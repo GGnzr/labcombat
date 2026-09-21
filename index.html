@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LabCombat</title>
+  </head>
+  <body style="background-color: #111; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; position: relative; font-family: sans-serif;">
+    <div id="app"></div>
+
+    <!-- Painel de Dev Mode (Fora do Jogo) -->
+    <div id="dev-panel" style="position: absolute; top: 20px; right: 20px; background: #2a2a35; padding: 15px; color: white; border: 2px solid #555; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
+        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; text-align: center;">🛠️ Dev Mode</h3>
+        <button style="width: 100%; padding: 8px; margin-bottom: 10px; background: #d93838; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
+                onclick="window.dispatchEvent(new CustomEvent('dev-reset'))">🔄 Encerrar/Resetar Sala</button>
+        <div style="display: flex; gap: 10px;">
+            <button style="flex: 1; padding: 8px; background: #38d938; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
+                    onclick="window.dispatchEvent(new CustomEvent('dev-streak', {detail: 1}))">+1 Streak</button>
+            <button style="flex: 1; padding: 8px; background: #d938d9; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
+                    onclick="window.dispatchEvent(new CustomEvent('dev-streak', {detail: -1}))">-1 Streak</button>
+        </div>
+    </div>
+
+    <!-- Overlay de Input para Entrar na Sala -->
+    <div id="join-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100;">
+        <div style="background: #222; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid #555;">
+            <h2 style="color: white; margin-top: 0;">Entrar na Sala</h2>
+            <input id="room-input" type="text" placeholder="Código (Ex: JOGAR)" style="font-size: 24px; padding: 10px; width: 200px; text-align: center; text-transform: uppercase; border-radius: 5px; border: none; margin-bottom: 20px;"><br>
+            <button onclick="window.dispatchEvent(new CustomEvent('submit-room-code', {detail: document.getElementById('room-input').value}))" style="font-size: 20px; padding: 10px 30px; background: #00f; color: white; border: none; border-radius: 5px; cursor: pointer;">Acessar</button>
+            <button onclick="document.getElementById('join-overlay').style.display='none'" style="font-size: 20px; padding: 10px 30px; background: #555; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+        </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
