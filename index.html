@@ -1,37 +1,1419 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>LabCombat</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      html, body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #050811;
+        background-image: radial-gradient(circle at center, rgba(15, 23, 42, 0.6) 0%, rgba(5, 8, 17, 0.95) 100%), url('/assets/bg.jpg');
+        background-size: cover;
+        background-position: center;
+        background-repeat: no-repeat;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+        touch-action: manipulation;
+        user-select: none;
+        -webkit-user-select: none;
+      }
+      #app {
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Modo Padrão: Preencher 100% da tela (acompanha o todo, sem barras pretas laterais) */
+      #app canvas {
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        display: block;
+        box-shadow: none;
+        image-rendering: pixelated;
+        image-rendering: crisp-edges;
+      }
+      /* Modo Opcional: Proporção 16:9 estrita (com bordas de contenção) */
+      body.aspect-fit #app canvas {
+        width: auto !important;
+        height: auto !important;
+        max-width: 100vw !important;
+        max-height: 100vh !important;
+        aspect-ratio: 16 / 9;
+        margin: auto !important;
+        box-shadow: 0 0 50px rgba(0, 0, 0, 0.95), 0 0 20px rgba(56, 189, 248, 0.15);
+      }
+      #dev-panel {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        background: rgba(30, 30, 40, 0.92);
+        backdrop-filter: blur(10px);
+        padding: 12px;
+        color: #eee;
+        border: 1.5px solid #4f4f70;
+        border-radius: 10px;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.6);
+        width: 230px;
+        z-index: 999;
+        font-size: 13px;
+        transition: width 0.2s ease, opacity 0.2s ease;
+      }
+      @media (max-width: 860px), (max-height: 640px) {
+        #dev-panel {
+          top: 6px;
+          right: 6px;
+          padding: 8px 10px;
+          font-size: 11px;
+          opacity: 0.85;
+        }
+        #dev-panel:hover {
+          opacity: 1;
+        }
+      }
+      /* Aviso de Orientação em Telas Móveis Verticais */
+      #orientation-prompt {
+        display: none;
+      }
+      @media screen and (orientation: portrait) and (max-width: 768px) {
+        #orientation-prompt:not(.dismissed) {
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100vw;
+          height: 100vh;
+          background: rgba(5, 8, 17, 0.95);
+          backdrop-filter: blur(8px);
+          color: #fff;
+          z-index: 2000;
+          text-align: center;
+          padding: 24px;
+        }
+        #orientation-prompt .phone-icon {
+          font-size: 48px;
+          margin-bottom: 16px;
+          display: inline-block;
+          animation: rotatePhone 2.5s infinite ease-in-out;
+        }
+        #orientation-prompt h3 {
+          font-size: 20px;
+          color: #38bdf8;
+          margin: 0 0 8px 0;
+        }
+        #orientation-prompt p {
+          font-size: 13px;
+          color: #94a3b8;
+          max-width: 270px;
+          line-height: 1.5;
+          margin: 0 0 20px 0;
+        }
+        #orientation-prompt .btn-dismiss-orientation {
+          padding: 9px 18px;
+          background: #1e293b;
+          border: 1px solid #475569;
+          color: #cbd5e1;
+          border-radius: 6px;
+          font-size: 12px;
+          font-weight: bold;
+          cursor: pointer;
+        }
+      }
+      @keyframes rotatePhone {
+        0% { transform: rotate(0deg); }
+        45% { transform: rotate(-90deg); }
+        75% { transform: rotate(-90deg); }
+        100% { transform: rotate(0deg); }
+      }
+      #open-rooms-list::-webkit-scrollbar {
+        width: 6px;
+      }
+      #open-rooms-list::-webkit-scrollbar-track {
+        background: #020617;
+        border-radius: 4px;
+      }
+      #open-rooms-list::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      #open-rooms-list::-webkit-scrollbar-thumb:hover {
+        background: #38bdf8;
+      }
+    </style>
   </head>
-  <body style="background-color: #111; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; position: relative; font-family: sans-serif;">
-    <div id="app"></div>
+  <body>
+    <div id="game-root">
+      <div id="app"></div>
 
-    <!-- Painel de Dev Mode (Fora do Jogo) -->
-    <div id="dev-panel" style="position: absolute; top: 20px; right: 20px; background: #2a2a35; padding: 15px; color: white; border: 2px solid #555; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);">
-        <h3 style="margin-top: 0; margin-bottom: 15px; font-size: 16px; text-align: center;">🛠️ Dev Mode</h3>
-        <button style="width: 100%; padding: 8px; margin-bottom: 10px; background: #d93838; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
-                onclick="window.dispatchEvent(new CustomEvent('dev-reset'))">🔄 Encerrar/Resetar Sala</button>
-        <div style="display: flex; gap: 10px;">
-            <button style="flex: 1; padding: 8px; background: #38d938; color: black; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
-                    onclick="window.dispatchEvent(new CustomEvent('dev-streak', {detail: 1}))">+1 Streak</button>
-            <button style="flex: 1; padding: 8px; background: #d938d9; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;" 
-                    onclick="window.dispatchEvent(new CustomEvent('dev-streak', {detail: -1}))">-1 Streak</button>
+      <!-- Sidebar Dedicada de GM / Dev Tools (Lateral 380px, Espaçosa com Abas) -->
+      <aside id="dev-sidebar">
+          <!-- Cabeçalho Principal do GM -->
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1.5px solid #1e293b; padding-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                  <span style="font-size: 20px;">🛡️</span>
+                  <div>
+                      <strong style="font-size: 15px; color: #38bdf8;">Painel Game Master</strong>
+                      <div style="font-size: 11px; color: #34d399; font-weight: bold;">● Conectado (Professor)</div>
+                  </div>
+              </div>
+              <div style="display: flex; gap: 6px;">
+                  <button id="dev-toggle-btn" title="Recolher Barra Lateral" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">◀ Recolher</button>
+                  <button id="btn-gm-logout" title="Sair do Modo GM e voltar à visão de aluno" style="background: #dc2626; border: none; color: #fff; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">✕ Sair</button>
+              </div>
+          </div>
+
+          <!-- Navegação por Abas (Tabs) -->
+          <div style="display: flex; background: #0b1120; border-radius: 8px; padding: 3px; margin-bottom: 12px; border: 1px solid #1e293b;">
+              <button id="tab-btn-controls" class="gm-tab-btn active" style="flex: 1; padding: 7px 4px; background: #1e293b; color: #38bdf8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🎮 Controles</button>
+              <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+          </div>
+
+          <!-- ABA 1: CONTROLES DA PARTIDA -->
+          <div id="tab-content-controls" class="gm-tab-content" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1;">
+              <!-- Exibição de Tela -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; font-size: 12px; margin-bottom: 6px; color: #38bdf8;">🖥️ Formato de Exibição</div>
+                  <div style="display: flex; gap: 8px;">
+                      <button id="btn-scale-toggle" style="flex: 1; background: #0f172a; border: 1px solid #475569; color: #facc15; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold;">📺 100% Tela</button>
+                      <button id="btn-fullscreen-toggle" style="flex: 1; background: #0f172a; border: 1px solid #475569; color: #38bdf8; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold;">⛶ Tela Cheia</button>
+                  </div>
+              </div>
+
+              <!-- Ajuste de Tempos -->
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #facc15;">⏱️ Configurar Tempos da Partida</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <label for="dev-start-delay" style="font-size: 13px;">Contagem Inicial:</label>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                          <input id="dev-start-delay" type="number" min="1" max="120" value="3" style="width: 60px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 14px; font-weight: bold;">
+                          <span style="font-size: 12px; color: #94a3b8;">seg</span>
+                      </div>
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                      <label for="dev-question-limit" style="font-size: 13px;">Tempo por Questão:</label>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                          <input id="dev-question-limit" type="number" min="3" max="120" value="15" style="width: 60px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 14px; font-weight: bold;">
+                          <span style="font-size: 12px; color: #94a3b8;">seg</span>
+                      </div>
+                  </div>
+                  <button id="dev-apply-timers-btn" style="width: 100%; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Salvar e Aplicar Tempos</button>
+                  <div id="dev-timers-status" style="font-size: 12px; color: #34d399; text-align: center; margin-top: 4px; min-height: 16px;"></div>
+              </div>
+
+              <!-- Controles de Streak & Ultimate -->
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #c084fc;">⚡ Cargas & Especial (Teste GM)</div>
+                  <div style="display: flex; gap: 8px;">
+                      <button id="dev-streak-plus" style="flex: 1; padding: 8px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">+1 Carga</button>
+                      <button id="dev-streak-minus" style="flex: 1; padding: 8px; background: #9333ea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">-1 Carga</button>
+                  </div>
+              </div>
+
+              <!-- Ações da Partida -->
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #38bdf8;">🎯 Ações da Arena</div>
+                  <button id="dev-skip-question" style="width: 100%; padding: 9px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⏭️ Pular para Próxima Questão</button>
+                  <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
+              </div>
+          </div>
+
+          <!-- ABA 2: SALAS NO FIREBASE -->
+          <div id="tab-content-rooms" class="gm-tab-content" style="display: none; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px 10px; border-radius: 6px;">
+                  <span style="font-size: 12px; font-weight: bold; color: #38bdf8;">📡 Conexão Firebase:</span>
+                  <span style="font-size: 11px; color: #34d399; font-weight: bold;">🟢 Ativa</span>
+              </div>
+
+              <div style="display: flex; gap: 6px;">
+                  <button id="dev-refresh-rooms-btn" style="flex: 1; padding: 7px; background: #2563eb; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;">🔄 Atualizar</button>
+                  <button id="dev-clean-empty-rooms-btn" style="flex: 1.2; padding: 7px; background: #b45309; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;" title="Deleta salas sem jogadores ou abandonadas">🧹 Limpar Vazias</button>
+                  <button id="dev-clear-all-rooms-btn" style="padding: 7px 10px; background: #991b1b; color: white; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer;" title="Excluir todas as salas do banco">⚠️ Limpar Tudo</button>
+              </div>
+
+              <div id="dev-active-rooms-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; max-height: calc(100vh - 220px); background: #080d1a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px;">
+                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Carregando salas...</div>
+              </div>
+          </div>
+
+          <!-- ABA 3: LOGS EM TEMPO REAL -->
+          <div id="tab-content-logs" class="gm-tab-content" style="display: none; flex-direction: column; gap: 8px; flex: 1; height: calc(100vh - 140px);">
+              <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 6px 10px; border-radius: 6px;">
+                  <div style="font-size: 12px; color: #facc15; font-weight: bold;">📜 Console de Eventos</div>
+                  <div style="display: flex; gap: 6px;">
+                      <button id="dev-copy-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;">📋 Copiar</button>
+                      <button id="dev-clear-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f87171; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;">🗑️ Limpar</button>
+                  </div>
+              </div>
+
+              <!-- Terminal Ampliado e com Tipografia Clara (12px) -->
+              <div id="dev-logs-terminal" style="font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 11.5px; flex: 1; height: calc(100vh - 190px); overflow-y: auto; background: #020617; border: 1.5px solid #1e293b; border-radius: 8px; padding: 10px; line-height: 1.5; color: #cbd5e1; white-space: pre-wrap; word-break: break-all;">
+              </div>
+          </div>
+      </aside>
+    </div>
+
+    <!-- Botão Flutuante Discreto para Reabrir a Barra Lateral (Apenas quando GM logado e barra recolhida) -->
+    <button id="gm-reopen-pill" title="Reabrir Painel do Game Master">🛠️ Painel GM</button>
+
+    <!-- Modal de Autenticação do Game Master / Professor -->
+    <div id="gm-login-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.3); width: 340px; max-width: 90vw;">
+            <div style="font-size: 38px; margin-bottom: 6px;">🛡️</div>
+            <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 20px; font-weight: bold;">Acesso Professor / GM</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 16px 0;">Digite o PIN de Game Master para gerenciar a partida:</p>
+            
+            <div style="margin-bottom: 14px;">
+                <input id="gm-pin-input" type="password" maxlength="16" placeholder="PIN do GM" 
+                       style="font-size: 20px; letter-spacing: 4px; font-weight: bold; width: 200px; padding: 10px; text-align: center; background: #020617; border: 2px solid #38bdf8; border-radius: 8px; color: #facc15; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
+            </div>
+
+            <div id="gm-login-error" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 12px;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button id="btn-gm-login-submit" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: filter 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
+                    🔓 Acessar Modo GM
+                </button>
+                <button id="btn-gm-login-cancel" style="padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">
+                    ✕ Cancelar
+                </button>
+            </div>
+            <div style="margin-top: 14px; font-size: 11px; color: #64748b;">
+                Atalho: Pressione <kbd style="background: #1e293b; padding: 2px 5px; border-radius: 4px; color: #94a3b8; border: 1px solid #475569;">F2</kbd> para abrir esta tela.
+            </div>
         </div>
     </div>
 
-    <!-- Overlay de Input para Entrar na Sala -->
-    <div id="join-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); justify-content: center; align-items: center; z-index: 100;">
-        <div style="background: #222; padding: 30px; border-radius: 10px; text-align: center; border: 2px solid #555;">
-            <h2 style="color: white; margin-top: 0;">Entrar na Sala</h2>
-            <input id="room-input" type="text" placeholder="Código (Ex: JOGAR)" style="font-size: 24px; padding: 10px; width: 200px; text-align: center; text-transform: uppercase; border-radius: 5px; border: none; margin-bottom: 20px;"><br>
-            <button onclick="window.dispatchEvent(new CustomEvent('submit-room-code', {detail: document.getElementById('room-input').value}))" style="font-size: 20px; padding: 10px 30px; background: #00f; color: white; border: none; border-radius: 5px; cursor: pointer;">Acessar</button>
-            <button onclick="document.getElementById('join-overlay').style.display='none'" style="font-size: 20px; padding: 10px 30px; background: #555; color: white; border: none; border-radius: 5px; cursor: pointer; margin-left: 10px;">Cancelar</button>
+    <!-- Overlay de Definir Apelido -->
+    <div id="nickname-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 340px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+            <div style="font-size: 38px; margin-bottom: 6px;">👤</div>
+            <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 22px; font-weight: bold;">Seu Apelido</h2>
+            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 16px 0;">Como deseja ser chamado no combate?</p>
+            
+            <div style="margin-bottom: 14px;">
+                <input id="nickname-modal-input" type="text" maxlength="14" placeholder="Ex: DevNinja" 
+                       style="font-size: 18px; font-weight: bold; width: 220px; padding: 10px; text-align: center; background: #020617; border: 2px solid #38bdf8; border-radius: 8px; color: #38bdf8; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
+            </div>
+
+            <div id="nickname-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 12px;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button id="btn-save-nickname" style="padding: 12px; background: linear-gradient(90deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: filter 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+                    ✓ Salvar Apelido
+                </button>
+                <button id="btn-cancel-nickname" style="padding: 10px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">
+                    ✕ Fechar
+                </button>
+            </div>
         </div>
     </div>
 
+    <!-- Overlay de Entrada em Sala (Design Moderno & Cyberpunk com Lista de Salas Ativas) -->
+    <div id="join-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
+        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 440px; max-width: 94vw; max-height: 90vh; box-sizing: border-box; overflow-x: hidden; overflow-y: auto;">
+            
+            <!-- Header do Modal -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
+                <div style="display: flex; align-items: center; gap: 8px; text-align: left;">
+                    <span style="font-size: 26px;">⚔️</span>
+                    <div>
+                        <h2 style="color: #f8fafc; margin: 0; font-size: 19px; font-weight: bold;">Entrar no Combate</h2>
+                        <div style="color: #94a3b8; font-size: 11px;">Conecte-se por código ou selecione uma sala aberta</div>
+                    </div>
+                </div>
+                <button id="btn-close-join-x" type="button" title="Fechar" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold;">✕</button>
+            </div>
+            
+            <!-- Campo Apelido -->
+            <div style="margin-bottom: 12px; text-align: left;">
+                <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">SEU APELIDO:</label>
+                <input id="join-nickname-input" type="text" maxlength="14" placeholder="Ex: Jogador 2" 
+                       style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
+            </div>
+
+            <!-- Opção A: Inserir Código -->
+            <div style="margin-bottom: 10px; text-align: left;">
+                <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">CÓDIGO DA SALA (4 CARACTERES):</label>
+                <div style="display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: stretch;">
+                    <input id="room-input" type="text" placeholder="ABCD" maxlength="4"
+                           style="font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: bold; flex: 1; min-width: 0; box-sizing: border-box; padding: 8px 10px; text-align: center; text-transform: uppercase; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #facc15; outline: none;">
+                    <button id="btn-paste-code" type="button" style="flex-shrink: 0; width: 80px; padding: 0 8px; background: #1e293b; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                        📋 Colar
+                    </button>
+                    <button id="btn-submit-join" type="button" style="flex-shrink: 0; padding: 0 16px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; white-space: nowrap; box-sizing: border-box; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.4);">
+                        🚀 Entrar
+                    </button>
+                </div>
+            </div>
+
+            <div id="join-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 8px; word-break: break-word; text-align: left;"></div>
+
+            <!-- Divisória com Salas Abertas ao Vivo -->
+            <div style="display: flex; align-items: center; justify-content: space-between; margin: 10px 0 8px 0; border-top: 1px solid #1e293b; padding-top: 8px;">
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <span style="font-size: 14px;">📡</span>
+                    <span style="font-size: 11px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px; text-transform: uppercase;">Salas Abertas ao Vivo</span>
+                    <span id="open-rooms-count" style="font-size: 10px; background: #1e293b; color: #94a3b8; padding: 1px 6px; border-radius: 8px; font-weight: bold;">0</span>
+                </div>
+                <button id="btn-refresh-open-rooms" type="button" title="Recarregar salas" style="background: transparent; border: 1px solid #334155; color: #94a3b8; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                    🔄 Atualizar
+                </button>
+            </div>
+
+            <!-- Lista de Salas Abertas com Scroll Elegante -->
+            <div id="open-rooms-list" style="max-height: 175px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; margin-bottom: 14px; text-align: left;">
+                <!-- Preenchido via Firebase em tempo real -->
+            </div>
+
+            <!-- Botão Voltar ao Menu -->
+            <button id="btn-cancel-join" type="button" style="width: 100%; padding: 10px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-sizing: border-box;">
+                ✕ Voltar ao Menu
+            </button>
+        </div>
+    </div>
+
+    <script type="module">
+        import { isGM, loginGM, logoutGM } from '/src/auth.js';
+        import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
+        import { db } from '/src/firebase.js';
+        import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
+        import { getProfessorById } from '/src/professors.js';
+
+        // Elementos da Sidebar GM
+        const startDelayInput = document.getElementById('dev-start-delay');
+        const questionLimitInput = document.getElementById('dev-question-limit');
+        const statusEl = document.getElementById('dev-timers-status');
+        const toggleBtn = document.getElementById('dev-toggle-btn');
+        const btnGmLogout = document.getElementById('btn-gm-logout');
+        const gmReopenPill = document.getElementById('gm-reopen-pill');
+
+        // Elementos de Abas da Sidebar GM
+        const tabBtnControls = document.getElementById('tab-btn-controls');
+        const tabBtnRooms = document.getElementById('tab-btn-rooms');
+        const tabBtnLogs = document.getElementById('tab-btn-logs');
+        const tabContentControls = document.getElementById('tab-content-controls');
+        const tabContentRooms = document.getElementById('tab-content-rooms');
+        const tabContentLogs = document.getElementById('tab-content-logs');
+        const gmRoomsCount = document.getElementById('gm-rooms-count');
+        const gmLogsCount = document.getElementById('gm-logs-count');
+
+        // Elementos do Monitor de Salas e Terminal de Logs
+        const roomsListEl = document.getElementById('dev-active-rooms-list');
+        const refreshRoomsBtn = document.getElementById('dev-refresh-rooms-btn');
+        const cleanEmptyRoomsBtn = document.getElementById('dev-clean-empty-rooms-btn');
+        const clearAllRoomsBtn = document.getElementById('dev-clear-all-rooms-btn');
+        const logsTerminalEl = document.getElementById('dev-logs-terminal');
+        const copyLogsBtn = document.getElementById('dev-copy-logs-btn');
+        const clearLogsBtn = document.getElementById('dev-clear-logs-btn');
+
+        // Elementos do Modal de Login GM
+        const gmLoginModal = document.getElementById('gm-login-modal');
+        const gmPinInput = document.getElementById('gm-pin-input');
+        const gmLoginError = document.getElementById('gm-login-error');
+        const btnGmLoginSubmit = document.getElementById('btn-gm-login-submit');
+        const btnGmLoginCancel = document.getElementById('btn-gm-login-cancel');
+
+        // Estado do Modo GM e Sidebar
+        let gmActive = isGM();
+        let sidebarOpen = gmActive;
+
+        // Gerenciamento de Troca de Abas
+        function switchTab(target) {
+            [tabBtnControls, tabBtnRooms, tabBtnLogs].forEach(b => {
+                if (!b) return;
+                b.style.background = 'transparent';
+                b.style.color = '#94a3b8';
+            });
+            [tabContentControls, tabContentRooms, tabContentLogs].forEach(c => {
+                if (c) c.style.display = 'none';
+            });
+
+            if (target === 'controls' && tabBtnControls && tabContentControls) {
+                tabBtnControls.style.background = '#1e293b';
+                tabBtnControls.style.color = '#38bdf8';
+                tabContentControls.style.display = 'flex';
+            } else if (target === 'rooms' && tabBtnRooms && tabContentRooms) {
+                tabBtnRooms.style.background = '#1e293b';
+                tabBtnRooms.style.color = '#38bdf8';
+                tabContentRooms.style.display = 'flex';
+                fetchActiveRooms();
+            } else if (target === 'logs' && tabBtnLogs && tabContentLogs) {
+                tabBtnLogs.style.background = '#1e293b';
+                tabBtnLogs.style.color = '#38bdf8';
+                tabContentLogs.style.display = 'flex';
+                if (logsTerminalEl) logsTerminalEl.scrollTop = logsTerminalEl.scrollHeight;
+            }
+        }
+
+        if (tabBtnControls) tabBtnControls.addEventListener('click', () => switchTab('controls'));
+        if (tabBtnRooms) tabBtnRooms.addEventListener('click', () => switchTab('rooms'));
+        if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => switchTab('logs'));
+
+        function updateLayoutClasses() {
+            if (gmActive) {
+                document.body.classList.add('gm-active');
+                if (sidebarOpen) {
+                    document.body.classList.add('dev-sidebar-open');
+                    fetchActiveRooms();
+                } else {
+                    document.body.classList.remove('dev-sidebar-open');
+                }
+            } else {
+                document.body.classList.remove('gm-active', 'dev-sidebar-open');
+            }
+
+            // Dispara redimensionamento para o Phaser recalcular o canvas
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 60);
+            setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 180);
+        }
+
+        function updateLogsBadge() {
+            if (gmLogsCount) {
+                const count = getLogsHistory().length;
+                gmLogsCount.textContent = count > 0 ? `${count}` : '';
+            }
+        }
+
+        // Formatação visual do terminal de logs
+        function renderLogLine(logItem) {
+            const line = document.createElement('div');
+            line.style.marginBottom = '3px';
+
+            const timeSpan = document.createElement('span');
+            timeSpan.style.color = '#64748b';
+            timeSpan.textContent = `[${logItem.timestamp}] `;
+
+            const tagSpan = document.createElement('span');
+            tagSpan.style.fontWeight = 'bold';
+            tagSpan.style.marginRight = '4px';
+
+            switch (logItem.type) {
+                case 'room':
+                    tagSpan.style.color = '#34d399';
+                    tagSpan.textContent = '[SALA]';
+                    break;
+                case 'join':
+                    tagSpan.style.color = '#60a5fa';
+                    tagSpan.textContent = '[ENTRAR]';
+                    break;
+                case 'error':
+                    tagSpan.style.color = '#f87171';
+                    tagSpan.textContent = '[ERRO]';
+                    break;
+                case 'warn':
+                    tagSpan.style.color = '#facc15';
+                    tagSpan.textContent = '[AVISO]';
+                    break;
+                case 'game':
+                    tagSpan.style.color = '#c084fc';
+                    tagSpan.textContent = '[JOGO]';
+                    break;
+                default:
+                    tagSpan.style.color = '#38bdf8';
+                    tagSpan.textContent = '[INFO]';
+            }
+
+            const msgSpan = document.createElement('span');
+            msgSpan.textContent = logItem.message;
+
+            line.appendChild(timeSpan);
+            line.appendChild(tagSpan);
+            line.appendChild(msgSpan);
+            return line;
+        }
+
+        function appendLog(logItem) {
+            if (!logsTerminalEl) return;
+            logsTerminalEl.appendChild(renderLogLine(logItem));
+            logsTerminalEl.scrollTop = logsTerminalEl.scrollHeight;
+            updateLogsBadge();
+        }
+
+        // Renderizar histórico inicial de logs
+        getLogsHistory().forEach(appendLog);
+        updateLogsBadge();
+
+        window.addEventListener('labcombat-log', (e) => {
+            if (e.detail) appendLog(e.detail);
+        });
+
+        window.addEventListener('labcombat-logs-cleared', () => {
+            if (logsTerminalEl) logsTerminalEl.innerHTML = '';
+            updateLogsBadge();
+        });
+
+        if (clearLogsBtn) {
+            clearLogsBtn.addEventListener('click', () => {
+                clearLogsHistory();
+            });
+        }
+
+        if (copyLogsBtn) {
+            copyLogsBtn.addEventListener('click', () => {
+                const logsText = getLogsHistory().map(l => `[${l.timestamp}] [${l.type.toUpperCase()}] ${l.message}`).join('\n');
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(logsText).then(() => {
+                        copyLogsBtn.textContent = 'Copiado!';
+                        setTimeout(() => { copyLogsBtn.textContent = 'Copiar'; }, 2000);
+                    });
+                }
+            });
+        }
+
+        // Monitor de Salas Ativas em Tempo Real do Firebase
+        async function fetchActiveRooms() {
+            if (!roomsListEl) return;
+            roomsListEl.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px; font-size: 12px;">Atualizando salas...</div>';
+            try {
+                const snapshot = await get(ref(db, 'rooms'));
+                if (!snapshot.exists()) {
+                    roomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala ativa no momento.</div>';
+                    if (gmRoomsCount) gmRoomsCount.textContent = '0';
+                    return;
+                }
+                const roomsData = snapshot.val();
+                const roomKeys = Object.keys(roomsData).filter(k => k !== '_test_ping' && k !== 'arena').reverse();
+                
+                if (gmRoomsCount) gmRoomsCount.textContent = `${roomKeys.length}`;
+
+                if (roomKeys.length === 0) {
+                    roomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala encontrada.</div>';
+                    return;
+                }
+
+                roomsListEl.innerHTML = '';
+                roomKeys.forEach(k => {
+                    const r = roomsData[k];
+                    const card = document.createElement('div');
+                    card.style.cssText = 'background: #0f172a; border: 1px solid #1e293b; border-radius: 6px; padding: 8px 10px; margin-bottom: 6px; display: flex; flex-direction: column; gap: 5px; transition: border-color 0.2s;';
+                    card.onmouseenter = () => card.style.borderColor = '#38bdf8';
+                    card.onmouseleave = () => card.style.borderColor = '#1e293b';
+
+                    const p1Nick = (r && r.p1 && r.p1.nickname) || 'Anônimo';
+                    const p2Nick = (r && r.p2 && r.p2.nickname) ? r.p2.nickname : 'Aguardando Oponente';
+                    const p2Color = (r && r.p2) ? '#60a5fa' : '#34d399';
+                    const state = (r && r.arena && r.arena.state) ? r.arena.state : (r && r.p2 ? 'selecionando' : 'aguardando');
+
+                    card.innerHTML = `
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <span style="font-family: monospace; font-size: 14px; font-weight: bold; color: #facc15; background: #020617; padding: 2px 6px; border-radius: 4px; border: 1px solid #334155;">${k}</span>
+                                <span style="font-size: 10px; text-transform: uppercase; background: #1e293b; color: #94a3b8; padding: 2px 5px; border-radius: 4px; font-weight: bold;">${state}</span>
+                            </div>
+                            <div style="display: flex; gap: 4px;">
+                                <button class="btn-copy-code" title="Copiar Código" style="background: #1e293b; border: 1px solid #475569; color: #38bdf8; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">📋 Copiar</button>
+                                <button class="btn-del-room" title="Excluir Sala" style="background: #450a0a; border: 1px solid #991b1b; color: #f87171; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">🗑️</button>
+                            </div>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #cbd5e1; margin-top: 2px;">
+                            <span>🔵 P1: <strong style="color: #f8fafc;">${p1Nick}</strong></span>
+                            <span style="color: ${p2Color};">🔴 P2: <strong>${p2Nick}</strong></span>
+                        </div>
+                    `;
+
+                    const copyBtn = card.querySelector('.btn-copy-code');
+                    copyBtn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (navigator.clipboard) {
+                            navigator.clipboard.writeText(k);
+                            copyBtn.textContent = '✓ Copiado';
+                            setTimeout(() => { copyBtn.textContent = '📋 Copiar'; }, 1500);
+                            logEvent('info', `Código da sala [${k}] copiado.`);
+                        }
+                        const roomInput = document.getElementById('room-input');
+                        if (roomInput) roomInput.value = k;
+                    });
+
+                    const delBtn = card.querySelector('.btn-del-room');
+                    delBtn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Excluir a sala [${k}] (${p1Nick})?`)) {
+                            try {
+                                await remove(ref(db, `rooms/${k}`));
+                                logEvent('room', `🗑️ Sala [${k}] excluída pelo GM.`);
+                                fetchActiveRooms();
+                            } catch (err) {
+                                logEvent('error', `Falha ao excluir sala [${k}]: ${err.message}`);
+                            }
+                        }
+                    });
+
+                    roomsListEl.appendChild(card);
+                });
+            } catch (err) {
+                console.error('Erro ao buscar salas:', err);
+                roomsListEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 12px; font-size: 12px;">Erro ao carregar salas: ${err.message}</div>`;
+            }
+        }
+
+        if (refreshRoomsBtn) {
+            refreshRoomsBtn.addEventListener('click', fetchActiveRooms);
+        }
+
+        if (cleanEmptyRoomsBtn) {
+            cleanEmptyRoomsBtn.addEventListener('click', async () => {
+                cleanEmptyRoomsBtn.disabled = true;
+                cleanEmptyRoomsBtn.textContent = 'Limpando...';
+                try {
+                    const snapshot = await get(ref(db, 'rooms'));
+                    if (!snapshot.exists()) {
+                        logEvent('info', 'Nenhuma sala para limpar.');
+                        return;
+                    }
+                    const roomsData = snapshot.val();
+                    let countCleaned = 0;
+                    for (const [k, r] of Object.entries(roomsData)) {
+                        if (k === '_test_ping' || k === 'arena') continue;
+                        const isGhost = !r || !r.p1 || !r.p1.nickname;
+                        const isStale = r && r.createdAt && (Date.now() - r.createdAt > 30 * 60 * 1000);
+                        const isLegacyWithoutDate = r && !r.createdAt;
+                        if (isGhost || isStale || isLegacyWithoutDate) {
+                            await remove(ref(db, `rooms/${k}`));
+                            countCleaned++;
+                        }
+                    }
+                    logEvent('room', `🧹 Limpeza concluída: ${countCleaned} salas vazias/inativas removidas.`);
+                    await fetchActiveRooms();
+                } catch (err) {
+                    logEvent('error', `Falha ao limpar salas vazias: ${err.message}`);
+                } finally {
+                    cleanEmptyRoomsBtn.textContent = '🧹 Limpar Vazias';
+                    cleanEmptyRoomsBtn.disabled = false;
+                }
+            });
+        }
+
+        if (clearAllRoomsBtn) {
+            clearAllRoomsBtn.addEventListener('click', async () => {
+                if (!confirm('⚠️ Tem certeza que deseja excluir TODAS as salas do banco de dados?\nPartidas em andamento serão canceladas.')) {
+                    return;
+                }
+                clearAllRoomsBtn.disabled = true;
+                clearAllRoomsBtn.textContent = 'Excluindo...';
+                try {
+                    await remove(ref(db, 'rooms'));
+                    logEvent('warn', '⚠️ Todas as salas foram removidas do Firebase pelo GM.');
+                    await fetchActiveRooms();
+                } catch (err) {
+                    logEvent('error', `Falha ao excluir todas as salas: ${err.message}`);
+                } finally {
+                    clearAllRoomsBtn.textContent = '⚠️ Limpar Tudo';
+                    clearAllRoomsBtn.disabled = false;
+                }
+            });
+        }
+
+        // Log de inicialização do sistema
+        logEvent('info', 'Sistema LabCombat carregado. Monitor pronto.');
+
+        // Aplica o estado inicial ao carregar
+        updateLayoutClasses();
+
+        // Alternar recolher/abrir sidebar do GM
+        if (toggleBtn) {
+            toggleBtn.addEventListener('click', () => {
+                sidebarOpen = false;
+                updateLayoutClasses();
+            });
+        }
+
+        if (gmReopenPill) {
+            gmReopenPill.addEventListener('click', () => {
+                sidebarOpen = true;
+                updateLayoutClasses();
+            });
+        }
+
+        if (btnGmLogout) {
+            btnGmLogout.addEventListener('click', () => {
+                logoutGM();
+                gmActive = false;
+                sidebarOpen = false;
+                updateLayoutClasses();
+            });
+        }
+
+        // Modal de Login do GM
+        function openGMLoginModal() {
+            if (gmLoginModal && gmPinInput) {
+                gmLoginModal.style.display = 'flex';
+                gmPinInput.value = '';
+                if (gmLoginError) gmLoginError.textContent = '';
+                gmPinInput.focus();
+            }
+        }
+
+        function closeGMLoginModal() {
+            if (gmLoginModal) {
+                gmLoginModal.style.display = 'none';
+                if (gmLoginError) gmLoginError.textContent = '';
+            }
+        }
+
+        function handleGMLoginSubmit() {
+            const pin = gmPinInput.value;
+            if (loginGM(pin)) {
+                gmActive = true;
+                sidebarOpen = true;
+                closeGMLoginModal();
+                updateLayoutClasses();
+            } else {
+                if (gmLoginError) gmLoginError.textContent = 'PIN inválido. Tente novamente.';
+                gmPinInput.select();
+            }
+        }
+
+        if (btnGmLoginSubmit) btnGmLoginSubmit.addEventListener('click', handleGMLoginSubmit);
+        if (btnGmLoginCancel) btnGmLoginCancel.addEventListener('click', closeGMLoginModal);
+        if (gmPinInput) {
+            gmPinInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') handleGMLoginSubmit();
+                if (e.key === 'Escape') closeGMLoginModal();
+            });
+        }
+
+        // Atalhos de Teclado (F2 ou Ctrl+Shift+D)
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'F2' || (e.ctrlKey && e.shiftKey && e.code === 'KeyD')) {
+                e.preventDefault();
+                if (gmActive) {
+                    sidebarOpen = !sidebarOpen;
+                    updateLayoutClasses();
+                } else {
+                    openGMLoginModal();
+                }
+            }
+        });
+
+        // Evento customizado para abrir modal do GM vindo de qualquer cena do Phaser
+        window.addEventListener('open-gm-modal', () => {
+            if (gmActive) {
+                sidebarOpen = true;
+                updateLayoutClasses();
+            } else {
+                openGMLoginModal();
+            }
+        });
+
+        // Configuração de Tempos e Controles de Partida
+        const savedStart = localStorage.getItem('dev_start_delay');
+        const savedLimit = localStorage.getItem('dev_question_limit');
+        if (savedStart && savedStart !== '30') {
+            startDelayInput.value = savedStart;
+        } else {
+            startDelayInput.value = '3';
+            localStorage.setItem('dev_start_delay', '3');
+        }
+        if (savedLimit) questionLimitInput.value = savedLimit;
+
+        function emitTimers(showFeedback = true) {
+            const startDelay = parseInt(startDelayInput.value, 10) || 3;
+            const questionLimit = parseInt(questionLimitInput.value, 10) || 15;
+            localStorage.setItem('dev_start_delay', startDelay);
+            localStorage.setItem('dev_question_limit', questionLimit);
+            
+            window.dispatchEvent(new CustomEvent('dev-set-timers', {
+                detail: { matchStartDelay: startDelay, questionTimeLimit: questionLimit }
+            }));
+
+            if (showFeedback && statusEl) {
+                statusEl.textContent = '✓ Aplicado!';
+                setTimeout(() => { if (statusEl) statusEl.textContent = ''; }, 2000);
+            }
+        }
+
+        const btnApplyTimers = document.getElementById('dev-apply-timers-btn');
+        if (btnApplyTimers) btnApplyTimers.addEventListener('click', () => emitTimers(true));
+        if (startDelayInput) startDelayInput.addEventListener('change', () => emitTimers(true));
+        if (questionLimitInput) questionLimitInput.addEventListener('change', () => emitTimers(true));
+
+        const btnStreakPlus = document.getElementById('dev-streak-plus');
+        if (btnStreakPlus) {
+            btnStreakPlus.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('dev-streak', { detail: 1 }));
+            });
+        }
+        const btnStreakMinus = document.getElementById('dev-streak-minus');
+        if (btnStreakMinus) {
+            btnStreakMinus.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('dev-streak', { detail: -1 }));
+            });
+        }
+        const btnSkipQuestion = document.getElementById('dev-skip-question');
+        if (btnSkipQuestion) {
+            btnSkipQuestion.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('dev-next-question'));
+            });
+        }
+        const btnResetMatch = document.getElementById('dev-reset-btn');
+        if (btnResetMatch) {
+            btnResetMatch.addEventListener('click', () => {
+                window.dispatchEvent(new CustomEvent('dev-reset'));
+            });
+        }
+
+        // Listener para dispensar aviso de rotação em mobile
+        const orientationPrompt = document.getElementById('orientation-prompt');
+        const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
+        if (btnDismissOrientation && orientationPrompt) {
+            btnDismissOrientation.addEventListener('click', () => {
+                orientationPrompt.classList.add('dismissed');
+            });
+        }
+
+        // Alternador de Modo de Escala (100% Preencher vs 16:9 Fit Proporcional)
+        const scaleToggleBtn = document.getElementById('btn-scale-toggle');
+        const savedScaleMode = localStorage.getItem('labcombat_scale_mode') || 'fill';
+        if (savedScaleMode === 'fit') {
+            document.body.classList.add('aspect-fit');
+            if (scaleToggleBtn) scaleToggleBtn.textContent = '📐 16:9 Fit';
+        } else {
+            document.body.classList.remove('aspect-fit');
+            if (scaleToggleBtn) scaleToggleBtn.textContent = '📺 100% Tela';
+        }
+
+        if (scaleToggleBtn) {
+            scaleToggleBtn.addEventListener('click', () => {
+                const isFit = document.body.classList.toggle('aspect-fit');
+                localStorage.setItem('labcombat_scale_mode', isFit ? 'fit' : 'fill');
+                scaleToggleBtn.textContent = isFit ? '📐 16:9 Fit' : '📺 100% Tela';
+                window.dispatchEvent(new Event('resize'));
+            });
+        }
+
+        // Handler de Tela Cheia (Fullscreen)
+        const fullscreenBtn = document.getElementById('btn-fullscreen-toggle');
+        if (fullscreenBtn) {
+            fullscreenBtn.addEventListener('click', () => {
+                if (!document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(() => {});
+                    fullscreenBtn.textContent = '✕ Sair Cheia';
+                } else {
+                    document.exitFullscreen().catch(() => {});
+                    fullscreenBtn.textContent = '⛶ Tela Cheia';
+                }
+            });
+            document.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    fullscreenBtn.textContent = '⛶ Tela Cheia';
+                } else {
+                    fullscreenBtn.textContent = '✕ Sair Cheia';
+                }
+            });
+        }
+
+        // Handlers de Apelido (Nickname)
+        const nicknameOverlay = document.getElementById('nickname-overlay');
+        const nicknameInput = document.getElementById('nickname-modal-input');
+        const nicknameErrorMsg = document.getElementById('nickname-error-msg');
+        const btnSaveNickname = document.getElementById('btn-save-nickname');
+        const btnCancelNickname = document.getElementById('btn-cancel-nickname');
+
+        window.addEventListener('open-nickname-modal', () => {
+            if (nicknameOverlay && nicknameInput) {
+                nicknameOverlay.style.display = 'flex';
+                nicknameInput.value = localStorage.getItem('labcombat_nickname') || 'Jogador 1';
+                if (nicknameErrorMsg) nicknameErrorMsg.textContent = '';
+                nicknameInput.focus();
+                nicknameInput.select();
+            }
+        });
+
+        function saveNicknameFromModal() {
+            const val = nicknameInput.value.trim();
+            if (!val) {
+                if (nicknameErrorMsg) nicknameErrorMsg.textContent = 'Digite um apelido válido.';
+                return;
+            }
+            localStorage.setItem('labcombat_nickname', val);
+            nicknameOverlay.style.display = 'none';
+            window.dispatchEvent(new CustomEvent('nickname-changed', { detail: val }));
+        }
+
+        btnSaveNickname.addEventListener('click', saveNicknameFromModal);
+        nicknameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') saveNicknameFromModal();
+            if (e.key === 'Escape') nicknameOverlay.style.display = 'none';
+        });
+        btnCancelNickname.addEventListener('click', () => {
+            nicknameOverlay.style.display = 'none';
+        });
+
+        // Handlers do Modal de Entrada em Sala & Lista de Salas Abertas
+        const roomInput = document.getElementById('room-input');
+        const joinNicknameInput = document.getElementById('join-nickname-input');
+        const joinOverlay = document.getElementById('join-overlay');
+        const joinErrorMsg = document.getElementById('join-error-msg');
+        const btnSubmitJoin = document.getElementById('btn-submit-join');
+        const btnCancelJoin = document.getElementById('btn-cancel-join');
+        const btnCloseJoinX = document.getElementById('btn-close-join-x');
+        const btnPasteCode = document.getElementById('btn-paste-code');
+        const btnRefreshOpenRooms = document.getElementById('btn-refresh-open-rooms');
+        const openRoomsListEl = document.getElementById('open-rooms-list');
+        const openRoomsCountEl = document.getElementById('open-rooms-count');
+
+        let openRoomsUnsubscribe = null;
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        function cleanRoomCode(raw) {
+            if (!raw) return '';
+            // Remove espaços, símbolos e pontuações
+            let cleaned = raw.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+            // Se tiver mais de 4 caracteres (ex: "SALA2A9Y" ou URL), pega os últimos 4 caracteres
+            if (cleaned.length > 4) {
+                cleaned = cleaned.slice(-4);
+            }
+            return cleaned;
+        }
+
+        function renderNoRoomsHtml() {
+            return `
+                <div style="color: #64748b; text-align: center; padding: 18px 10px; font-size: 12px; background: #070c16; border-radius: 8px; border: 1px dashed #1e293b;">
+                    <div style="font-size: 20px; margin-bottom: 4px;">📡</div>
+                    <div style="color: #94a3b8; font-weight: bold; margin-bottom: 3px;">Nenhuma sala pública aberta no momento</div>
+                    <div style="font-size: 11px; color: #475569;">Peça o código ao Host ou insira um código privado no campo acima.</div>
+                </div>
+            `;
+        }
+
+        function subscribeOpenRooms() {
+            if (openRoomsUnsubscribe) {
+                openRoomsUnsubscribe();
+                openRoomsUnsubscribe = null;
+            }
+            if (!openRoomsListEl) return;
+
+            openRoomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 14px; font-size: 12px;">Buscando salas abertas no servidor...</div>';
+
+            try {
+                const roomsRef = ref(db, 'rooms');
+                openRoomsUnsubscribe = onValue(roomsRef, (snap) => {
+                if (!openRoomsListEl) return;
+                const data = snap.val();
+                if (!data) {
+                    openRoomsListEl.innerHTML = renderNoRoomsHtml();
+                    if (openRoomsCountEl) openRoomsCountEl.textContent = '0';
+                    return;
+                }
+
+                const openRooms = [];
+                const now = Date.now();
+                const twoHours = 2 * 60 * 60 * 1000;
+
+                for (const [code, r] of Object.entries(data)) {
+                    if (code === '_test_ping' || code === 'arena') continue;
+                    if (!r || !r.p1 || !r.p1.nickname) continue;
+                    if (r.state === 'closed') continue;
+
+                    // Sala aberta para entrada: partida não começou (round 0 ou indefinido)
+                    const isMatchStarted = r.round && r.round >= 1;
+                    if (isMatchStarted) continue;
+
+                    // Ignorar salas fantasmas de sessões abandonadas há mais de 2 horas
+                    if (r.createdAt && (now - r.createdAt > twoHours)) continue;
+
+                    // Sala aberta: vaga P2 disponível (APENAS se P2 não existe ou não tem nickname)
+                    const p2Vacant = !r.p2 || !r.p2.nickname;
+                    if (!p2Vacant) continue;
+
+                    openRooms.push({ code, room: r });
+                }
+
+                if (openRoomsCountEl) openRoomsCountEl.textContent = `${openRooms.length}`;
+
+                if (openRooms.length === 0) {
+                    openRoomsListEl.innerHTML = renderNoRoomsHtml();
+                    return;
+                }
+
+                // Mais recentes no topo
+                openRooms.sort((a, b) => (b.room.createdAt || 0) - (a.room.createdAt || 0));
+
+                openRoomsListEl.innerHTML = '';
+                openRooms.forEach(({ code, room }) => {
+                    const card = document.createElement('div');
+                    card.className = 'open-room-card';
+                    card.style.cssText = 'background: #090e1a; border: 1.5px solid #1e293b; border-radius: 8px; padding: 9px 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: all 0.15s;';
+                    card.onmouseenter = () => {
+                        card.style.borderColor = '#38bdf8';
+                        card.style.background = '#0d1627';
+                    };
+                    card.onmouseleave = () => {
+                        card.style.borderColor = '#1e293b';
+                        card.style.background = '#090e1a';
+                    };
+
+                    const hostNick = room.p1.nickname || 'Host';
+                    const prof = getProfessorById(room.p1.characterId || 'so');
+                    const profName = prof ? prof.shortName : 'Sistemas Op.';
+                    const badgeTxt = '🟢 1 VAGA LIVRE';
+                    const badgeBg = '#064e3b';
+                    const badgeColor = '#34d399';
+
+                    card.innerHTML = `
+                        <div style="flex: 1; min-width: 0; padding-right: 8px;">
+                            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                                <span style="font-family: monospace; font-size: 14px; font-weight: bold; color: #facc15; background: #020617; padding: 2px 7px; border-radius: 4px; border: 1px solid #334155; letter-spacing: 1px;">${code}</span>
+                                <span style="font-size: 9.5px; font-weight: bold; color: ${badgeColor}; background: ${badgeBg}; padding: 2px 6px; border-radius: 4px;">${badgeTxt}</span>
+                            </div>
+                            <div style="font-size: 11.5px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                👑 Host: <strong style="color: #f1f5f9;">${escapeHtml(hostNick)}</strong> <span style="color: #64748b;">(${profName})</span>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-direct-join" style="flex-shrink: 0; padding: 7px 14px; background: #16a34a; border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: bold; cursor: pointer; transition: background 0.15s; white-space: nowrap; box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);">
+                            ⚔️ Entrar
+                        </button>
+                    `;
+
+                    const btnDirect = card.querySelector('.btn-direct-join');
+                    btnDirect.onmouseenter = () => btnDirect.style.background = '#15803d';
+                    btnDirect.onmouseleave = () => btnDirect.style.background = '#16a34a';
+
+                    const selectAndJoin = (e) => {
+                        if (e) e.stopPropagation();
+                        if (roomInput) {
+                            roomInput.value = code;
+                            roomInput.dispatchEvent(new Event('input', { bubbles: true }));
+                        }
+                        triggerJoin();
+                    };
+
+                    card.addEventListener('click', selectAndJoin);
+                    btnDirect.addEventListener('click', selectAndJoin);
+
+                    openRoomsListEl.appendChild(card);
+                });
+            }, (error) => {
+                console.error('Erro ao escutar salas abertas:', error);
+                if (openRoomsListEl) {
+                    openRoomsListEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 14px; font-size: 12px;">Erro ao carregar salas: ${error.message}</div>`;
+                }
+            });
+            } catch (err) {
+                console.error('Erro ao subscrever salas abertas:', err);
+                if (openRoomsListEl) {
+                    openRoomsListEl.innerHTML = `<div style="color: #f87171; text-align: center; padding: 14px; font-size: 12px;">Erro ao carregar salas: ${err.message}</div>`;
+                }
+            }
+        }
+
+        function closeJoinModal() {
+            if (joinOverlay) joinOverlay.style.display = 'none';
+            if (joinErrorMsg) joinErrorMsg.textContent = '';
+            if (openRoomsUnsubscribe) {
+                openRoomsUnsubscribe();
+                openRoomsUnsubscribe = null;
+            }
+            if (btnSubmitJoin) {
+                btnSubmitJoin.disabled = false;
+                btnSubmitJoin.textContent = '🚀 Entrar';
+            }
+        }
+
+        // Impede que cliques nos modais vazem para o canvas do Phaser por baixo
+        [joinOverlay, nicknameOverlay, gmLoginModal].forEach(overlayEl => {
+            if (!overlayEl) return;
+            ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend'].forEach(evt => {
+                overlayEl.addEventListener(evt, (e) => {
+                    // Se o usuário clicar no backdrop escuro fora da janela modal, fecha o modal correspondente
+                    if (evt === 'click' && e.target === overlayEl) {
+                        if (overlayEl === joinOverlay) {
+                            closeJoinModal();
+                        } else {
+                            overlayEl.style.display = 'none';
+                        }
+                    }
+                    e.stopPropagation();
+                });
+            });
+        });
+
+        if (roomInput) {
+            roomInput.addEventListener('input', () => {
+                const cleaned = cleanRoomCode(roomInput.value);
+                if (roomInput.value !== cleaned) {
+                    roomInput.value = cleaned;
+                }
+            });
+
+            roomInput.addEventListener('paste', (e) => {
+                e.preventDefault();
+                const pasteText = (e.clipboardData || window.clipboardData).getData('text') || '';
+                const cleaned = cleanRoomCode(pasteText);
+                roomInput.value = cleaned;
+                if (joinErrorMsg) joinErrorMsg.textContent = '';
+                roomInput.dispatchEvent(new Event('input', { bubbles: true }));
+            });
+        }
+
+        if (btnPasteCode) {
+            btnPasteCode.addEventListener('click', async () => {
+                let text = '';
+                try {
+                    if (navigator.clipboard && navigator.clipboard.readText) {
+                        text = await navigator.clipboard.readText();
+                    }
+                } catch {
+                    // Fallback se permissão de leitura de clipboard for bloqueada
+                }
+                if (!text) {
+                    text = window.prompt('Cole o código da sala (Ctrl+V):') || '';
+                }
+                const cleaned = cleanRoomCode(text);
+                if (cleaned) {
+                    roomInput.value = cleaned;
+                    if (joinErrorMsg) joinErrorMsg.textContent = '';
+                    roomInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    btnPasteCode.textContent = '✓ Colado!';
+                    setTimeout(() => { if (btnPasteCode) btnPasteCode.textContent = '📋 Colar'; }, 1500);
+                } else {
+                    roomInput.focus();
+                }
+            });
+        }
+
+        if (btnRefreshOpenRooms) {
+            btnRefreshOpenRooms.addEventListener('click', () => {
+                subscribeOpenRooms();
+            });
+        }
+
+        window.addEventListener('open-join-modal', () => {
+            if (joinOverlay) {
+                // Se o modal já estiver aberto, NÃO apague o que o usuário já digitou ou colou!
+                if (joinOverlay.style.display === 'flex') {
+                    return;
+                }
+                joinOverlay.style.display = 'flex';
+                if (joinNicknameInput) {
+                    joinNicknameInput.value = localStorage.getItem('labcombat_nickname') || 'Jogador 2';
+                }
+                if (roomInput) {
+                    roomInput.value = '';
+                    setTimeout(() => roomInput.focus(), 60);
+                }
+                if (btnSubmitJoin) {
+                    btnSubmitJoin.disabled = false;
+                    btnSubmitJoin.textContent = '🚀 Entrar';
+                }
+                if (joinErrorMsg) joinErrorMsg.textContent = '';
+
+                // Inicia escuta em tempo real das salas abertas
+                subscribeOpenRooms();
+            }
+        });
+
+        async function triggerJoin() {
+            const rawCode = roomInput.value.trim();
+            const code = cleanRoomCode(rawCode);
+            const nick = (joinNicknameInput ? joinNicknameInput.value.trim() : '') || 'Jogador 2';
+
+            if (!code || code.length < 4) {
+                joinErrorMsg.textContent = 'Por favor, informe o código de 4 caracteres (ex: 2A9Y) ou selecione uma sala aberta.';
+                if (roomInput) roomInput.focus();
+                return;
+            }
+            joinErrorMsg.textContent = 'Buscando sala no servidor...';
+            if (btnSubmitJoin) {
+                btnSubmitJoin.disabled = true;
+                btnSubmitJoin.textContent = '⏳ Conectando...';
+            }
+            localStorage.setItem('labcombat_nickname', nick);
+
+            try {
+                let targetRoomId = code;
+                let roomRef = ref(db, `rooms/${targetRoomId}`);
+                let snapshot = await get(roomRef);
+
+                // Resolução de ambiguidade visual caso o jogador tenha confundido 0/O ou 1/I
+                if (!snapshot.exists()) {
+                    const candidates = [
+                        code.replace(/0/g, 'O'),
+                        code.replace(/O/g, '0'),
+                        code.replace(/1/g, 'I'),
+                        code.replace(/I/g, '1')
+                    ];
+                    for (const cand of candidates) {
+                        if (cand !== code) {
+                            const testSnap = await get(ref(db, `rooms/${cand}`));
+                            if (testSnap.exists()) {
+                                targetRoomId = cand;
+                                snapshot = testSnap;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                if (!snapshot.exists()) {
+                    joinErrorMsg.textContent = `Sala "${code}" não encontrada! Verifique o código com o Host.`;
+                    if (btnSubmitJoin) {
+                        btnSubmitJoin.disabled = false;
+                        btnSubmitJoin.textContent = '🚀 Entrar';
+                    }
+                    return;
+                }
+
+                const rData = snapshot.val();
+                const sessionPlayerId = sessionStorage.getItem('labcombat_player_id');
+                const sessionRoomId = sessionStorage.getItem('labcombat_room_id');
+
+                const isP1 = (rData.p1 && rData.p1.nickname && rData.p1.nickname.trim().toLowerCase() === nick.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p1');
+                const isP2 = (rData.p2 && rData.p2.nickname && rData.p2.nickname.trim().toLowerCase() === nick.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p2');
+
+                // 1. Se a partida já começou e o jogador não é reconexão
+                if (rData.round && rData.round >= 1 && !isP1 && !isP2) {
+                    joinErrorMsg.textContent = `⚠️ A partida na sala "${targetRoomId}" já começou!`;
+                    if (btnSubmitJoin) {
+                        btnSubmitJoin.disabled = false;
+                        btnSubmitJoin.textContent = '🚀 Entrar';
+                    }
+                    return;
+                }
+
+                // 2. Se a sala já possui P2 e quem está entrando NÃO é o P2 ou P1 reconectando
+                if (rData.p2 && rData.p2.nickname && !isP2 && !isP1) {
+                    joinErrorMsg.textContent = `⚠️ Esta sala já está cheia! (2/2 jogadores).`;
+                    logEvent('warn', `[Sala Cheia] Conexão bloqueada para "${nick}" na sala "${targetRoomId}".`);
+                    if (btnSubmitJoin) {
+                        btnSubmitJoin.disabled = false;
+                        btnSubmitJoin.textContent = '🚀 Entrar';
+                    }
+                    return;
+                }
+
+                // 3. Reconexão do Host como P1
+                if (isP1) {
+                    logEvent('join', `[Reconectado] Host "${nick}" reconectou na sala "${targetRoomId}".`);
+                    sessionStorage.setItem('labcombat_room_id', targetRoomId);
+                    sessionStorage.setItem('labcombat_player_id', 'p1');
+                    sessionStorage.setItem('labcombat_nickname', nick);
+                    closeJoinModal();
+                    if (window.game && window.game.scene) {
+                        window.game.scene.stop('MenuScene');
+                        window.game.scene.start('CharacterSelectScene', {
+                            roomId: targetRoomId,
+                            playerId: 'p1',
+                            nickname: nick
+                        });
+                    }
+                    return;
+                }
+
+                // 4. Reconexão do Jogador 2
+                if (isP2) {
+                    logEvent('join', `[Reconectado] Jogador "${nick}" reconectou como P2 na sala "${targetRoomId}".`);
+                    sessionStorage.setItem('labcombat_room_id', targetRoomId);
+                    sessionStorage.setItem('labcombat_player_id', 'p2');
+                    sessionStorage.setItem('labcombat_nickname', nick);
+                    closeJoinModal();
+                    if (window.game && window.game.scene) {
+                        window.game.scene.stop('MenuScene');
+                        window.game.scene.start('CharacterSelectScene', {
+                            roomId: targetRoomId,
+                            playerId: 'p2',
+                            nickname: nick
+                        });
+                    }
+                    return;
+                }
+
+                // 5. Novo Jogador 2 entrando em vaga livre
+                const p2Data = {
+                    nickname: nick,
+                    hp: 100,
+                    charges: 0,
+                    hasShield: false,
+                    hasTryCatch: false,
+                    lives: 3,
+                    streak: 0,
+                    answered: false,
+                    characterId: (rData.p2 && rData.p2.characterId) || 'web',
+                    ready: false
+                };
+
+                const p2Ref = ref(db, `rooms/${targetRoomId}/p2`);
+                await set(p2Ref, p2Data);
+                try {
+                    onDisconnect(p2Ref).remove();
+                } catch(e) {}
+
+                logEvent('join', `[Conectado] Jogador "${nick}" entrou com sucesso como P2 na sala "${targetRoomId}".`);
+
+                sessionStorage.setItem('labcombat_room_id', targetRoomId);
+                sessionStorage.setItem('labcombat_player_id', 'p2');
+                sessionStorage.setItem('labcombat_nickname', nick);
+
+                closeJoinModal();
+
+                // Transição garantida para CharacterSelectScene
+                if (window.game && window.game.scene) {
+                    window.game.scene.stop('MenuScene');
+                    window.game.scene.start('CharacterSelectScene', {
+                        roomId: targetRoomId,
+                        playerId: 'p2',
+                        nickname: nick
+                    });
+                } else {
+                    window.dispatchEvent(new CustomEvent('submit-room-code', { detail: { roomId: targetRoomId, nickname: nick } }));
+                }
+
+            } catch (err) {
+                console.error('Erro ao conectar na sala:', err);
+                joinErrorMsg.textContent = `Erro de conexão: ${err.message}`;
+                if (btnSubmitJoin) {
+                    btnSubmitJoin.disabled = false;
+                    btnSubmitJoin.textContent = '🚀 Entrar';
+                }
+            }
+        }
+
+        btnSubmitJoin.addEventListener('click', triggerJoin);
+        roomInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') triggerJoin();
+        });
+        joinNicknameInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') roomInput.focus();
+        });
+        btnCancelJoin.addEventListener('click', closeJoinModal);
+        if (btnCloseJoinX) btnCloseJoinX.addEventListener('click', closeJoinModal);
+
+
+        // Enviar os tempos configurados após o carregamento da página
+        window.addEventListener('load', () => {
+            setTimeout(() => emitTimers(false), 500);
+        });
+    </script>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
