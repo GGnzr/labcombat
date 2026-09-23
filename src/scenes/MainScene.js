@@ -1,22 +1,31 @@
-﻿import Phaser from 'phaser';
-import { ref, set, onValue, get, update } from 'firebase/database';
+import Phaser from 'phaser';
+import { ref, set, onValue, get, update, remove } from 'firebase/database';
 import { db } from '../firebase.js';
 import { questions } from '../questions.js';
+import { professors, getProfessorById } from '../professors.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
         super('MainScene');
-        this.QUESTION_TIME_LIMIT = 15;
-        this.MATCH_START_DELAY = 30;
+        let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
+        if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
+        const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
+        this.QUESTION_TIME_LIMIT = devQuestionLimit;
+        this.MATCH_START_DELAY = devStartDelay;
     }
 
     preload() {
         this.load.image('arena_bg', '/assets/bg.jpg');
+        professors.forEach(p => {
+            this.load.image(p.idleKey, p.idleUrl);
+            this.load.image(p.portraitKey, p.portraitUrl);
+        });
     }
 
     init(data) {
         this.roomId = data.roomId;
         this.playerId = data.playerId;
+        this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || localStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
         this.isWaitingForOpponent = true;
         
         // Reset flags so they don't leak between reconnects
@@ -26,109 +35,943 @@ export class MainScene extends Phaser.Scene {
         this.optionButtons = [];
         this.isLeaving = false;
         this.localQuestionStartTime = null;
-        this.localMatchStartTime = null;
+        this.targetMatchStartTime = null;
         this.lastProcessedQuestionId = null;
-        this.lastProcessedMatchSignal = null;
+        this.lastProcessedRound = null;
         this.previousData = null;
+        this.isAdvancingQuestion = false;
+        this.currentRound = 0;
+        this.roomUnsubscribe = null;
+
+        // Propriedades do Novo Sistema de Combate
+        this.p1CurrentHp = 100;
+        this.p2CurrentHp = 100;
+        this.p1CurrentCharges = 0;
+        this.p2CurrentCharges = 0;
+        this.currentRoundModifier = 'normal';
+        this.isResolvingRound = false;
+        this.isExecutingFinisher = false;
+
+        const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
+        this.QUESTION_TIME_LIMIT = devQuestionLimit;
+        const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
+        this.MATCH_START_DELAY = (devStartDelay && devStartDelay !== 30) ? devStartDelay : 3;
+
+        if (this.nextQuestionTimeout) {
+            clearTimeout(this.nextQuestionTimeout);
+            this.nextQuestionTimeout = null;
+        }
     }
 
     create() {
-        // Fundo (Background Image)
-        const bg = this.add.image(400, 300, 'arena_bg').setOrigin(0.5);
-        bg.setDisplaySize(800, 600); // Ajusta a imagem para cobrir a tela 800x600
+        // 0. Base de cor sólida cobrindo todo o canvas 1024x576
+        this.add.rectangle(512, 288, 1024, 576, 0x060913);
 
-        this.add.text(400, 30, 'LabCombat - Arena de Batalha', { fontSize: '24px', fill: '#fff', backgroundColor: '#000000aa', padding: {x: 10, y: 5} }).setOrigin(0.5);
+        // 1. Fundo da Arena (RESTRITO EXCLUSIVAMENTE à parte superior onde ficam os personagens: y=0 a y=330)
+        // NÃO fica atrás das questões de forma alguma!
+        const arenaBg = this.add.image(512, 165, 'arena_bg');
+        arenaBg.setDisplaySize(1024, 576); // Proporção natural 16:9
+        
+        // Máscara geométrica para confinar o fundo da arena rigorosamente na área dos personagens
+        const arenaMaskGfx = this.make.graphics();
+        arenaMaskGfx.fillStyle(0xffffff);
+        arenaMaskGfx.fillRect(0, 0, 1024, 330);
+        const arenaMask = arenaMaskGfx.createGeometryMask();
+        arenaBg.setMask(arenaMask);
 
-        this.statusText = this.add.text(400, 60, 'Conectando...', { fontSize: '18px', fill: '#fff', backgroundColor: '#000000aa', padding: {x: 10, y: 2} }).setOrigin(0.5);
+        // Overlay suave para integrar o fundo da arena
+        const arenaOverlay = this.add.rectangle(512, 165, 1024, 330, 0x000000, 0.15);
+        arenaOverlay.setMask(arenaMask);
 
-        // Vidas ajustadas para não baterem na barra de progresso!
-        this.p1Text = this.add.text(200, 70, 'P1 Vidas: ❤️❤️❤️', { fontSize: '18px', fill: '#fff', backgroundColor: '#00000088', padding: {x: 5, y: 2} }).setOrigin(0.5);
-        this.p2Text = this.add.text(600, 70, 'P2 Vidas: ❤️❤️❤️', { fontSize: '18px', fill: '#fff', backgroundColor: '#00000088', padding: {x: 5, y: 2} }).setOrigin(0.5);
+        // 2. Barra Superior Unificada (HUD Header)
+        this.add.rectangle(512, 24, 1024, 48, 0x0a0f1d, 0.95);
+        this.add.line(512, 48, 0, 0, 1024, 0, 0x1e293b).setLineWidth(1);
 
-        this.add.text(20, 20, '[ Sair da Sala ]', { fontSize: '16px', fill: '#fff', backgroundColor: '#900', padding: { x: 10, y: 5 } })
+        // Botão Sair da Sala (compacto e alinhado à esquerda)
+        this.add.text(55, 24, '🚪 Sair', { 
+            fontSize: '13px', fill: '#fff', backgroundColor: '#991b1b', 
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
+            .on('pointerover', function() { this.setStyle({ backgroundColor: '#b91c1c' }); })
+            .on('pointerout', function() { this.setStyle({ backgroundColor: '#991b1b' }); })
             .on('pointerdown', () => this.leaveRoom());
 
-        this.p1Thermometer = this.add.graphics();
-        this.p2Thermometer = this.add.graphics();
-
-        this.fighterP1 = this.add.container(200, 220);
-        const p1Body = this.add.rectangle(0, 0, 50, 100, 0x00aa00);
-        const p1Eye = this.add.rectangle(12, -20, 10, 10, 0x000000); 
-        this.fighterP1.add([p1Body, p1Eye]);
-        this.fighterP1.originalX = 200;
-
-        this.fighterP2 = this.add.container(600, 220);
-        const p2Body = this.add.rectangle(0, 0, 50, 100, 0xaa0000);
-        const p2Eye = this.add.rectangle(-12, -20, 10, 10, 0x000000); 
-        this.fighterP2.add([p2Body, p2Eye]);
-        this.fighterP2.originalX = 600;
-
-        this.add.rectangle(400, 465, 760, 250, 0x111122, 0.9).setStrokeStyle(2, 0x444488);
-
-        this.questionText = this.add.text(400, 375, '', { 
-            fontSize: '18px', fill: '#fff', align: 'center', wordWrap: { width: 720 } 
+        // Título centralizado
+        this.add.text(512, 16, 'LABCOMBAT', { 
+            fontSize: '17px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 2 
         }).setOrigin(0.5);
 
-        // Limpa explicitamente caso a scene reinicie
+        // Status da partida (logo abaixo do título, sem colidir)
+        this.statusText = this.add.text(512, 35, 'Conectando...', { 
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+
+        // 3. Painéis dos Jogadores - Fighter HUD Cards (P1 à esquerda, P2 à direita)
+        // Dimensões: 450px de largura x 84px de altura. Espaço central de 92px entre os cards.
+
+        // === CARD P1 (JOGADOR 1 - ESQUERDA) ===
+        // Fundo do Card P1
+        this.p1PanelBg = this.add.rectangle(241, 94, 450, 84, 0x0c1527, 0.95).setStrokeStyle(2, 0x10b981);
+        
+        // Avatar / Retrato do Professor P1 (Esquerda do Card)
+        this.p1PortraitFrame = this.add.rectangle(56, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0x10b981);
+        this.p1Portrait = this.add.image(56, 94, 'prof_so_portrait').setDisplaySize(62, 62);
+
+        // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
+        this.p1NickText = this.add.text(98, 68, 'JOGADOR 1', { 
+            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
+        }).setOrigin(0, 0.5);
+
+        this.p1ProfText = this.add.text(210, 68, '• SISTEMAS OP.', { 
+            fontSize: '11px', fill: '#34d399', fontStyle: 'bold' 
+        }).setOrigin(0, 0.5);
+
+        this.p1HpText = this.add.text(454, 68, '100 HP', {
+            fontSize: '12px', fill: '#34d399', fontStyle: 'bold'
+        }).setOrigin(1, 0.5);
+
+        // Linha 2: Barra de HP P1 (356px de largura, y = 89)
+        this.p1HpBarBg = this.add.rectangle(276, 89, 356, 12, 0x030712).setStrokeStyle(1, 0x334155);
+        this.p1HpBarFill = this.add.rectangle(98, 89, 356, 12, 0x10b981).setOrigin(0, 0.5);
+
+        // Linha 3: Medidor de Cargas e Buffs P1 (y = 114)
+        this.p1ChargeSlots = [];
+        this.p1SlotTexts = [];
+        for (let s = 0; s < 3; s++) {
+            const slotBg = this.add.rectangle(112 + (s * 32), 114, 26, 15, 0x1e293b).setStrokeStyle(1, 0x334155);
+            const slotTxt = this.add.text(112 + (s * 32), 114, '⚡', {
+                fontSize: '10px', fill: '#475569', fontStyle: 'bold'
+            }).setOrigin(0.5);
+            this.p1ChargeSlots.push(slotBg);
+            this.p1SlotTexts.push(slotTxt);
+        }
+        this.p1ChargeLabel = this.add.text(202, 114, 'ESPECIAL: 0/3', {
+            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+        this.p1BuffIcons = this.add.text(454, 114, '', {
+            fontSize: '11px', fontStyle: 'bold'
+        }).setOrigin(1, 0.5);
+
+        // Aliases para compatibilidade
+        this.p1NameText = this.p1NickText;
+        this.p1HeartsText = this.p1HpText;
+        this.p1Text = this.p1NickText;
+        this.p1Thermometer = this.add.graphics();
+
+
+        // === CARD P2 (JOGADOR 2 - DIREITA) ===
+        // Fundo do Card P2
+        this.p2PanelBg = this.add.rectangle(783, 94, 450, 84, 0x0c1527, 0.95).setStrokeStyle(2, 0xef4444);
+
+        // Avatar / Retrato do Professor P2 (Direita do Card, espelhado)
+        this.p2PortraitFrame = this.add.rectangle(968, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0xef4444);
+        this.p2Portrait = this.add.image(968, 94, 'prof_web_portrait').setDisplaySize(62, 62).setFlipX(true);
+
+        // Linha 1: HP Numérico, Disciplina e Nickname (y = 68)
+        this.p2HpText = this.add.text(570, 68, '100 HP', {
+            fontSize: '12px', fill: '#f87171', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+
+        this.p2ProfText = this.add.text(814, 68, 'WEB & MOBILE •', { 
+            fontSize: '11px', fill: '#f87171', fontStyle: 'bold' 
+        }).setOrigin(1, 0.5);
+
+        this.p2NickText = this.add.text(926, 68, 'JOGADOR 2', { 
+            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
+        }).setOrigin(1, 0.5);
+
+        // Linha 2: Barra de HP P2 (356px de largura, y = 89)
+        // Origin (1, 0.5) em x = 926 preenche de 570 a 926 quando 100%
+        this.p2HpBarBg = this.add.rectangle(748, 89, 356, 12, 0x030712).setStrokeStyle(1, 0x334155);
+        this.p2HpBarFill = this.add.rectangle(926, 89, 356, 12, 0x10b981).setOrigin(1, 0.5);
+
+        // Linha 3: Buffs, Label de Especial e Medidor de Cargas P2 (y = 114)
+        this.p2BuffIcons = this.add.text(570, 114, '', {
+            fontSize: '11px', fontStyle: 'bold'
+        }).setOrigin(0, 0.5);
+
+        this.p2ChargeLabel = this.add.text(822, 114, 'ESPECIAL: 0/3', {
+            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        }).setOrigin(1, 0.5);
+
+        this.p2ChargeSlots = [];
+        this.p2SlotTexts = [];
+        for (let s = 0; s < 3; s++) {
+            const slotBg = this.add.rectangle(846 + (s * 32), 114, 26, 15, 0x1e293b).setStrokeStyle(1, 0x334155);
+            const slotTxt = this.add.text(846 + (s * 32), 114, '⚡', {
+                fontSize: '10px', fill: '#475569', fontStyle: 'bold'
+            }).setOrigin(0.5);
+            this.p2ChargeSlots.push(slotBg);
+            this.p2SlotTexts.push(slotTxt);
+        }
+
+        // Aliases para compatibilidade
+        this.p2NameText = this.p2NickText;
+        this.p2HeartsText = this.p2HpText;
+        this.p2Text = this.p2NickText;
+        this.p2Thermometer = this.add.graphics();
+
+        // 4. Personagens e Bases de Combate (Ficam firmes no piso da arena superior)
+        // P1 Fighter
+        this.fighterP1 = this.add.container(260, 246);
+        const p1Shadow = this.add.ellipse(0, 48, 100, 24, 0x000000, 0.5);
+        const p1PadRing = this.add.ellipse(0, 48, 92, 20).setStrokeStyle(2, 0x10b981, 0.9);
+        const p1PadGlow = this.add.ellipse(0, 48, 80, 16, 0x10b981, 0.25);
+        
+        // Sprite Estático do Professor P1 (sem animação)
+        this.fighterP1Sprite = this.add.image(0, 48, 'prof_so_idle')
+            .setOrigin(0.5, 1.0)
+            .setDisplaySize(76, 140);
+
+        this.fighterP1.add([p1Shadow, p1PadRing, p1PadGlow, this.fighterP1Sprite]);
+        this.fighterP1.originalX = 260;
+
+        // P2 Fighter
+        this.fighterP2 = this.add.container(764, 246);
+        const p2Shadow = this.add.ellipse(0, 48, 100, 24, 0x000000, 0.5);
+        const p2PadRing = this.add.ellipse(0, 48, 92, 20).setStrokeStyle(2, 0xef4444, 0.9);
+        const p2PadGlow = this.add.ellipse(0, 48, 80, 16, 0xef4444, 0.25);
+
+        // Sprite Estático do Professor P2 (sem animação, espelhado para encarar o P1)
+        this.fighterP2Sprite = this.add.image(0, 48, 'prof_web_idle')
+            .setOrigin(0.5, 1.0)
+            .setDisplaySize(76, 140)
+            .setFlipX(true);
+
+        this.fighterP2.add([p2Shadow, p2PadRing, p2PadGlow, this.fighterP2Sprite]);
+        this.fighterP2.originalX = 764;
+
+        // 5. Linha Divisória de Alta Tecnologia entre a Arena e o Terminal
+        // A arena fica restrita acima de y=330. O terminal fica em y=330 a 576 com fundo 100% SÓLIDO!
+        this.add.rectangle(512, 330, 1024, 4, 0x0f172a);
+        this.add.line(512, 330, 0, 0, 1024, 0, 0x38bdf8).setLineWidth(2);
+
+        // Fundo 100% SÓLIDO do Terminal de Questões (NENHUMA parte do fundo da arena fica atrás!)
+        this.add.rectangle(512, 453, 1024, 246, 0x080c16);
+
+        // Moldura interna do Terminal Cyber
+        this.add.rectangle(512, 453, 996, 234, 0x0b1120)
+            .setStrokeStyle(1.5, 0x1e293b);
+
+        // Faixa de cabeçalho do terminal
+        this.add.rectangle(512, 350, 996, 30, 0x0f172a);
+        this.add.line(512, 365, 0, 0, 996, 0, 0x1e293b).setLineWidth(1);
+
+        this.add.text(28, 350, '💻 TERMINAL DE COMBATE', { 
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 4, bottom: 4, left: 6, right: 6 }
+        }).setOrigin(0, 0.5);
+
+        // Cronômetro integrado perfeitamente ao cabeçalho (sem sobreposição!)
+        this.timerText = this.add.text(512, 350, '⏱️ Tempo: --', { 
+            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold', 
+            backgroundColor: '#1e293b', 
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 6, bottom: 6, left: 14, right: 14 } 
+        }).setOrigin(0.5);
+
+        this.add.text(996, 350, 'ARENA QUIZ 1V1', {
+            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        }).setOrigin(1, 0.5);
+
+        // Badge Modificador de Questão (Topo da Pergunta)
+        this.roundModifierBadge = this.add.text(512, 372, '', {
+            fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 3, bottom: 3, left: 12, right: 12 }
+        }).setOrigin(0.5).setVisible(false);
+
+        // Enunciado da questão (centralizado com leitura nítida e sem fundo poluído)
+        this.questionText = this.add.text(512, 396, '', { 
+            fontSize: '14px', fill: '#f8fafc', align: 'center', 
+            wordWrap: { width: 950 }, fontStyle: 'bold' 
+        }).setOrigin(0.5);
+
+        // Botões de opções (espaçamento de 32px, largura 960px)
         this.optionButtons = [];
         for (let i = 0; i < 4; i++) {
-            let btn = this.add.text(400, 430 + (i * 42), '', { 
-                fontSize: '16px', fill: '#fff', backgroundColor: '#333',
-                fixedWidth: 700,
-                padding: { x: 15, y: 10 }, align: 'left'
+            let btn = this.add.text(512, 432 + (i * 32), '', { 
+                fontSize: '12px', fill: '#ffffff', backgroundColor: '#1e293b',
+                fixedWidth: 960,
+                padding: { x: 16, y: 6 }, align: 'left'
             }).setOrigin(0.5).setInteractive({ useHandCursor: true });
             
+            btn.on('pointerover', () => {
+                if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
+                    btn.setStyle({ backgroundColor: '#334155' });
+                }
+            });
+            btn.on('pointerout', () => {
+                if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
+                    btn.setStyle({ backgroundColor: '#1e293b' });
+                }
+            });
             btn.on('pointerdown', () => this.handleAnswer(i));
             this.optionButtons.push(btn);
         }
 
-        this.timerText = this.add.text(400, 335, 'Tempo: --', { fontSize: '20px', fill: '#fff', fontStyle: 'bold', backgroundColor: '#00000088', padding: {x: 5, y: 2} }).setOrigin(0.5);
+        // Banner Central de Notificações de Combate
+        this.combatAlertBanner = this.add.text(512, 175, '', {
+            fontSize: '14px', fill: '#ffffff', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            backgroundColor: '#030712f0',
+            padding: { top: 8, bottom: 8, left: 24, right: 24 }
+        }).setOrigin(0.5).setVisible(false).setDepth(120);
 
-        this.setupFirebase();
+        // Overlay de Ultimate Finisher Cinematográfico
+        this.ultimateOverlay = this.add.container(512, 288).setDepth(260).setVisible(false);
+        this.ultBackdrop = this.add.rectangle(0, 0, 1024, 576, 0x030712, 0.94);
+        this.ultFlash = this.add.rectangle(0, 0, 1024, 576, 0xffffff, 0);
+        this.ultPortrait = this.add.image(0, -45, 'prof_so_portrait').setDisplaySize(160, 140);
+        this.ultHeader = this.add.text(0, 55, '⚡ ULTIMATE FINISHER! ⚡', {
+            fontSize: '20px', fill: '#facc15', fontStyle: 'bold', letterSpacing: 2
+        }).setOrigin(0.5);
+        this.ultMoveName = this.add.text(0, 90, 'KERNEL PANIC', {
+            fontSize: '26px', fill: '#ef4444', fontStyle: 'bold', letterSpacing: 2
+        }).setOrigin(0.5);
+        this.ultQuote = this.add.text(0, 126, '"Processo encerrado com código de erro fatal."', {
+            fontSize: '13px', fill: '#e2e8f0', fontStyle: 'italic'
+        }).setOrigin(0.5);
+        this.ultimateOverlay.add([this.ultBackdrop, this.ultFlash, this.ultPortrait, this.ultHeader, this.ultMoveName, this.ultQuote]);
 
-        this.gameOverPanel = this.add.container(400, 300).setDepth(10).setVisible(false);
-        const goBg = this.add.rectangle(0, 0, 800, 600, 0x000000, 0.85);
-        this.gameOverTitle = this.add.text(0, -50, '', { fontSize: '48px', fontStyle: 'bold' }).setOrigin(0.5);
-        const btnRestart = this.add.text(0, 50, '[ Jogar Novamente ]', { fontSize: '24px', backgroundColor: '#333', padding: { x: 20, y: 10 } })
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', async () => {
-                sessionStorage.clear();
-                await set(ref(db, `rooms/${this.roomId}`), null);
-                window.location.reload();
-            });
-        this.gameOverPanel.add([goBg, this.gameOverTitle, btnRestart]);
+        // 6. Painel Game Over (Reformulado, Perfeitamente Centralizado e com Múltiplas Opções)
+        this.gameOverPanel = this.add.container(512, 288).setDepth(200).setVisible(false);
 
-        this.pausePanel = this.add.container(400, 300).setDepth(15).setVisible(false);
-        const pauseBg = this.add.rectangle(0, 0, 800, 600, 0x000000, 0.85);
-        this.pauseTitle = this.add.text(0, -50, 'AGUARDANDO OPONENTE...', { fontSize: '48px', fontStyle: 'bold', fill: '#ffcc00' }).setOrigin(0.5);
-        this.pauseSub = this.add.text(0, 20, `Código da Sala: ${this.roomId}`, { fontSize: '32px', fill: '#00ff00', fontStyle: 'bold' }).setOrigin(0.5);
-        const pauseLeaveBtn = this.add.text(0, 100, '[ Fechar / Sair da Sala ]', { fontSize: '24px', backgroundColor: '#900', padding: { x: 20, y: 10 } })
+        // Backdrop escuro total que bloqueia interações com a tela de combate de fundo
+        const goBackdrop = this.add.rectangle(0, 0, 1024, 576, 0x030712, 0.94)
+            .setInteractive();
+
+        // Card Central de Alta Fidelidade (Glow + Fundo + Borda Temática)
+        this.goCardGlow = this.add.rectangle(0, 0, 610, 440, 0x38bdf8, 0.22);
+        this.goCardBg = this.add.rectangle(0, 0, 600, 430, 0x0c1322, 0.98)
+            .setStrokeStyle(2, 0x38bdf8);
+
+        // Faixa de Cabeçalho do Card
+        const goCardHeader = this.add.rectangle(0, -170, 600, 70, 0x080d1a, 0.9);
+        const goHeaderLine = this.add.line(0, -135, -300, 0, 300, 0, 0x1e293b).setLineWidth(1);
+
+        // Ícone e Títulos
+        this.goIconText = this.add.text(0, -182, '🏆', { 
+            fontSize: '34px',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+        }).setOrigin(0.5);
+
+        this.goTitleText = this.add.text(0, -145, 'VITÓRIA ACADÊMICA!', { 
+            fontSize: '26px', fontStyle: 'bold', fill: '#34d399',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+        }).setOrigin(0.5);
+
+        this.goSubText = this.add.text(0, -108, 'Parabéns! Você dominou o duelo.', { 
+            fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            align: 'center'
+        }).setOrigin(0.5);
+
+        // Resumo / Placar da Partida (Stats Box Centralizado)
+        const statsBoxBg = this.add.rectangle(0, -28, 540, 92, 0x030712, 0.9)
+            .setStrokeStyle(1.5, 0x1e293b);
+
+        // Coluna P1
+        this.goP1Nick = this.add.text(-170, -52, 'P1: JOGADOR 1', { 
+            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+        this.goP1Prof = this.add.text(-170, -32, '[ SISTEMAS OP. ]', { 
+            fontSize: '11px', fill: '#94a3b8' 
+        }).setOrigin(0.5);
+        this.goP1Hearts = this.add.text(-170, -8, '100 HP', { 
+            fontSize: '13px', fill: '#34d399', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+
+        // Separador Central (VS & Rodadas)
+        const vsBadge = this.add.text(0, -50, 'VS', { 
+            fontSize: '14px', fill: '#facc15', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+        this.goRoundsText = this.add.text(0, -30, '🎯 4 Rodadas', { 
+            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+        const modeBadge = this.add.text(0, -10, 'Duelo 1v1', { 
+            fontSize: '10px', fill: '#64748b' 
+        }).setOrigin(0.5);
+
+        // Coluna P2
+        this.goP2Nick = this.add.text(170, -52, 'P2: JOGADOR 2', { 
+            fontSize: '13px', fill: '#f87171', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+        this.goP2Prof = this.add.text(170, -32, '[ WEB & MOBILE ]', { 
+            fontSize: '11px', fill: '#94a3b8' 
+        }).setOrigin(0.5);
+        this.goP2Hearts = this.add.text(170, -8, '💀 0 HP (K.O.)', { 
+            fontSize: '13px', fill: '#ef4444', fontStyle: 'bold' 
+        }).setOrigin(0.5);
+
+        // Banner temporário de recusa de solicitação (posicionado acima dos botões)
+        this.requestDeclinedBanner = this.add.text(0, 22, '', { 
+            fontSize: '12px', fill: '#f87171', backgroundColor: '#450a0a',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 4, bottom: 4, left: 14, right: 14 }, fontStyle: 'bold' 
+        }).setOrigin(0.5).setVisible(false);
+
+        // --- GRUPO 1: Botões de Ação Padrão ---
+        // Botão 1 (Principal): Jogar Novamente (Revanche na Mesma Sala)
+        this.btnRematch = this.add.text(0, 56, '⚔️ Jogar Novamente (Revanche)', { 
+            fontSize: '15px', fill: '#ffffff', backgroundColor: '#16a34a',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 460, padding: { top: 11, bottom: 11 }, align: 'center', fontStyle: 'bold' 
+        })
             .setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.leaveRoom());
+            .on('pointerover', () => this.btnRematch.setStyle({ backgroundColor: '#22c55e' }))
+            .on('pointerout', () => this.btnRematch.setStyle({ backgroundColor: '#16a34a' }))
+            .on('pointerdown', () => this.handleRematch());
+
+        // Botão 2: Trocar Professor (Volta para a Seleção mantendo a sala)
+        this.btnChangeProf = this.add.text(-125, 118, '🔄 Trocar Professor', { 
+            fontSize: '12px', fill: '#38bdf8', backgroundColor: '#1e293b',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 210, padding: { top: 9, bottom: 9 }, align: 'center', fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => this.btnChangeProf.setStyle({ backgroundColor: '#334155' }))
+            .on('pointerout', () => this.btnChangeProf.setStyle({ backgroundColor: '#1e293b' }))
+            .on('pointerdown', () => this.handleChangeProfessor());
+
+        // Botão 3: Menu Principal (Limpa e Sai)
+        this.btnMainMenu = this.add.text(125, 118, '🏠 Menu Principal', { 
+            fontSize: '12px', fill: '#fca5a5', backgroundColor: '#450a0a',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 210, padding: { top: 9, bottom: 9 }, align: 'center', fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', () => this.btnMainMenu.setStyle({ backgroundColor: '#7f1d1d' }))
+            .on('pointerout', () => this.btnMainMenu.setStyle({ backgroundColor: '#450a0a' }))
+            .on('pointerdown', () => this.leaveToMenu());
+
+        // --- GRUPO 2: Painel de Espera (Para quem ENVIOU a solicitação) ---
+        this.waitingBox = this.add.rectangle(0, 94, 520, 92, 0x030712, 0.96)
+            .setStrokeStyle(1.5, 0x38bdf8).setVisible(false);
+
+        this.waitingText = this.add.text(0, 74, '', { 
+            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold', align: 'center',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            wordWrap: { width: 480 } 
+        }).setOrigin(0.5).setVisible(false);
+
+        this.btnCancelRequest = this.add.text(0, 116, '✕ Cancelar Solicitação', { 
+            fontSize: '12px', fill: '#cbd5e1', backgroundColor: '#334155',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 7, bottom: 7, left: 18, right: 18 }, fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setVisible(false)
+            .on('pointerover', () => this.btnCancelRequest.setStyle({ backgroundColor: '#475569' }))
+            .on('pointerout', () => this.btnCancelRequest.setStyle({ backgroundColor: '#334155' }))
+            .on('pointerdown', () => this.cancelPostMatchRequest());
+
+        // --- GRUPO 3: Painel de Decisão (Para quem RECEBEU a solicitação) ---
+        this.promptBox = this.add.rectangle(0, 94, 520, 102, 0x030712, 0.96)
+            .setStrokeStyle(2, 0xfacc15).setVisible(false);
+
+        this.promptTitle = this.add.text(0, 64, '', { 
+            fontSize: '14px', fill: '#facc15', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.promptSub = this.add.text(0, 86, '', { 
+            fontSize: '11px', fill: '#94a3b8',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+        }).setOrigin(0.5).setVisible(false);
+
+        this.btnAcceptRequest = this.add.text(-165, 120, '✓ Aceitar', { 
+            fontSize: '12px', fill: '#ffffff', backgroundColor: '#16a34a',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 145, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setVisible(false)
+            .on('pointerover', () => this.btnAcceptRequest.setStyle({ backgroundColor: '#22c55e' }))
+            .on('pointerout', () => this.btnAcceptRequest.setStyle({ backgroundColor: '#16a34a' }))
+            .on('pointerdown', () => this.acceptPostMatchRequest());
+
+        this.btnPromptChangeProf = this.add.text(0, 120, '🔄 Trocar Professor', { 
+            fontSize: '12px', fill: '#ffffff', backgroundColor: '#2563eb',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 155, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setVisible(false)
+            .on('pointerover', () => this.btnPromptChangeProf.setStyle({ backgroundColor: '#1d4ed8' }))
+            .on('pointerout', () => this.btnPromptChangeProf.setStyle({ backgroundColor: '#2563eb' }))
+            .on('pointerdown', () => this.executeChangeProfessorDirectly());
+
+        this.btnDeclineRequest = this.add.text(165, 120, '✕ Recusar (Encerrar)', { 
+            fontSize: '12px', fill: '#fca5a5', backgroundColor: '#7f1d1d',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            fixedWidth: 145, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .setVisible(false)
+            .on('pointerover', () => this.btnDeclineRequest.setStyle({ backgroundColor: '#991b1b' }))
+            .on('pointerout', () => this.btnDeclineRequest.setStyle({ backgroundColor: '#7f1d1d' }))
+            .on('pointerdown', () => this.declinePostMatchRequest());
+
+        // Rodapé do Card
+        this.goFooterHint = this.add.text(0, 172, `Código da Sala: ${this.roomId} • Duelo Finalizado`, {
+            fontSize: '11px', fill: '#64748b', fontStyle: 'normal'
+        }).setOrigin(0.5);
+
+        this.gameOverPanel.add([
+            goBackdrop, this.goCardGlow, this.goCardBg, goCardHeader, goHeaderLine,
+            this.goIconText, this.goTitleText, this.goSubText,
+            statsBoxBg,
+            this.goP1Nick, this.goP1Prof, this.goP1Hearts,
+            vsBadge, this.goRoundsText, modeBadge,
+            this.goP2Nick, this.goP2Prof, this.goP2Hearts,
+            this.requestDeclinedBanner,
+            this.btnRematch, this.btnChangeProf, this.btnMainMenu,
+            this.waitingBox, this.waitingText, this.btnCancelRequest,
+            this.promptBox, this.promptTitle, this.promptSub, this.btnAcceptRequest, this.btnPromptChangeProf, this.btnDeclineRequest,
+            this.goFooterHint
+        ]);
+
+        // 7. Painel de Contagem Inicial
+        this.pausePanel = this.add.container(512, 288).setDepth(15).setVisible(false);
+        const pauseBg = this.add.rectangle(0, 0, 1024, 576, 0x000000, 0.88);
+        this.pauseTitle = this.add.text(0, -50, 'AGUARDANDO OPONENTE...', { 
+            fontSize: '36px', fontStyle: 'bold', fill: '#facc15' 
+        }).setOrigin(0.5);
+        this.pauseSub = this.add.text(0, 20, `Código da Sala: ${this.roomId}`, { 
+            fontSize: '28px', fill: '#34d399', fontStyle: 'bold',
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+            padding: { top: 8, bottom: 8, left: 12, right: 12 }
+        }).setOrigin(0.5);
+        const pauseLeaveBtn = this.add.text(0, 100, '[ Fechar / Sair da Sala ]', { 
+            fontSize: '20px', backgroundColor: '#991b1b', padding: { x: 20, y: 10 }, fontStyle: 'bold' 
+        })
+            .setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerdown', () => this.leaveToMenu());
 
         this.pausePanel.add([pauseBg, this.pauseTitle, this.pauseSub, pauseLeaveBtn]);
 
-        window.addEventListener('dev-reset', async () => {
-            sessionStorage.clear();
-            await set(ref(db, `rooms/${this.roomId}`), null);
-            window.location.reload();
-        });
+        // Setup dos Listeners da Dev Tool
+        this.setupDevListeners();
+
+        // 8. Iniciar conexão e sincronização com o Firebase (após todos os painéis criados!)
+        this.setupFirebase();
     }
 
-    async leaveRoom() {
+    async handleRematch() {
+        if (!this.roomId) return;
+        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
+        if (!hasP2) {
+            // Modo solo: reinicia imediatamente sem pedir confirmação
+            return this.executeRematchDirectly();
+        }
+
+        // Modo 1v1: envia solicitação de revanche para o oponente
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                postMatchRequest: {
+                    type: 'rematch',
+                    from: this.playerId,
+                    fromNick: this.nickname,
+                    timestamp: Date.now()
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao solicitar revanche:', err);
+        }
+    }
+
+    async handleChangeProfessor() {
+        if (!this.roomId) return;
+        return this.executeChangeProfessorDirectly();
+    }
+
+    async acceptPostMatchRequest() {
+        const req = this.latestData?.postMatchRequest;
+        if (!req || !this.roomId) return;
+        
+        if (req.type === 'rematch') {
+            await this.executeRematchDirectly();
+        } else if (req.type === 'change_prof') {
+            await this.executeChangeProfessorDirectly();
+        }
+    }
+
+    async declinePostMatchRequest() {
+        const req = this.latestData?.postMatchRequest;
+        if (!this.roomId) return;
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                state: 'closed',
+                postMatchRequest: {
+                    status: 'declined',
+                    declinedBy: this.playerId,
+                    declinedNick: this.nickname,
+                    type: req?.type || 'rematch',
+                    timestamp: Date.now()
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao recusar pedido:', err);
+        }
+    }
+
+    async cancelPostMatchRequest() {
+        if (!this.roomId) return;
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                postMatchRequest: null
+            });
+        } catch (err) {
+            console.error('Erro ao cancelar pedido:', err);
+        }
+    }
+
+    async executeRematchDirectly() {
+        if (!this.roomId) return;
+        try {
+            const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 3;
+            await update(ref(db, `rooms/${this.roomId}`), {
+                postMatchRequest: null,
+                'p1/hp': 100,
+                'p1/charges': 0,
+                'p1/hasShield': false,
+                'p1/hasTryCatch': false,
+                'p1/lives': 3,
+                'p1/streak': 0,
+                'p1/answered': false,
+                'p1/answeredAt': null,
+                'p1/answerCorrect': null,
+                'p2/hp': 100,
+                'p2/charges': 0,
+                'p2/hasShield': false,
+                'p2/hasTryCatch': false,
+                'p2/lives': 3,
+                'p2/streak': 0,
+                'p2/answered': false,
+                'p2/answeredAt': null,
+                'p2/answerCorrect': null,
+                round: 0,
+                roundModifier: 'normal',
+                roundResolved: false,
+                currentQuestionId: null,
+                questionStartTime: null,
+                state: 'in_match',
+                matchStartTime: Date.now() + (devStartDelay * 1000)
+            });
+        } catch (err) {
+            console.error('Erro na revanche:', err);
+        }
+    }
+
+    async executeChangeProfessorDirectly() {
+        if (!this.roomId) return;
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                postMatchRequest: null,
+                state: 'character_select',
+                'p1/ready': false,
+                'p2/ready': false,
+                'p1/hp': 100,
+                'p1/charges': 0,
+                'p1/hasShield': false,
+                'p1/hasTryCatch': false,
+                'p1/lives': 3,
+                'p2/hp': 100,
+                'p2/charges': 0,
+                'p2/hasShield': false,
+                'p2/hasTryCatch': false,
+                'p2/lives': 3,
+                'p1/streak': 0,
+                'p2/streak': 0,
+                'p1/answered': false,
+                'p2/answered': false,
+                round: 0,
+                roundModifier: 'normal',
+                roundResolved: false,
+                currentQuestionId: null,
+                countdownStartTime: null,
+                matchStartTime: null
+            });
+        } catch (err) {
+            console.error('Erro ao trocar professor:', err);
+        }
+    }
+
+    updatePostMatchRequestUI(req, data) {
+        if (!this.gameOverPanel || !this.gameOverPanel.visible) return;
+
+        // Caso 1: Nenhuma solicitação ativa
+        if (!req) {
+            if (this.waitingBox) this.waitingBox.setVisible(false);
+            if (this.waitingText) this.waitingText.setVisible(false);
+            if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
+
+            if (this.promptBox) this.promptBox.setVisible(false);
+            if (this.promptTitle) this.promptTitle.setVisible(false);
+            if (this.promptSub) this.promptSub.setVisible(false);
+            if (this.btnAcceptRequest) this.btnAcceptRequest.setVisible(false);
+            if (this.btnPromptChangeProf) this.btnPromptChangeProf.setVisible(false);
+            if (this.btnDeclineRequest) this.btnDeclineRequest.setVisible(false);
+
+            if (this.btnRematch) this.btnRematch.setVisible(true);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(true);
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setText('🏠 Menu Principal');
+                this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
+                this.btnMainMenu.setVisible(true);
+            }
+            return;
+        }
+
+        // Caso 2: Solicitação foi RECUSADA -> A SALA É FINALIZADA!
+        if (req.status === 'declined' || data.state === 'closed') {
+            if (this.waitingBox) this.waitingBox.setVisible(false);
+            if (this.waitingText) this.waitingText.setVisible(false);
+            if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
+
+            if (this.promptBox) this.promptBox.setVisible(false);
+            if (this.promptTitle) this.promptTitle.setVisible(false);
+            if (this.promptSub) this.promptSub.setVisible(false);
+            if (this.btnAcceptRequest) this.btnAcceptRequest.setVisible(false);
+            if (this.btnPromptChangeProf) this.btnPromptChangeProf.setVisible(false);
+            if (this.btnDeclineRequest) this.btnDeclineRequest.setVisible(false);
+
+            if (this.btnRematch) this.btnRematch.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+
+            const declinedNick = req.declinedNick || (req.declinedBy === 'p1' ? data.p1?.nickname : data.p2?.nickname) || 'O oponente';
+            const actionLabel = req.type === 'change_prof' ? 'a troca de professor' : 'a revanche';
+
+            if (this.requestDeclinedBanner) {
+                this.requestDeclinedBanner.setPosition(0, 58);
+                this.requestDeclinedBanner.setText(`❌ ${declinedNick} recusou ${actionLabel}.\n🚪 A sala foi finalizada. Retornando ao menu...`);
+                this.requestDeclinedBanner.setStyle({
+                    align: 'center',
+                    fontSize: '13px',
+                    lineSpacing: 5,
+                    padding: { top: 8, bottom: 8, left: 18, right: 18 },
+                    backgroundColor: '#450a0a',
+                    fill: '#fca5a5'
+                });
+                this.requestDeclinedBanner.setVisible(true);
+            }
+
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(0, 122);
+                this.btnMainMenu.setText('🏠 Voltar ao Menu Principal Agora');
+                this.btnMainMenu.setStyle({ fixedWidth: 360, backgroundColor: '#991b1b', fill: '#ffffff' });
+                this.btnMainMenu.setVisible(true);
+            }
+
+            // Redireciona ambos para o menu após 3 segundos
+            if (!this.autoLeaveTimeout) {
+                this.autoLeaveTimeout = setTimeout(() => {
+                    this.leaveToMenu();
+                }, 3000);
+            }
+            return;
+        }
+
+        // Oculta banner de recusa se houver
+        if (this.requestDeclinedBanner) this.requestDeclinedBanner.setVisible(false);
+
+        // Caso 3: Este jogador foi quem ENVIOU a solicitação
+        if (req.from === this.playerId) {
+            if (this.btnRematch) this.btnRematch.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setText('🏠 Menu Principal');
+                this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
+                this.btnMainMenu.setVisible(true);
+            }
+
+            if (this.promptBox) this.promptBox.setVisible(false);
+            if (this.promptTitle) this.promptTitle.setVisible(false);
+            if (this.promptSub) this.promptSub.setVisible(false);
+            if (this.btnAcceptRequest) this.btnAcceptRequest.setVisible(false);
+            if (this.btnPromptChangeProf) this.btnPromptChangeProf.setVisible(false);
+            if (this.btnDeclineRequest) this.btnDeclineRequest.setVisible(false);
+
+            const otherNick = (this.playerId === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'oponente';
+            
+            if (this.waitingBox) this.waitingBox.setVisible(true);
+            if (this.waitingText) {
+                this.waitingText.setText(`⏳ Solicitação de revanche enviada!\nAguardando ${otherNick} aceitar...`).setVisible(true);
+            }
+            if (this.btnCancelRequest) this.btnCancelRequest.setVisible(true);
+            return;
+        }
+
+        // Caso 4: Este jogador foi quem RECEBEU a solicitação
+        if (req.from !== this.playerId) {
+            if (this.btnRematch) this.btnRematch.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.btnMainMenu) this.btnMainMenu.setVisible(false);
+
+            if (this.waitingBox) this.waitingBox.setVisible(false);
+            if (this.waitingText) this.waitingText.setVisible(false);
+            if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
+
+            const senderNick = req.fromNick || (this.playerId === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'O oponente';
+
+            if (this.promptBox) this.promptBox.setVisible(true);
+            if (this.promptTitle) {
+                this.promptTitle.setText(`⚔️ ${senderNick} propôs uma REVANCHE!`).setVisible(true);
+            }
+            if (this.promptSub) {
+                this.promptSub.setText('Deseja um novo duelo com os mesmos personagens? (Ou troque de professor)').setVisible(true);
+            }
+            if (this.btnAcceptRequest) {
+                this.btnAcceptRequest.setText('✓ Aceitar Revanche').setVisible(true);
+            }
+            if (this.btnPromptChangeProf) {
+                this.btnPromptChangeProf.setVisible(true);
+            }
+            if (this.btnDeclineRequest) {
+                this.btnDeclineRequest.setText('✕ Recusar (Encerrar Sala)').setVisible(true);
+            }
+        }
+    }
+
+    async leaveToMenu() {
         this.isLeaving = true;
+        if (this.autoLeaveTimeout) {
+            clearTimeout(this.autoLeaveTimeout);
+            this.autoLeaveTimeout = null;
+        }
+        if (this.declinedBannerTimeout) {
+            clearTimeout(this.declinedBannerTimeout);
+            this.declinedBannerTimeout = null;
+        }
+        if (typeof this.roomUnsubscribe === 'function') {
+            this.roomUnsubscribe();
+            this.roomUnsubscribe = null;
+        }
+        if (this.nextQuestionTimeout) {
+            clearTimeout(this.nextQuestionTimeout);
+            this.nextQuestionTimeout = null;
+        }
         if (this.roomId) {
             try {
-                await set(ref(db, `rooms/${this.roomId}`), null); 
-            } catch(e) {
-                console.error(e);
+                if (this.playerId === 'p1') {
+                    await remove(ref(db, `rooms/${this.roomId}`));
+                } else {
+                    await remove(ref(db, `rooms/${this.roomId}/p2`));
+                }
+            } catch (err) {
+                console.error('Erro ao sair da sala:', err);
             }
         }
         sessionStorage.removeItem('labcombat_room_id');
         sessionStorage.removeItem('labcombat_player_id');
-        window.location.reload();
+        this.scene.start('MenuScene');
+    }
+
+    leaveRoom() {
+        return this.leaveToMenu();
+    }
+
+    setupDevListeners() {
+        this.handleDevReset = async () => {
+            sessionStorage.clear();
+            if (this.roomId) {
+                try {
+                    await set(ref(db, `rooms/${this.roomId}`), null);
+                } catch(e) {
+                    console.error('Erro ao resetar sala:', e);
+                }
+            }
+            window.location.reload();
+        };
+
+        this.onDevStreak = (e) => {
+            const delta = e.detail || 0;
+            this.handleDevStreak(delta);
+        };
+
+        this.onDevNextQuestion = () => {
+            this.handleDevNextQuestion();
+        };
+
+        this.onDevSetTimers = (e) => {
+            const { matchStartDelay, questionTimeLimit } = e.detail || {};
+            if (matchStartDelay) this.MATCH_START_DELAY = matchStartDelay;
+            if (questionTimeLimit) this.QUESTION_TIME_LIMIT = questionTimeLimit;
+
+            if (this.playerId === 'p1' && this.roomId) {
+                update(ref(db, `rooms/${this.roomId}`), {
+                    matchStartDelay: this.MATCH_START_DELAY,
+                    questionTimeLimit: this.QUESTION_TIME_LIMIT
+                }).catch(err => console.error('Erro ao salvar tempos dev:', err));
+            }
+        };
+
+        window.addEventListener('dev-reset', this.handleDevReset);
+        window.addEventListener('dev-streak', this.onDevStreak);
+        window.addEventListener('dev-next-question', this.onDevNextQuestion);
+        window.addEventListener('dev-set-timers', this.onDevSetTimers);
+
+        this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            window.removeEventListener('dev-reset', this.handleDevReset);
+            window.removeEventListener('dev-streak', this.onDevStreak);
+            window.removeEventListener('dev-next-question', this.onDevNextQuestion);
+            window.removeEventListener('dev-set-timers', this.onDevSetTimers);
+            if (this.autoLeaveTimeout) {
+                clearTimeout(this.autoLeaveTimeout);
+                this.autoLeaveTimeout = null;
+            }
+            if (this.declinedBannerTimeout) {
+                clearTimeout(this.declinedBannerTimeout);
+                this.declinedBannerTimeout = null;
+            }
+            if (this.nextQuestionTimeout) {
+                clearTimeout(this.nextQuestionTimeout);
+                this.nextQuestionTimeout = null;
+            }
+            if (typeof this.roomUnsubscribe === 'function') {
+                this.roomUnsubscribe();
+                this.roomUnsubscribe = null;
+            }
+        });
+    }
+
+    handleDevStreak(delta) {
+        if (!this.roomId || !this.playerId || this.isGameOver) return;
+        const playerRef = ref(db, `rooms/${this.roomId}/${this.playerId}`);
+        get(playerRef).then((snap) => {
+            const data = snap.val();
+            if (!data) return;
+
+            let newCharges = Math.max(0, Math.min(3, (data.charges || 0) + delta));
+            update(playerRef, {
+                charges: newCharges
+            });
+        });
+    }
+
+    handleDevNextQuestion() {
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent) return;
+        if (this.nextQuestionTimeout) {
+            clearTimeout(this.nextQuestionTimeout);
+            this.nextQuestionTimeout = null;
+        }
+        this.isAdvancingQuestion = false;
+        this.pickNextQuestion();
     }
 
     async setupFirebase() {
@@ -140,179 +983,697 @@ export class MainScene extends Phaser.Scene {
             this.statusText.setText('Você é o Jogador 2.');
         }
 
-        onValue(roomRef, (snap) => {
+        this.roomUnsubscribe = onValue(roomRef, (snap) => {
             if (this.isLeaving) return;
             const data = snap.val();
             if (data) {
                 this.updateState(data);
             } else {
-                alert('A sala foi fechada porque um dos jogadores saiu.');
+                if (typeof this.roomUnsubscribe === 'function') {
+                    this.roomUnsubscribe();
+                    this.roomUnsubscribe = null;
+                }
                 sessionStorage.removeItem('labcombat_room_id');
                 sessionStorage.removeItem('labcombat_player_id');
-                window.location.reload();
+                this.scene.start('MenuScene');
             }
         });
     }
 
     playAttack(fighter, direction) {
-        this.tweens.add({ targets: fighter, x: fighter.originalX + (120 * direction), duration: 150, yoyo: true, ease: 'Power2' });
+        this.tweens.add({ targets: fighter, x: fighter.originalX + (110 * direction), duration: 150, yoyo: true, ease: 'Power2' });
     }
 
     playDamage(fighter) {
-        this.tweens.add({ targets: fighter, x: fighter.originalX + 15, duration: 50, yoyo: true, repeat: 4 });
-        this.tweens.add({ targets: fighter, alpha: 0.2, duration: 100, yoyo: true, repeat: 2 });
-    }
-
-    drawThermometer(graphics, x, y, streak) {
-        graphics.clear();
-        const blockWidth = 18;
-        const blockHeight = 15;
-        const spacing = 4;
-        const startX = x - (9 * (blockWidth + spacing)) / 2;
-
-        for (let i = -3; i <= 5; i++) {
-            let color = 0x555555;
-            if (i < 0) color = 0xff3333;
-            else if (i === 0) color = 0xcccccc;
-            else if (i > 0 && i < 5) color = 0x33ff33;
-            else if (i === 5) color = 0xffcc00;
-
-            let isFilled = false;
-            if (streak >= 0 && i >= 0 && i <= streak) isFilled = true;
-            if (streak < 0 && i <= 0 && i >= streak) isFilled = true;
-
-            const currentX = startX + (i + 3) * (blockWidth + spacing);
-
-            graphics.fillStyle(isFilled ? color : 0x222222, 1);
-            graphics.lineStyle(1, 0xffffff, 0.3);
-            graphics.strokeRect(currentX, y, blockWidth, blockHeight);
-            graphics.fillRect(currentX, y, blockWidth, blockHeight);
-            
-            if (i === streak) {
-                graphics.lineStyle(2, 0xffffff, 1);
-                graphics.strokeRect(currentX - 1, y - 1, blockWidth + 2, blockHeight + 2);
-            }
-        }
+        this.tweens.add({ targets: fighter, x: fighter.originalX + 12, duration: 50, yoyo: true, repeat: 4 });
+        this.tweens.add({ targets: fighter, alpha: 0.3, duration: 100, yoyo: true, repeat: 2 });
     }
 
     clearQuestion() {
         this.currentQuestionData = null;
         this.localQuestionStartTime = null;
         this.lastProcessedQuestionId = null;
+        this.lastProcessedRound = null;
         this.questionText.setText('');
         this.optionButtons.forEach(btn => {
             btn.setText('');
-            btn.setStyle({ fill: '#fff', backgroundColor: '#333' });
+            btn.setStyle({ fill: '#fff', backgroundColor: '#1e293b' });
             btn.disableInteractive();
         });
-        this.timerText.setText('Tempo: --');
+        if (this.roundModifierBadge) {
+            this.roundModifierBadge.setVisible(false);
+        }
+        this.timerText.setText('⏱️ Tempo: --');
+        this.timerText.setStyle({ fill: '#38bdf8', backgroundColor: '#1e293b' });
+    }
+
+    showCombatAlert(text, color = '#facc15') {
+        if (!this.combatAlertBanner) return;
+        this.combatAlertBanner.setText(text).setStyle({ fill: color }).setVisible(true).setAlpha(0).setScale(0.9);
+        this.tweens.killTweensOf(this.combatAlertBanner);
+        this.tweens.add({
+            targets: this.combatAlertBanner,
+            alpha: 1,
+            scale: 1,
+            duration: 200,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                this.time.delayedCall(2400, () => {
+                    this.tweens.add({
+                        targets: this.combatAlertBanner,
+                        alpha: 0,
+                        duration: 300,
+                        onComplete: () => {
+                            this.combatAlertBanner.setVisible(false);
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    triggerUltimateFinisher(winnerProf, loserProf, callback) {
+        if (this.isExecutingFinisher) return;
+        this.isExecutingFinisher = true;
+
+        if (winnerProf) {
+            if (this.textures.exists(winnerProf.portraitKey)) {
+                this.ultPortrait.setTexture(winnerProf.portraitKey);
+            } else {
+                this.ultPortrait.setTexture(winnerProf.idleKey);
+            }
+            this.ultMoveName.setText(winnerProf.ultimateName ? winnerProf.ultimateName.toUpperCase() : 'GOLPE FATAL');
+            this.ultQuote.setText(winnerProf.ultimateQuote ? `"${winnerProf.ultimateQuote}"` : '"Duelo encerrado com perfeição."');
+            this.ultHeader.setText(`⚡ ULTIMATE FINISHER • PROF. ${winnerProf.shortName.toUpperCase()} ⚡`);
+        }
+
+        this.ultimateOverlay.setVisible(true).setAlpha(0);
+        this.cameras.main.shake(700, 0.03);
+        this.cameras.main.flash(450, 255, 255, 255);
+
+        this.tweens.add({
+            targets: this.ultimateOverlay,
+            alpha: 1,
+            duration: 250,
+            ease: 'Power2',
+            onComplete: () => {
+                this.time.delayedCall(2600, () => {
+                    this.tweens.add({
+                        targets: this.ultimateOverlay,
+                        alpha: 0,
+                        duration: 400,
+                        onComplete: () => {
+                            this.ultimateOverlay.setVisible(false);
+                            this.isExecutingFinisher = false;
+                            if (typeof callback === 'function') callback();
+                        }
+                    });
+                });
+            }
+        });
+    }
+
+    resolveRound(data) {
+        if (this.playerId !== 'p1' || this.isResolvingRound || data.roundResolved) return;
+        this.isResolvingRound = true;
+
+        const p1 = data.p1 || {};
+        const p2 = data.p2 || {};
+
+        let p1Hp = p1.hp != null ? p1.hp : 100;
+        let p2Hp = p2.hp != null ? p2.hp : 100;
+        let p1Charges = p1.charges || 0;
+        let p2Charges = p2.charges || 0;
+        let p1Shield = !!p1.hasShield;
+        let p2Shield = !!p2.hasShield;
+        let p1TryCatch = !!p1.hasTryCatch;
+        let p2TryCatch = !!p2.hasTryCatch;
+
+        const modifier = data.roundModifier || 'normal';
+
+        const p1Correct = !!p1.answerCorrect;
+        const p2Correct = !!p2.answerCorrect;
+        const p1Time = p1.answeredAt || 9999999999999;
+        const p2Time = p2.answeredAt || 9999999999999;
+        const p1Nick = (p1.nickname || 'Jogador 1').toUpperCase();
+        const p2Nick = (p2.nickname || 'Jogador 2').toUpperCase();
+
+        let alertMessage = '';
+        let ultimateWinner = null;
+
+        // CASO 1: AMBOS OS JOGADORES ERRARAM
+        if (!p1Correct && !p2Correct) {
+            if (p1TryCatch) {
+                p1TryCatch = false;
+            } else {
+                p1Charges = Math.max(0, p1Charges - 1);
+            }
+
+            if (p2TryCatch) {
+                p2TryCatch = false;
+            } else {
+                p2Charges = Math.max(0, p2Charges - 1);
+            }
+
+            alertMessage = '⚠️ AMBOS ERRARAM! (-1 CARGA CADA)';
+        }
+        // CASO 2: AMBOS OS JOGADORES ACERTARAM (Disputa de Velocidade)
+        else if (p1Correct && p2Correct) {
+            const p1IsFaster = p1Time <= p2Time;
+            const fastKey = p1IsFaster ? 'p1' : 'p2';
+            const slowKey = p1IsFaster ? 'p2' : 'p1';
+            const fastNick = p1IsFaster ? p1Nick : p2Nick;
+            const slowNick = p1IsFaster ? p2Nick : p1Nick;
+
+            let extraCharge = 0;
+            if (modifier === 'charge') extraCharge = 1;
+            if (modifier === 'shield') {
+                if (fastKey === 'p1') p1Shield = true;
+                else p2Shield = true;
+            }
+            if (modifier === 'heal') {
+                if (fastKey === 'p1') p1Hp = Math.min(100, p1Hp + 10);
+                else p2Hp = Math.min(100, p2Hp + 10);
+            }
+            if (modifier === 'try_catch') {
+                if (fastKey === 'p1') p1TryCatch = true;
+                else p2TryCatch = true;
+            }
+
+            if (fastKey === 'p1') {
+                p1Charges = Math.min(3, p1Charges + 1 + extraCharge);
+            } else {
+                p2Charges = Math.min(3, p2Charges + 1 + extraCharge);
+            }
+
+            alertMessage = `⚡ ${fastNick} FOI MAIS RÁPIDO! (+BÔNUS) • ${slowNick} SE DEFENDEU!`;
+        }
+        // CASO 3: APENAS UM ACERTOU
+        else {
+            const winnerKey = p1Correct ? 'p1' : 'p2';
+            const loserKey = p1Correct ? 'p2' : 'p1';
+            const winnerNick = p1Correct ? p1Nick : p2Nick;
+            const loserNick = p1Correct ? p2Nick : p1Nick;
+
+            let winnerCharges = winnerKey === 'p1' ? p1Charges : p2Charges;
+            let loserHp = loserKey === 'p1' ? p1Hp : p2Hp;
+            let loserShield = loserKey === 'p1' ? p1Shield : p2Shield;
+            let loserTryCatch = loserKey === 'p1' ? p1TryCatch : p2TryCatch;
+
+            const hadUltimateReady = (winnerCharges >= 3);
+
+            let extraCharge = 0;
+            if (modifier === 'charge') extraCharge = 1;
+            if (modifier === 'shield') {
+                if (winnerKey === 'p1') p1Shield = true;
+                else p2Shield = true;
+            }
+            if (modifier === 'heal') {
+                if (winnerKey === 'p1') p1Hp = Math.min(100, p1Hp + 10);
+                else p2Hp = Math.min(100, p2Hp + 10);
+            }
+            if (modifier === 'try_catch') {
+                if (winnerKey === 'p1') p1TryCatch = true;
+                else p2TryCatch = true;
+            }
+
+            if (loserTryCatch) {
+                loserTryCatch = false;
+                winnerCharges = Math.min(3, winnerCharges + 1 + extraCharge);
+                alertMessage = `🪲 TRY-CATCH ABSORVEU O ERRO DE ${loserNick}! (0 DANO)`;
+            } else if (hadUltimateReady) {
+                if (loserShield) {
+                    loserShield = false;
+                    winnerCharges = 0;
+                    alertMessage = `🛡️ FIREWALL ABSORVEU A ULTIMATE! ${loserNick} SOBREVIVEU!`;
+                } else {
+                    if (loserHp <= 33) {
+                        loserHp = 0;
+                        ultimateWinner = winnerKey;
+                        alertMessage = `💥 ULTIMATE FINISHER! K.O. DE ${winnerNick}!`;
+                    } else {
+                        loserHp = Math.max(0, loserHp - 28);
+                        winnerCharges = 0;
+                        alertMessage = `⚡ SUPER GOLPE DE ${winnerNick}! (-28 HP)`;
+                    }
+                }
+            } else {
+                winnerCharges = Math.min(3, winnerCharges + 1 + extraCharge);
+                if (loserShield) {
+                    loserShield = false;
+                    alertMessage = `🛡️ FIREWALL DE ${loserNick} ABSORVEU O ATAQUE!`;
+                } else {
+                    loserHp = Math.max(0, loserHp - 15);
+                    alertMessage = `💥 GOLPE DE ${winnerNick}! (-15 HP)`;
+                }
+            }
+
+            if (winnerKey === 'p1') {
+                p1Charges = winnerCharges;
+                p2Hp = loserHp;
+                p2Shield = loserShield;
+                p2TryCatch = loserTryCatch;
+            } else {
+                p2Charges = winnerCharges;
+                p1Hp = loserHp;
+                p1Shield = loserShield;
+                p1TryCatch = loserTryCatch;
+            }
+        }
+
+        const updates = {
+            'p1/hp': p1Hp,
+            'p1/charges': p1Charges,
+            'p1/hasShield': p1Shield,
+            'p1/hasTryCatch': p1TryCatch,
+            'p2/hp': p2Hp,
+            'p2/charges': p2Charges,
+            'p2/hasShield': p2Shield,
+            'p2/hasTryCatch': p2TryCatch,
+            roundResolved: true,
+            roundAlert: alertMessage,
+            ultimateWinner: ultimateWinner
+        };
+
+        update(ref(db, `rooms/${this.roomId}`), updates).finally(() => {
+            this.isResolvingRound = false;
+        });
     }
 
     updateState(data) {
+        if (!data) return;
+        this.latestData = data;
+
+        // Se a partida foi reiniciada para a tela de seleção de professores (ex: Revanche / Trocar Professor)
+        if (data.state === 'character_select') {
+            if (this.autoLeaveTimeout) {
+                clearTimeout(this.autoLeaveTimeout);
+                this.autoLeaveTimeout = null;
+            }
+            if (this.declinedBannerTimeout) {
+                clearTimeout(this.declinedBannerTimeout);
+                this.declinedBannerTimeout = null;
+            }
+            if (typeof this.roomUnsubscribe === 'function') {
+                this.roomUnsubscribe();
+                this.roomUnsubscribe = null;
+            }
+            if (this.nextQuestionTimeout) {
+                clearTimeout(this.nextQuestionTimeout);
+                this.nextQuestionTimeout = null;
+            }
+            this.scene.start('CharacterSelectScene', {
+                roomId: this.roomId,
+                playerId: this.playerId,
+                nickname: this.nickname,
+                previousCharacterId: this.playerId === 'p1' ? data.p1?.characterId : data.p2?.characterId
+            });
+            return;
+        }
+
         const hasP1 = !!data.p1;
         const hasP2 = !!data.p2;
 
+        if (data.matchStartDelay) {
+            this.MATCH_START_DELAY = data.matchStartDelay;
+        }
+        if (data.questionTimeLimit) {
+            this.QUESTION_TIME_LIMIT = data.questionTimeLimit;
+        }
+        if (data.round != null) {
+            this.currentRound = data.round;
+        }
+
+        // 1. Atualizar Visual dos Lutadores, HP, Cargas e Buffs
+        const p1Hp = data.p1?.hp != null ? data.p1.hp : 100;
+        const p2Hp = data.p2?.hp != null ? data.p2.hp : 100;
+        const p1Charges = data.p1?.charges || 0;
+        const p2Charges = data.p2?.charges || 0;
+
+        if (data.p1) {
+            const p1Prof = getProfessorById(data.p1.characterId || 'so');
+            const p1Nick = data.p1.nickname || 'Jogador 1';
+            if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.idleKey);
+            
+            // Retrato do Professor P1 no Card
+            if (this.p1Portrait && this.textures.exists(p1Prof.portraitKey)) {
+                this.p1Portrait.setTexture(p1Prof.portraitKey);
+            }
+
+            // Nickname e Disciplina P1
+            if (this.p1NickText) {
+                let displayNick = p1Nick.toUpperCase();
+                if (displayNick.length > 12) displayNick = displayNick.slice(0, 10) + '..';
+                this.p1NickText.setText(displayNick);
+            }
+            if (this.p1ProfText) {
+                let displayProf = `• ${p1Prof.shortName}`;
+                if (displayProf.length > 18) displayProf = `• ${p1Prof.shortName.slice(0, 15)}..`;
+                this.p1ProfText.setText(displayProf);
+            }
+
+            // Barra de HP P1 (356px de largura)
+            const p1Ratio = Math.max(0, Math.min(1, p1Hp / 100));
+            let p1Color = 0x10b981;
+            let p1Hex = '#34d399';
+            if (p1Hp <= 33) {
+                p1Color = 0xef4444;
+                p1Hex = '#ef4444';
+            } else if (p1Hp <= 66) {
+                p1Color = 0xeab308;
+                p1Hex = '#facc15';
+            }
+
+            if (this.p1HpBarFill) {
+                this.p1HpBarFill.setSize(356 * p1Ratio, 12);
+                this.p1HpBarFill.setFillStyle(p1Color, 1);
+            }
+            if (this.p1HpText) {
+                this.p1HpText.setText(`${p1Hp} HP`).setStyle({ fill: p1Hex });
+            }
+
+            // Cargas P1 (3 slots energizados)
+            for (let s = 0; s < 3; s++) {
+                if (this.p1ChargeSlots && this.p1ChargeSlots[s]) {
+                    if (s < p1Charges) {
+                        this.p1ChargeSlots[s].setFillStyle(0xfacc15, 1);
+                        this.p1ChargeSlots[s].setStrokeStyle(1.5, 0xffffff);
+                        if (this.p1SlotTexts && this.p1SlotTexts[s]) {
+                            this.p1SlotTexts[s].setStyle({ fill: '#000000' });
+                        }
+                    } else {
+                        this.p1ChargeSlots[s].setFillStyle(0x1e293b, 1);
+                        this.p1ChargeSlots[s].setStrokeStyle(1, 0x334155);
+                        if (this.p1SlotTexts && this.p1SlotTexts[s]) {
+                            this.p1SlotTexts[s].setStyle({ fill: '#475569' });
+                        }
+                    }
+                }
+            }
+            if (this.p1ChargeLabel) {
+                if (p1Charges >= 3) {
+                    if (p2Hp <= 33) {
+                        this.p1ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
+                    } else {
+                        this.p1ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
+                    }
+                } else {
+                    this.p1ChargeLabel.setText(`ESPECIAL: ${p1Charges}/3`).setStyle({ fill: '#64748b' });
+                }
+            }
+
+            // Buffs P1
+            const p1Buffs = [];
+            if (data.p1.hasShield) p1Buffs.push('🛡️ FIREWALL');
+            if (data.p1.hasTryCatch) p1Buffs.push('🪲 TRY-CATCH');
+            if (this.p1BuffIcons) {
+                this.p1BuffIcons.setText(p1Buffs.join(' ')).setStyle({ fill: '#38bdf8' });
+            }
+
+            if (this.playerId === 'p1') {
+                this.hasAnsweredLocal = !!data.p1.answered;
+            }
+        }
+
+        if (data.p2) {
+            const p2Prof = getProfessorById(data.p2.characterId || 'web');
+            const p2Nick = data.p2.nickname || 'Jogador 2';
+            if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.idleKey);
+            
+            // Retrato do Professor P2 no Card
+            if (this.p2Portrait && this.textures.exists(p2Prof.portraitKey)) {
+                this.p2Portrait.setTexture(p2Prof.portraitKey);
+            }
+
+            // Nickname e Disciplina P2
+            if (this.p2NickText) {
+                let displayNick = p2Nick.toUpperCase();
+                if (displayNick.length > 12) displayNick = displayNick.slice(0, 10) + '..';
+                this.p2NickText.setText(displayNick);
+            }
+            if (this.p2ProfText) {
+                let displayProf = `${p2Prof.shortName} •`;
+                if (displayProf.length > 18) displayProf = `${p2Prof.shortName.slice(0, 15)}.. •`;
+                this.p2ProfText.setText(displayProf);
+            }
+
+            // Barra de HP P2 (356px de largura)
+            const p2Ratio = Math.max(0, Math.min(1, p2Hp / 100));
+            let p2Color = 0x10b981;
+            let p2Hex = '#34d399';
+            if (p2Hp <= 33) {
+                p2Color = 0xef4444;
+                p2Hex = '#ef4444';
+            } else if (p2Hp <= 66) {
+                p2Color = 0xeab308;
+                p2Hex = '#facc15';
+            }
+
+            if (this.p2HpBarFill) {
+                this.p2HpBarFill.setSize(356 * p2Ratio, 12);
+                this.p2HpBarFill.setFillStyle(p2Color, 1);
+            }
+            if (this.p2HpText) {
+                this.p2HpText.setText(`${p2Hp} HP`).setStyle({ fill: p2Hex });
+            }
+
+            // Cargas P2 (3 slots energizados)
+            for (let s = 0; s < 3; s++) {
+                if (this.p2ChargeSlots && this.p2ChargeSlots[s]) {
+                    if (s < p2Charges) {
+                        this.p2ChargeSlots[s].setFillStyle(0xfacc15, 1);
+                        this.p2ChargeSlots[s].setStrokeStyle(1.5, 0xffffff);
+                        if (this.p2SlotTexts && this.p2SlotTexts[s]) {
+                            this.p2SlotTexts[s].setStyle({ fill: '#000000' });
+                        }
+                    } else {
+                        this.p2ChargeSlots[s].setFillStyle(0x1e293b, 1);
+                        this.p2ChargeSlots[s].setStrokeStyle(1, 0x334155);
+                        if (this.p2SlotTexts && this.p2SlotTexts[s]) {
+                            this.p2SlotTexts[s].setStyle({ fill: '#475569' });
+                        }
+                    }
+                }
+            }
+            if (this.p2ChargeLabel) {
+                if (p2Charges >= 3) {
+                    if (p1Hp <= 33) {
+                        this.p2ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
+                    } else {
+                        this.p2ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
+                    }
+                } else {
+                    this.p2ChargeLabel.setText(`ESPECIAL: ${p2Charges}/3`).setStyle({ fill: '#64748b' });
+                }
+            }
+
+            // Buffs P2
+            const p2Buffs = [];
+            if (data.p2.hasShield) p2Buffs.push('🛡️ FIREWALL');
+            if (data.p2.hasTryCatch) p2Buffs.push('🪲 TRY-CATCH');
+            if (this.p2BuffIcons) {
+                this.p2BuffIcons.setText(p2Buffs.join(' ')).setStyle({ fill: '#38bdf8' });
+            }
+
+            if (this.playerId === 'p2') {
+                this.hasAnsweredLocal = !!data.p2.answered;
+            }
+        }
+
+        // Modificador de Questão da Rodada
+        if (this.roundModifierBadge) {
+            if (data.roundModifier && data.roundModifier !== 'normal') {
+                this.roundModifierBadge.setVisible(true);
+                switch (data.roundModifier) {
+                    case 'charge':
+                        this.roundModifierBadge.setText('⚡ OVERCLOCK: +1 CARGA EXTRA AO ACERTAR PRIMEIRO')
+                            .setStyle({ fill: '#fef08a', backgroundColor: '#854d0e' });
+                        break;
+                    case 'shield':
+                        this.roundModifierBadge.setText('🛡️ FIREWALL: GANHA ESCUDO QUE ANULA PRÓXIMO ATAQUE/ULTIMATE')
+                            .setStyle({ fill: '#bae6fd', backgroundColor: '#075985' });
+                        break;
+                    case 'heal':
+                        this.roundModifierBadge.setText('💚 BACKUP: RESTAURA +10 HP AO ACERTAR PRIMEIRO')
+                            .setStyle({ fill: '#bbf7d0', backgroundColor: '#166534' });
+                        break;
+                    case 'try_catch':
+                        this.roundModifierBadge.setText('🪲 TRY-CATCH: ANULA O PRÓXIMO ERRO SEM SOFRER DANO')
+                            .setStyle({ fill: '#f5d0fe', backgroundColor: '#86198f' });
+                        break;
+                    default:
+                        this.roundModifierBadge.setVisible(false);
+                }
+            } else {
+                this.roundModifierBadge.setVisible(false);
+            }
+        }
+
+        // Banner de Alerta de Combate
+        if (data.roundAlert && data.roundAlert !== this.lastDisplayedAlert) {
+            this.lastDisplayedAlert = data.roundAlert;
+            this.showCombatAlert(data.roundAlert);
+        }
+
+        // Animações de Ataque / Dano se houve alteração de HP ou Cargas
+        if (this.previousData) {
+            const prevP1Hp = this.previousData.p1?.hp != null ? this.previousData.p1.hp : 100;
+            const prevP2Hp = this.previousData.p2?.hp != null ? this.previousData.p2.hp : 100;
+            const prevP1Charges = this.previousData.p1?.charges || 0;
+            const prevP2Charges = this.previousData.p2?.charges || 0;
+
+            if (p1Hp < prevP1Hp) {
+                this.playDamage(this.fighterP1);
+                this.cameras.main.shake(120, 0.008);
+            }
+            if (p2Hp < prevP2Hp) {
+                this.playDamage(this.fighterP2);
+                this.cameras.main.shake(120, 0.008);
+            }
+            if (p1Charges > prevP1Charges) {
+                this.playAttack(this.fighterP1, 1);
+            }
+            if (p2Charges > prevP2Charges) {
+                this.playAttack(this.fighterP2, -1);
+            }
+        }
+        this.previousData = data;
+
+        // 2. Checagem de Fim de Jogo (HP <= 0)
+        if (p1Hp === 100 && p2Hp === 100) {
+            this.isGameOver = false;
+            this.hasPlayedUltimateFinisher = false;
+            if (this.gameOverPanel) this.gameOverPanel.setVisible(false);
+            if (this.declinedBannerTimeout) clearTimeout(this.declinedBannerTimeout);
+        }
+
+        if (data.p1 && data.p2 && (p1Hp <= 0 || p2Hp <= 0)) {
+            if (this.nextQuestionTimeout) {
+                clearTimeout(this.nextQuestionTimeout);
+                this.nextQuestionTimeout = null;
+            }
+
+            if (data.ultimateWinner && !this.hasPlayedUltimateFinisher) {
+                this.hasPlayedUltimateFinisher = true;
+                const winKey = data.ultimateWinner;
+                const loseKey = winKey === 'p1' ? 'p2' : 'p1';
+                const winProf = getProfessorById(data[winKey]?.characterId || (winKey === 'p1' ? 'so' : 'web'));
+                const loseProf = getProfessorById(data[loseKey]?.characterId || (loseKey === 'p1' ? 'so' : 'web'));
+                this.triggerUltimateFinisher(winProf, loseProf, () => {
+                    this.handleGameOver(p1Hp, p2Hp, data);
+                    this.updatePostMatchRequestUI(data.postMatchRequest, data);
+                });
+                return;
+            }
+
+            if (!this.isExecutingFinisher) {
+                this.handleGameOver(p1Hp, p2Hp, data);
+                this.updatePostMatchRequestUI(data.postMatchRequest, data);
+            }
+            return;
+        }
+
+        // 3. Controle de Conexão e Início de Partida
         if (!hasP1 || !hasP2) {
             this.isWaitingForOpponent = true;
             this.clearQuestion();
             this.statusText.setText('Aguardando conexão do oponente...');
             this.timerText.setText('Tempo: PAUSADO');
-            this.pauseTitle.setText('AGUARDANDO OPONENTE...');
-            this.pauseSub.setText(`Código da Sala: ${this.roomId}`);
-            this.pausePanel.setVisible(true);
-            this.localMatchStartTime = null;
+            if (this.pauseTitle) this.pauseTitle.setText('AGUARDANDO OPONENTE...');
+            if (this.pauseSub) this.pauseSub.setText(`Código da Sala: ${this.roomId}`);
+            if (this.pausePanel) this.pausePanel.setVisible(true);
+            this.targetMatchStartTime = null;
+            return;
+        }
+
+        this.isWaitingForOpponent = false;
+
+        // Se já há questão ativa, esconde imediatamente o painel de contagem inicial
+        if (data.currentQuestionId != null) {
+            if (this.pausePanel) this.pausePanel.setVisible(false);
         } else {
-            if (this.isWaitingForOpponent) {
-                this.isWaitingForOpponent = false;
-                
-                // Trata nulos adequadamente (Firebase pode retornar undefined ou null)
-                if (data.currentQuestionId != null) {
-                    this.pausePanel.setVisible(false);
-                } else {
-                    this.pausePanel.setVisible(true);
-                    this.pauseTitle.setText('O COMBATE VAI COMEÇAR EM:');
-                    this.pauseSub.setText('30s');
-                    
-                    if (this.playerId === 'p1') {
-                        update(ref(db, `rooms/${this.roomId}`), {
-                            matchStartSignal: Date.now()
-                        });
-                    }
-                }
+            // Contagem regressiva antes da 1ª questão
+            if (this.pausePanel) {
+                this.pausePanel.setVisible(true);
+                this.pauseTitle.setText('O COMBATE VAI COMEÇAR EM:');
+            }
+
+            if (data.matchStartTime) {
+                this.targetMatchStartTime = data.matchStartTime;
+            } else if (this.playerId === 'p1') {
+                const startAt = Date.now() + (this.MATCH_START_DELAY * 1000);
+                this.targetMatchStartTime = startAt;
+                update(ref(db, `rooms/${this.roomId}`), {
+                    matchStartTime: startAt
+                }).catch(e => console.error(e));
             }
         }
 
-        if (data.matchStartSignal != null && data.matchStartSignal !== this.lastProcessedMatchSignal) {
-            this.lastProcessedMatchSignal = data.matchStartSignal;
-            this.localMatchStartTime = Date.now();
-        }
+        // 4. Detecta início de nova rodada
+        const isNewRound = (data.round != null && data.round !== this.lastProcessedRound) ||
+                           (data.currentQuestionId != null && data.currentQuestionId !== this.lastProcessedQuestionId);
 
-        if (this.previousData) {
-            if (data.p1 && this.previousData.p1 && data.p1.streak > this.previousData.p1.streak) {
-                this.playAttack(this.fighterP1, 1);
-            }
-            if (data.p1 && this.previousData.p1 && data.p1.lives < this.previousData.p1.lives) {
-                this.playDamage(this.fighterP1);
-            }
-
-            if (data.p2 && this.previousData.p2 && data.p2.streak > this.previousData.p2.streak) {
-                this.playAttack(this.fighterP2, -1);
-            }
-            if (data.p2 && this.previousData.p2 && data.p2.lives < this.previousData.p2.lives) {
-                this.playDamage(this.fighterP2);
-            }
-        }
-        this.previousData = data; 
-
-        if (data.p1) {
-            this.p1Text.setText(`P1 Vidas: ${'❤️'.repeat(Math.max(0, data.p1.lives))}`);
-            if (this.playerId === 'p1') {
-                this.p1Text.setStyle({ fill: '#fff', fontStyle: 'bold' });
-                this.hasAnsweredLocal = data.p1.answered;
-            }
-            this.drawThermometer(this.p1Thermometer, 200, 105, data.p1.streak);
-        }
-        if (data.p2) {
-            this.p2Text.setText(`P2 Vidas: ${'❤️'.repeat(Math.max(0, data.p2.lives))}`);
-            if (this.playerId === 'p2') {
-                this.p2Text.setStyle({ fill: '#fff', fontStyle: 'bold' });
-                this.hasAnsweredLocal = data.p2.answered;
-            }
-            this.drawThermometer(this.p2Thermometer, 600, 105, data.p2.streak);
-        }
-
-        if (data.p1 && data.p1.lives === 3 && data.p2 && data.p2.lives === 3) {
-            this.isGameOver = false;
-            this.gameOverPanel.setVisible(false);
-        }
-
-        if (data.p1 && data.p2 && (data.p1.lives <= 0 || data.p2.lives <= 0)) {
-            this.handleGameOver(data.p1.lives, data.p2.lives);
-            return; 
-        }
-
-        if (data.currentQuestionId != null && data.currentQuestionId !== this.lastProcessedQuestionId) {
+        if (isNewRound && data.currentQuestionId != null) {
+            this.lastProcessedRound = data.round != null ? data.round : data.currentQuestionId;
             this.lastProcessedQuestionId = data.currentQuestionId;
-            this.localQuestionStartTime = Date.now();
+            this.isAdvancingQuestion = false;
+
+            if (this.pausePanel) this.pausePanel.setVisible(false);
+
+            if (this.nextQuestionTimeout) {
+                clearTimeout(this.nextQuestionTimeout);
+                this.nextQuestionTimeout = null;
+            }
+
+            this.localQuestionStartTime = data.questionStartedAt || Date.now();
             this.renderQuestion(data.currentQuestionId);
         }
 
+        // 5. Se ambos responderam: resolução da rodada e avanço sincronizado
         if (data.p1 && data.p2 && data.p1.answered && data.p2.answered && !this.isGameOver) {
             this.localQuestionStartTime = null;
+
+            if (this.playerId === 'p1' && !data.roundResolved && !this.isResolvingRound) {
+                this.resolveRound(data);
+            }
+
             if (this.playerId === 'p1') {
-                this.statusText.setText('Ambos responderam! Carregando próxima...');
-                setTimeout(() => {
-                    if (!this.isGameOver) this.pickNextQuestion();
-                }, 3000);
+                this.statusText.setText('Rodada resolvida! Carregando próxima...');
+                if (!this.isAdvancingQuestion) {
+                    this.isAdvancingQuestion = true;
+                    if (this.nextQuestionTimeout) clearTimeout(this.nextQuestionTimeout);
+                    this.nextQuestionTimeout = setTimeout(() => {
+                        this.nextQuestionTimeout = null;
+                        if (!this.isGameOver) {
+                            this.pickNextQuestion();
+                        }
+                    }, 2600);
+                }
             } else {
                 this.statusText.setText('Aguardando próxima rodada...');
+                // Fallback para P2 caso o P1 congele ou desconecte
+                if (!this.isAdvancingQuestion) {
+                    if (this.nextQuestionTimeout) clearTimeout(this.nextQuestionTimeout);
+                    this.nextQuestionTimeout = setTimeout(() => {
+                        this.nextQuestionTimeout = null;
+                        if (!this.isGameOver && !this.isWaitingForOpponent) {
+                            this.pickNextQuestion();
+                        }
+                    }, 5200);
+                }
             }
         }
     }
 
     renderQuestion(qId) {
         const q = questions.find(q => q.id == qId);
-        if (!q) return;
+        if (!q) {
+            console.error('Questão não encontrada para o ID:', qId);
+            return;
+        }
+
+        if (this.pausePanel) this.pausePanel.setVisible(false);
+        this.isWaitingForOpponent = false;
 
         this.hasAnsweredLocal = false;
         this.currentQuestionData = q;
@@ -320,17 +1681,18 @@ export class MainScene extends Phaser.Scene {
 
         for (let i = 0; i < 4; i++) {
             this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${q.options[i]}`);
-            this.optionButtons[i].setStyle({ backgroundColor: '#333' }); 
-            if (!this.hasAnsweredLocal && !this.isGameOver) {
+            this.optionButtons[i].setStyle({ backgroundColor: '#1e293b', fill: '#ffffff' }); 
+            if (!this.isGameOver) {
                 this.optionButtons[i].setInteractive(); 
             }
         }
 
         this.statusText.setText('Valendo!');
+        this.statusText.setStyle({ fill: '#22c55e' });
     }
 
     handleAnswer(selectedIndex = null, isTimeout = false) {
-        if (!this.playerId || !this.currentQuestionData || this.hasAnsweredLocal || this.isGameOver || this.isWaitingForOpponent) return;
+        if (!this.roomId || !this.playerId || !this.currentQuestionData || this.hasAnsweredLocal || this.isGameOver || this.isWaitingForOpponent) return;
 
         this.hasAnsweredLocal = true;
         this.optionButtons.forEach(btn => btn.disableInteractive());
@@ -339,138 +1701,255 @@ export class MainScene extends Phaser.Scene {
 
         if (isTimeout) {
             this.statusText.setText('TEMPO ESGOTADO!');
-            this.optionButtons.forEach(btn => btn.setStyle({ backgroundColor: '#555' }));
+            this.statusText.setStyle({ fill: '#ef4444' });
+            this.optionButtons.forEach(btn => btn.setStyle({ backgroundColor: '#374151' }));
         } else {
             isCorrect = (selectedIndex === this.currentQuestionData.correctIndex);
-            this.optionButtons[selectedIndex].setStyle({ backgroundColor: isCorrect ? '#0a0' : '#a00' });
+            this.optionButtons[selectedIndex].setStyle({ backgroundColor: isCorrect ? '#16a34a' : '#dc2626' });
             if (!isCorrect) {
-                this.optionButtons[this.currentQuestionData.correctIndex].setStyle({ backgroundColor: '#0a0' });
+                this.optionButtons[this.currentQuestionData.correctIndex].setStyle({ backgroundColor: '#16a34a' });
             }
         }
 
         const playerRef = ref(db, `rooms/${this.roomId}/${this.playerId}`);
-        get(playerRef).then((snap) => {
-            let data = snap.val();
-            if (!data) return;
-
-            let newStreak = data.streak;
-            let newLives = data.lives;
-
-            if (isTimeout) {
-                newStreak = Math.max(-3, newStreak - 1);
-            } else if (isCorrect) {
-                newStreak = Math.min(5, newStreak + 1);
-            } else {
-                newStreak = Math.max(-3, newStreak - 1);
-            }
-
-            if (newStreak === -3) {
-                newLives -= 1;
-                newStreak = 0;
-            }
-
-            update(playerRef, {
-                streak: newStreak,
-                lives: newLives,
-                answered: true
-            }).then(() => {
-                if (newStreak === 5) {
-                    this.statusText.setText('ULTIMATE ACERTOU! DANO NO OPONENTE!');
-                    const opponentId = this.playerId === 'p1' ? 'p2' : 'p1';
-                    const oppRef = ref(db, `rooms/${this.roomId}/${opponentId}`);
-                    get(oppRef).then((oppSnap) => {
-                        let oppData = oppSnap.val();
-                        if (oppData && oppData.lives > 0) {
-                            update(oppRef, { lives: oppData.lives - 1 });
-                        }
-                    });
-                    update(playerRef, { streak: 0 });
-                }
-            });
-        });
+        update(playerRef, {
+            answered: true,
+            answeredAt: Date.now(),
+            answerCorrect: isCorrect,
+            answeredChoice: selectedIndex != null ? selectedIndex : -1
+        }).catch(err => console.error('Erro ao enviar resposta:', err));
     }
 
-    handleGameOver(p1Lives, p2Lives) {
-        if (p1Lives <= 0 && p2Lives <= 0) {
-            this.showGameOver(false); 
-        } else if (p1Lives <= 0) {
-            this.showGameOver(this.playerId === 'p2');
-        } else if (p2Lives <= 0) {
-            this.showGameOver(this.playerId === 'p1');
+    forceTimeoutUnanswered() {
+        if (this.playerId !== 'p1' || this.isGameOver || this.isWaitingForOpponent) return;
+        const roomRef = ref(db, `rooms/${this.roomId}`);
+        get(roomRef).then((snap) => {
+            const data = snap.val();
+            if (!data || this.isGameOver) return;
+            const updates = {};
+            const now = Date.now();
+            
+            if (data.p1 && !data.p1.answered) {
+                updates['p1/answered'] = true;
+                updates['p1/answeredAt'] = now;
+                updates['p1/answerCorrect'] = false;
+                updates['p1/answeredChoice'] = -1;
+            }
+
+            if (data.p2 && !data.p2.answered) {
+                updates['p2/answered'] = true;
+                updates['p2/answeredAt'] = now;
+                updates['p2/answerCorrect'] = false;
+                updates['p2/answeredChoice'] = -1;
+            }
+
+            if (Object.keys(updates).length > 0) {
+                update(roomRef, updates);
+            }
+        }).catch(err => console.error('Erro no timeout forçado:', err));
+    }
+
+    handleGameOver(p1Hp, p2Hp, data = null) {
+        const roomData = data || this.latestData || this.previousData || {};
+        const p1Nick = (roomData.p1?.nickname || 'Jogador 1').toUpperCase();
+        const p2Nick = (roomData.p2?.nickname || 'Jogador 2').toUpperCase();
+
+        if (p1Hp <= 0 && p2Hp <= 0) {
+            this.showGameOver(false, null, true, roomData); 
+        } else if (p1Hp <= 0) {
+            this.showGameOver(this.playerId === 'p2', p2Nick, false, roomData);
+        } else if (p2Hp <= 0) {
+            this.showGameOver(this.playerId === 'p1', p1Nick, false, roomData);
         }
     }
 
-    showGameOver(isWinner) {
+    showGameOver(isWinner, winnerNick, isTie = false, roomData = null) {
         this.isGameOver = true;
         this.gameOverPanel.setVisible(true);
-        this.gameOverTitle.setText(isWinner ? 'VITÓRIA!' : 'DERROTA...');
-        this.gameOverTitle.setStyle({ fill: isWinner ? '#0f0' : '#f00' });
+
+        const data = roomData || this.latestData || this.previousData || {};
+        const p1 = data.p1 || {};
+        const p2 = data.p2 || {};
+        const p1Prof = getProfessorById(p1.characterId || 'so');
+        const p2Prof = getProfessorById(p2.characterId || 'web');
+
+        // Configuração visual conforme Vitória, Derrota ou Empate
+        if (isTie) {
+            this.goCardGlow.setFillStyle(0xfacc15, 0.25);
+            this.goCardBg.setStrokeStyle(2, 0xfacc15);
+            this.goIconText.setText('🤝');
+            this.goTitleText.setText('EMPATE DUPLO!').setStyle({ fill: '#facc15' });
+            this.goSubText.setText('Ambos os combatentes esgotaram o HP simultaneamente!').setStyle({ fill: '#fde047' });
+        } else if (isWinner) {
+            this.goCardGlow.setFillStyle(0x10b981, 0.25);
+            this.goCardBg.setStrokeStyle(2, 0x10b981);
+            this.goIconText.setText('🏆');
+            this.goTitleText.setText('VITÓRIA ACADÊMICA!').setStyle({ fill: '#34d399' });
+            this.goSubText.setText(`Parabéns, ${winnerNick}! Você dominou o duelo de TI!`).setStyle({ fill: '#e2e8f0' });
+        } else {
+            this.goCardGlow.setFillStyle(0xef4444, 0.25);
+            this.goCardBg.setStrokeStyle(2, 0xef4444);
+            this.goIconText.setText('💀');
+            this.goTitleText.setText('DERROTA NO COMBATE...').setStyle({ fill: '#f87171' });
+            this.goSubText.setText(`Vitória de ${winnerNick}! Revise os conceitos e peça revanche!`).setStyle({ fill: '#cbd5e1' });
+        }
+
+        // Atualizar Placar / Resumo da Partida
+        const p1Name = (p1.nickname || 'Jogador 1').toUpperCase();
+        const p2Name = (p2.nickname || 'Jogador 2').toUpperCase();
+        const p1Hp = p1.hp != null ? p1.hp : 0;
+        const p2Hp = p2.hp != null ? p2.hp : 0;
+
+        this.goP1Nick.setText(`P1: ${p1Name}`);
+        this.goP1Prof.setText(`[ ${p1Prof.shortName.toUpperCase()} ]`);
+        this.goP1Hearts.setText(p1Hp > 0 ? `${p1Hp} HP` : '💀 0 HP (K.O.)');
+        this.goP1Hearts.setStyle({ fill: p1Hp > 0 ? '#34d399' : '#ef4444' });
+
+        this.goP2Nick.setText(`P2: ${p2Name}`);
+        this.goP2Prof.setText(`[ ${p2Prof.shortName.toUpperCase()} ]`);
+        this.goP2Hearts.setText(p2Hp > 0 ? `${p2Hp} HP` : '💀 0 HP (K.O.)');
+        this.goP2Hearts.setStyle({ fill: p2Hp > 0 ? '#34d399' : '#ef4444' });
+
+        const roundsPlayed = data.round || this.currentRound || 1;
+        this.goRoundsText.setText(`🎯 ${roundsPlayed} Rodada${roundsPlayed > 1 ? 's' : ''}`);
+
+        this.btnRematch.setText('⚔️ Jogar Novamente (Revanche)');
+        this.btnChangeProf.setText('🔄 Trocar Professor');
+
+        if (this.goFooterHint) {
+            this.goFooterHint.setText(`Código da Sala: ${this.roomId} • Duelo Finalizado`);
+        }
+
         this.timerText.setText('Fim de Jogo');
+        this.timerText.setStyle({ fill: '#94a3b8', backgroundColor: '#1e293b' });
+
+        this.updatePostMatchRequestUI(data.postMatchRequest, data);
+
+        // Animação de entrada suave
+        this.gameOverPanel.setScale(0.92);
+        this.tweens.add({
+            targets: this.gameOverPanel,
+            scale: 1.0,
+            duration: 180,
+            ease: 'Back.easeOut'
+        });
     }
 
     pickNextQuestion() {
-        const randomQ = questions[Math.floor(Math.random() * questions.length)];
+        if (this.isGameOver) return;
+
+        const currentId = this.currentQuestionData ? this.currentQuestionData.id : null;
+        const available = questions.filter(q => q.id !== currentId);
+        const pool = available.length > 0 ? available : questions;
+        const randomQ = pool[Math.floor(Math.random() * pool.length)];
+
+        // Sorteio de Modificador da Rodada (~30% de chance de modificador especial, ~70% normal)
+        let selectedModifier = 'normal';
+        const modRoll = Math.random();
+        if (modRoll < 0.30) {
+            const modifiers = ['charge', 'shield', 'heal', 'try_catch'];
+            selectedModifier = modifiers[Math.floor(Math.random() * modifiers.length)];
+        }
+
+        const nextRound = (this.currentRound || 0) + 1;
         const roomRef = ref(db, `rooms/${this.roomId}`);
         
         update(roomRef, {
+            round: nextRound,
             currentQuestionId: randomQ.id,
+            questionStartedAt: Date.now(),
+            roundModifier: selectedModifier,
+            roundResolved: false,
+            roundAlert: null,
+            ultimateWinner: null,
             'p1/answered': false,
-            'p2/answered': false
+            'p1/answeredAt': null,
+            'p1/answerCorrect': null,
+            'p1/answeredChoice': null,
+            'p2/answered': false,
+            'p2/answeredAt': null,
+            'p2/answerCorrect': null,
+            'p2/answeredChoice': null,
+            matchStartTime: null
+        }).catch(err => {
+            console.error('Erro ao atualizar próxima questão no Firebase:', err);
+            this.isAdvancingQuestion = false;
         });
     }
 
     update() {
         if (this.isGameOver) return; 
 
-        // SAFETY CHECK: Se por algum motivo bizarro do Phaser as respostas sumirem, força a re-renderização
+        // Recuperação de segurança caso os botões fiquem vazios
         if (this.currentQuestionData && this.optionButtons[0] && this.optionButtons[0].text === '') {
             this.renderQuestion(this.currentQuestionData.id);
         }
 
-        if (this.pausePanel.visible && this.localMatchStartTime) {
-            const elapsed = Math.floor((Date.now() - this.localMatchStartTime) / 1000);
-            const remaining = this.MATCH_START_DELAY - elapsed;
-            
-            if (remaining > 0) {
-                this.pauseSub.setText(`${remaining}s`);
-            } else {
+        // Contagem regressiva antes da 1ª questão
+        if (this.pausePanel && this.pausePanel.visible) {
+            if (this.currentQuestionData != null) {
                 this.pausePanel.setVisible(false);
-                this.localMatchStartTime = null;
-                this.localQuestionStartTime = null; 
+            } else if (this.targetMatchStartTime) {
+                const remaining = Math.ceil((this.targetMatchStartTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    this.pauseSub.setText(`${remaining}s`);
+                } else {
+                    this.pauseSub.setText('⚔️ LUTEM!');
+                    this.pausePanel.setVisible(false);
+                    this.targetMatchStartTime = null;
 
-                if (this.playerId === 'p1') {
-                    update(ref(db, `rooms/${this.roomId}`), {
-                        'p1/lives': 3, 'p1/streak': 0, 'p1/answered': false,
-                        'p2/lives': 3, 'p2/streak': 0, 'p2/answered': false,
-                        currentQuestionId: null,
-                        matchStartSignal: null
-                    }).then(() => {
-                        this.pickNextQuestion();
-                    });
+                    if (this.playerId === 'p1' && !this.isAdvancingQuestion) {
+                        this.isAdvancingQuestion = true;
+                        update(ref(db, `rooms/${this.roomId}`), {
+                            'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false, 'p1/answered': false,
+                            'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false, 'p2/answered': false,
+                            round: 0,
+                            roundModifier: 'normal',
+                            roundResolved: false,
+                            matchStartTime: null
+                        }).then(() => {
+                            this.pickNextQuestion();
+                        }).catch(e => {
+                            console.error(e);
+                            this.pickNextQuestion();
+                        });
+                    }
                 }
             }
         }
 
         if (this.isWaitingForOpponent) return;
 
-        if (this.localQuestionStartTime && !this.hasAnsweredLocal) {
+        // Controle do tempo da questão
+        if (this.localQuestionStartTime) {
             const elapsed = Math.floor((Date.now() - this.localQuestionStartTime) / 1000);
             const remaining = this.QUESTION_TIME_LIMIT - elapsed;
             
-            if (remaining > 0) {
-                this.timerText.setText(`Tempo: ${remaining}s`);
-                if (remaining <= 5) {
-                    this.timerText.setStyle({ fill: '#ff0000' });
+            if (!this.hasAnsweredLocal) {
+                if (remaining > 0) {
+                    this.timerText.setText(`⏱️ Tempo: ${remaining}s`);
+                    if (remaining <= 5) {
+                        this.timerText.setStyle({ fill: '#ef4444', backgroundColor: '#450a0a' });
+                    } else {
+                        this.timerText.setStyle({ fill: '#38bdf8', backgroundColor: '#1e293b' });
+                    }
                 } else {
-                    this.timerText.setStyle({ fill: '#ffffff' });
+                    this.timerText.setText('⏱️ Tempo: 0s');
+                    this.handleAnswer(null, true);
                 }
             } else {
-                this.timerText.setText('Tempo: 0s');
-                this.handleAnswer(null, true);
+                if (remaining > 0) {
+                    this.timerText.setText(`⏳ Aguardando (${remaining}s)`);
+                    this.timerText.setStyle({ fill: '#94a3b8', backgroundColor: '#1e293b' });
+                } else {
+                    this.timerText.setText('⏳ Processando...');
+                }
             }
-        } else if (this.hasAnsweredLocal) {
-            this.timerText.setText(`-- aguardando --`);
-            this.timerText.setStyle({ fill: '#aaaaaa' });
+
+            // Fallback autoritativo do Host (P1)
+            if (this.playerId === 'p1' && remaining <= -2 && !this.isAdvancingQuestion && !this.isGameOver) {
+                this.forceTimeoutUnanswered();
+            }
         }
     }
 }
