@@ -66,7 +66,7 @@ export class MenuScene extends Phaser.Scene {
         this.createRulesFooter();
 
         // 7. Sub-rodapé informativo
-        this.add.text(512, 546, 'LabCombat • Duelos de Computação • 6 Professores Disponíveis', {
+        this.add.text(512, 546, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
             fontSize: '11px', fill: '#475569'
         }).setOrigin(0.5);
 

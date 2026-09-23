@@ -7,7 +7,7 @@
 
 **LabCombat** é um jogo de luta multiplayer educacional em tempo real que combina a adrenalina dos jogos de arcade clássicos (Street Fighter, The King of Fighters) com quizzes de tecnologia da informação e computação.
 
-Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos e batalham respondendo a perguntas técnicas. Acertos rápidos e combos contínuos liberam ataques especiais e ultimates para nocautear o adversário!
+Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos e batalham respondendo a perguntas técnicas. Acertos rápidos acumulam cargas de energia para desferir super golpes e ultimates para nocautear o adversário!
 
 ---
 
@@ -24,6 +24,7 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 - **Grid de Lutadores:** Escolha entre diferentes disciplinas da computação (Web & Mobile, Banco de Dados, Engenharia de Software, Redes, Sistemas Operacionais, POO).
 - **Pré-visualização Dinâmica:** Sprites animados em repouso (Idle) e portraits retro.
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
+- **Modo Solo para Testes:** Botão `⚡ Iniciar Solo` para testar as rodadas de perguntas diretamente sem precisar de um segundo jogador.
 
 ### ⚔️ Batalha e Mecânicas de Combate
 - **Pontos de Vida (100 HP):** Cada jogador inicia o duelo com **100 HP**. O combate encerra quando o HP de um dos lutadores chega a 0 (K.O.).
@@ -35,14 +36,14 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
   - **Duelo de Velocidade (Ambos acertam):** Quem responder em menor tempo vence a disputa de velocidade, recebendo +1 Carga e o bônus do modificador da rodada, enquanto o mais lento se defende sem sofrer dano.
   - **Ambos erram:** Ambos são penalizados e perdem 1 carga acumulada (**-1 Carga**).
 - **Modificadores Especiais de Rodada:**
-  - 🛡️ **Firewall (Escudo):** Bloqueia e absorve 100% do dano do próximo ataque ou Ultimate.
-  - 🪲 **Try-Catch:** Tratamento de exceção que anula o dano caso o jogador erre a questão.
-  - 💚 **Heal (Refatoração):** Recupera **+10 HP** para o lutador que vencer a rodada.
-  - ⚡ **Carga Dupla:** Concede carga extra de energia ao acertador mais rápido.
+  - 🛡️ **Firewall:** Ganha escudo que anula e absorve 100% do dano do próximo ataque ou Ultimate.
+  - 🪲 **Try-Catch:** Tratamento de exceção que anula o dano do próximo erro.
+  - 💚 **Backup:** Restaura **+10 HP** ao acertar primeiro.
+  - ⚡ **Overclock:** Concede **+1 Carga extra** ao acertar primeiro.
 - **Temporizador Dinâmico:** Tempo por questão calibrado e sincronizado em tempo real com o painel do desenvolvedor.
 
 ### 🛠️ Painel do Game Master / Dev (Modo Administrador)
-- **Acesso Seguro via PIN:** Abertura da sidebar de administração protegida por autenticação.
+- **Acesso Seguro via PIN:** Abertura da sidebar de administração protegida por autenticação (atalho **F2**, **Ctrl + Shift + D** ou parâmetro `?gm=1` na URL; PIN padrão: `admin` ou `gm2026`).
 - **Ajustes de Tempo:** Calibração em tempo real do tempo de início de rodada e limite por questão.
 - **Monitor de Salas:** Painel em tempo real para visualizar salas criadas, jogadores conectados e botões para limpeza de salas vazias.
 - **Terminal de Logs:** Histórico detalhado de eventos (salas, conexões, partidas, avisos e erros) com filtro por cores e botão de cópia.
