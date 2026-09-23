@@ -4,6 +4,7 @@
 ![Phaser 3](https://img.shields.io/badge/Phaser_3-8B5CF6?style=for-the-badge&logo=javascript&logoColor=white)
 ![Firebase](https://img.shields.io/badge/Firebase_RTDB-FFA611?style=for-the-badge&logo=firebase&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/ES6+-F7DF1E?style=for-the-badge&logo=javascript&logoColor=black)
+![License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)
 
 **LabCombat** é um jogo de luta multiplayer educacional em tempo real que combina a adrenalina dos jogos de arcade clássicos (Street Fighter, The King of Fighters) com quizzes de tecnologia da informação e computação.
 
@@ -138,8 +139,17 @@ labcombat/
 │   └── main.js               # Ponto de entrada da aplicação
 ├── index.html                # Estrutura HTML, painel GM e modais de entrada
 ├── package.json              # Dependências e scripts do projeto
+├── PLANO_DE_IMPLEMENTACAO.md # Planejamento técnico, deploy, autenticação e LGPD
+├── LICENSE                   # Licença de uso e distribuição do código (MIT)
 └── README.md                 # Documentação oficial
 ```
+
+---
+
+## 📋 Plano de Produção & Roadmap
+
+Para consultar o planejamento de evolução técnica, roteiro de deploy online (Vercel/Firebase), arquitetura de autenticação, conformidade com a LGPD e licenciamento, acesse o documento completo:
+👉 **[PLANO_DE_IMPLEMENTACAO.md](PLANO_DE_IMPLEMENTACAO.md)**
 
 ---
 
@@ -148,6 +158,13 @@ labcombat/
 - **[Phaser 3](https://phaser.io/):** Motor de física e renderização 2D Canvas/WebGL.
 - **[Firebase Realtime Database](https://firebase.google.com/):** Sincronização em tempo real de salas, jogadores e estado da partida.
 - **[Vite](https://vitejs.dev/):** Build tool e servidor de desenvolvimento ágil.
+
+---
+
+## 📄 Licença
+
+Este projeto está licenciado sob os termos da **Licença MIT** - consulte o arquivo [LICENSE](LICENSE) para mais detalhes.  
+*Os assets visuais, personagens e conteúdos pedagógicos são de autoria do projeto e destinados a fins estritamente educacionais.*
 
 ---
 
