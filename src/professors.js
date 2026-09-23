@@ -1,7 +1,7 @@
 export const professors = [
     {
         id: 'so',
-        name: 'Prof. Sistemas Operacionais',
+        name: 'Sistemas Operacionais',
         shortName: 'Sistemas Operacionais',
         subject: 'Threads, Processos & Kernel',
         quote: '"Todo programa é um processo esperando a sua vez."',
@@ -15,7 +15,7 @@ export const professors = [
     },
     {
         id: 'eng_soft',
-        name: 'Prof. Engenharia de Software',
+        name: 'Engenharia de Software',
         shortName: 'Eng. de Software',
         subject: 'Scrum, Requisitos & Clean Code',
         quote: '"Todo bug caro começou como um requisito mal entendido."',
@@ -29,7 +29,7 @@ export const professors = [
     },
     {
         id: 'poo',
-        name: 'Prof. POO',
+        name: 'Programação Orientada a Objetos',
         shortName: 'Programação OO',
         subject: 'Classes, Polimorfismo & Herança',
         quote: '"Tudo é objeto. Até o problema."',
@@ -43,7 +43,7 @@ export const professors = [
     },
     {
         id: 'web',
-        name: 'Prof. Web & Mobile',
+        name: 'Web & Mobile',
         shortName: 'Web & Mobile',
         subject: 'Frontend, Fullstack & APIs',
         quote: '"Bom código funciona em qualquer tela."',
@@ -57,7 +57,7 @@ export const professors = [
     },
     {
         id: 'bd',
-        name: 'Prof. Banco de Dados',
+        name: 'Banco de Dados',
         shortName: 'Banco de Dados',
         subject: 'SQL, Índices & Normalização',
         quote: '"Dado bem organizado vale mais que ouro."',
@@ -71,7 +71,7 @@ export const professors = [
     },
     {
         id: 'redes',
-        name: 'Prof. Redes de Computadores',
+        name: 'Redes de Computadores',
         shortName: 'Redes',
         subject: 'TCP/IP, Roteamento & Ping',
         quote: '"Toda conexão começa com um bom ping."',

@@ -428,8 +428,8 @@ export class MainScene extends Phaser.Scene {
             .on('pointerout', () => this.btnRematch.setStyle({ backgroundColor: '#16a34a' }))
             .on('pointerdown', () => this.handleRematch());
 
-        // Botão 2: Trocar Professor (Volta para a Seleção mantendo a sala)
-        this.btnChangeProf = this.add.text(-125, 118, '🔄 Trocar Professor', { 
+        // Botão 2: Trocar Personagem (Volta para a Seleção mantendo a sala)
+        this.btnChangeProf = this.add.text(-125, 118, '🔄 Trocar Personagem', { 
             fontSize: '12px', fill: '#38bdf8', backgroundColor: '#1e293b',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             fixedWidth: 210, padding: { top: 9, bottom: 9 }, align: 'center', fontStyle: 'bold' 
@@ -500,7 +500,7 @@ export class MainScene extends Phaser.Scene {
             .on('pointerout', () => this.btnAcceptRequest.setStyle({ backgroundColor: '#16a34a' }))
             .on('pointerdown', () => this.acceptPostMatchRequest());
 
-        this.btnPromptChangeProf = this.add.text(0, 120, '🔄 Trocar Professor', { 
+        this.btnPromptChangeProf = this.add.text(0, 120, '🔄 Trocar Personagem', { 
             fontSize: '12px', fill: '#ffffff', backgroundColor: '#2563eb',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             fixedWidth: 155, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
@@ -1064,7 +1064,7 @@ export class MainScene extends Phaser.Scene {
             }
             this.ultMoveName.setText(winnerProf.ultimateName ? winnerProf.ultimateName.toUpperCase() : 'GOLPE FATAL');
             this.ultQuote.setText(winnerProf.ultimateQuote ? `"${winnerProf.ultimateQuote}"` : '"Duelo encerrado com perfeição."');
-            this.ultHeader.setText(`⚡ ULTIMATE FINISHER • PROF. ${winnerProf.shortName.toUpperCase()} ⚡`);
+            this.ultHeader.setText(`⚡ ULTIMATE FINISHER • ${winnerProf.shortName.toUpperCase()} ⚡`);
         }
 
         this.ultimateOverlay.setVisible(true).setAlpha(0);
@@ -1814,7 +1814,7 @@ export class MainScene extends Phaser.Scene {
         this.goRoundsText.setText(`🎯 ${roundsPlayed} Rodada${roundsPlayed > 1 ? 's' : ''}`);
 
         this.btnRematch.setText('⚔️ Jogar Novamente (Revanche)');
-        this.btnChangeProf.setText('🔄 Trocar Professor');
+        this.btnChangeProf.setText('🔄 Trocar Personagem');
 
         if (this.goFooterHint) {
             this.goFooterHint.setText(`Código da Sala: ${this.roomId} • Duelo Finalizado`);

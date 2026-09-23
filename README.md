@@ -7,7 +7,7 @@
 
 **LabCombat** é um jogo de luta multiplayer educacional em tempo real que combina a adrenalina dos jogos de arcade clássicos (Street Fighter, The King of Fighters) com quizzes de tecnologia da informação e computação.
 
-Dois jogadores entram na arena, escolhem seus personagens/professores favoritos e batalham respondendo a perguntas técnicas. Acertos rápidos e combos contínuos liberam ataques especiais e ultimates para nocautear o adversário!
+Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos e batalham respondendo a perguntas técnicas. Acertos rápidos e combos contínuos liberam ataques especiais e ultimates para nocautear o adversário!
 
 ---
 
@@ -21,7 +21,7 @@ Dois jogadores entram na arena, escolhem seus personagens/professores favoritos 
 - **Limpeza Automática:** Gatilhos nativos de `onDisconnect` que limpam jogadores inativos e salas abandonadas.
 
 ### 🕹️ Seleção de Personagens (Estilo Arcade)
-- **Grid de Lutadores:** Escolha entre diferentes professores/disciplinas (Web, Banco de Dados, Engenharia de Software, Redes, Sistemas Operacionais, POO).
+- **Grid de Lutadores:** Escolha entre diferentes disciplinas da computação (Web & Mobile, Banco de Dados, Engenharia de Software, Redes, Sistemas Operacionais, POO).
 - **Pré-visualização Dinâmica:** Sprites animados em repouso (Idle) e portraits retro.
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
 
@@ -39,16 +39,18 @@ Dois jogadores entram na arena, escolhem seus personagens/professores favoritos 
 
 ---
 
-## 👨‍🏫 Personagens / Professores
+## 🎮 Disciplinas / Personagens
 
-| Personagem | Matéria / Especialidade | Estilo de Ataque |
+Cada lutador representa uma disciplina fundamental da área de tecnologia:
+
+| Disciplina | Tópicos & Especialidades | Golpe Especial (Ultimate) |
 | :--- | :--- | :--- |
-| **Dr. Script** | Desenvolvimento Web & Frontend | Ataques rápidos com tags HTML e scripts reativos |
-| **Prof. Query** | Bancos de Dados & SQL | Golpes pesados com comandos estruturados e transações |
-| **Dra. Agile** | Engenharia de Software & Scrum | Gestão tática e ataques em sprints coordenados |
-| **Prof. Packet** | Redes de Computadores & Protocolos | Rajadas de pacotes TCP e controle de fluxo |
-| **Dr. Kernel** | Sistemas Operacionais | Manipulação de memória e processos de baixo nível |
-| **Profa. Class** | Programação Orientada a Objetos | Herança de dano e polimorfismo destrutivo |
+| **Sistemas Operacionais** | Threads, Processos & Kernel | KERNEL PANIC (TELA AZUL) |
+| **Engenharia de Software** | Scrum, Requisitos & Clean Code | DEPLOY EM PRODUÇÃO NA SEXTA |
+| **Programação Orientada a Objetos** | Classes, Polimorfismo & Herança | NULL POINTER EXCEPTION |
+| **Web & Mobile** | Frontend, Fullstack & APIs | 404 NOT FOUND (CORS ERROR) |
+| **Banco de Dados** | SQL, Índices & Normalização | DROP DATABASE --FORCE |
+| **Redes de Computadores** | TCP/IP, Roteamento & Ping | DDoS OVERLOAD (PING DA MORTE) |
 
 ---
 
@@ -93,7 +95,7 @@ Dois jogadores entram na arena, escolhem seus personagens/professores favoritos 
 2. **Entrar na Sala (Desafiante):**
    - O Jogador 2 clica em **ENTRAR EM SALA**, insere seu apelido e digita ou cola o código, ou seleciona a sala diretamente na lista de **Salas Abertas ao Vivo**.
 3. **Seleção de Personagens:**
-   - Ambos os jogadores escolhem seu professor favorito e clicam em **CONFIRMAR**.
+   - Ambos os jogadores escolhem sua disciplina/personagem e clicam em **CONFIRMAR**.
 4. **O Combate:**
    - Leia a pergunta técnica exibida na tela e clique na alternativa correta antes que o cronômetro expire.
    - O primeiro jogador a zerar as vidas do oponente vence a partida!
