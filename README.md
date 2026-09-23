@@ -26,10 +26,20 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
 
 ### ⚔️ Batalha e Mecânicas de Combate
-- **HUD Renovado:** Interface limpa sem poluição visual, barras de vida e termômetro de sequência.
-- **Sistema de Streak (Combos):** Sequência de acertos preenche o termômetro. Ao atingir +5, um ataque "Ultimate" devastador é disparado!
-- **Punições:** Erros e tempo esgotado penalizam o termômetro de combate (-3 custa uma vida).
-- **Temporizador Ajustável:** Tempo por questão configurável dinamicamente.
+- **Pontos de Vida (100 HP):** Cada jogador inicia o duelo com **100 HP**. O combate encerra quando o HP de um dos lutadores chega a 0 (K.O.).
+- **Sistema de Cargas e Ultimate (⚡ 0 a 3 Cargas):**
+  - Acertos acumulam cargas de energia para ataques especiais (máximo de 3 cargas).
+  - Com **3 Cargas**, o próximo acerto dispara um **Super Golpe (-28 HP)** ou um devastador **Ultimate Finisher (K.O. instantâneo)** se o adversário estiver com 33 HP ou menos!
+- **Disputa de Respostas por Rodada:**
+  - **Apenas um acerta:** O acertador causa **-15 HP** de dano direto no rival e ganha +1 Carga.
+  - **Duelo de Velocidade (Ambos acertam):** Quem responder em menor tempo vence a disputa de velocidade, recebendo +1 Carga e o bônus do modificador da rodada, enquanto o mais lento se defende sem sofrer dano.
+  - **Ambos erram:** Ambos são penalizados e perdem 1 carga acumulada (**-1 Carga**).
+- **Modificadores Especiais de Rodada:**
+  - 🛡️ **Firewall (Escudo):** Bloqueia e absorve 100% do dano do próximo ataque ou Ultimate.
+  - 🪲 **Try-Catch:** Tratamento de exceção que anula o dano caso o jogador erre a questão.
+  - 💚 **Heal (Refatoração):** Recupera **+10 HP** para o lutador que vencer a rodada.
+  - ⚡ **Carga Dupla:** Concede carga extra de energia ao acertador mais rápido.
+- **Temporizador Dinâmico:** Tempo por questão calibrado e sincronizado em tempo real com o painel do desenvolvedor.
 
 ### 🛠️ Painel do Game Master / Dev (Modo Administrador)
 - **Acesso Seguro via PIN:** Abertura da sidebar de administração protegida por autenticação.
@@ -98,7 +108,8 @@ Cada lutador representa uma disciplina fundamental da área de tecnologia:
    - Ambos os jogadores escolhem sua disciplina/personagem e clicam em **CONFIRMAR**.
 4. **O Combate:**
    - Leia a pergunta técnica exibida na tela e clique na alternativa correta antes que o cronômetro expire.
-   - O primeiro jogador a zerar as vidas do oponente vence a partida!
+   - Seja rápido: em caso de acerto mútuo, quem responder primeiro vence a disputa de velocidade da rodada.
+   - Acumule 3 cargas para desferir o Ultimate Finisher. O primeiro a zerar os 100 HP do rival vence a batalha por K.O.!
 
 ---
 
