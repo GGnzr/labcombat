@@ -86,7 +86,44 @@ Este documento detalha o planejamento técnico completo para a evolução do **L
         }
     }
     ```
-  * Esse overlay bloqueia as interações e exibe uma animação instruindo o jogador a virar o celular para a posição horizontal (*Landscape*).
+### 1.5 Sistema de Ranking Competitivo e Elos de Batalha (Progressão por Vitórias)
+* **Objetivo:** Estimular o engajamento e a competição saudável entre estudantes e jogadores, permitindo subir de elo a cada sequência de vitórias conquistadas.
+* **Elos Temáticos de Carreira Dev:**
+  * 🥉 **Estagiário (Intern):** 0 a 2 vitórias (0 a 74 RP)
+  * 🥈 **Desenvolvedor Júnior:** 3 a 5 vitórias (75 a 149 RP)
+  * 🥇 **Desenvolvedor Pleno:** 6 a 9 vitórias (150 a 249 RP)
+  * 💎 **Desenvolvedor Sênior / Tech Lead:** 10 a 14 vitórias (250 a 374 RP)
+  * 👑 **Arquiteto / Mestre dos Algoritmos:** 15+ vitórias (375+ RP)
+
+* **Mecânica de Pontuação (Rank Points - RP):**
+  * **Vitória:** +25 RP base.
+  * **Bônus de Desempenho:** +5 RP se vencer com K.O. via *Ultimate Finisher* ou sem sofrer nenhum erro (*Perfect Match*).
+  * **Derrota:** -10 RP (com proteção nos elos iniciais para não desestimular o aprendizado).
+
+* **Estrutura no Firebase Realtime Database:**
+  ```json
+  {
+    "leaderboard": {
+      "user_anon_uid_123": {
+        "nickname": "DevNinja",
+        "points": 210,
+        "wins": 8,
+        "matches": 11,
+        "winRate": "72%",
+        "tier": "Desenvolvedor Pleno",
+        "tierIcon": "🥇",
+        "favoriteSubject": "Banco de Dados",
+        "updatedAt": 1727138000000
+      }
+    }
+  }
+  ```
+
+* **Integração na Interface (UI/UX):**
+  1. **Menu Principal:** Botão `🏆 Ranking da Arena` no cabeçalho ou rodapé, abrindo um modal estilizado com o **TOP 10 Geral** e a posição/elo atual do jogador local.
+  2. **Card de Batalha & Seleção:** Badge de elo exibido ao lado do apelido (ex: `🥇 DevNinja [PLENO]`).
+  3. **Tela de Vitória (Pós-Combate):** Animação de barra de experiência enchendo com `+25 RP` e banner comemorativo ao subir de elo: `🎉 PROMOÇÃO DE CARREIRA! Você subiu para Dev Sênior! 🚀`.
+  4. **Controle no Painel GM:** O professor terá um botão `"Zerar Temporada / Ranking da Turma"` para iniciar novos torneios pontuais em sala de aula.
 
 ---
 
@@ -179,15 +216,46 @@ flowchart TD
     VerifyClaims -->|Não| BlockAccess[Acesso Negado]
 ```
 
-### 4.1 Estratégia de Autenticação Híbrida
+### 4.1 Estratégia de Contas e Autenticação (Alunos vs Professores)
 
-1. **Alunos / Jogadores (Acesso Sem Atrito):**
-   * Em contexto escolar/universitário, exigir cadastro com e-mail e senha causa desistência e perda de tempo da aula.
-   * **Solução:** **Firebase Anonymous Authentication** combinado com o **Nickname** escolhido. O Firebase gera um identificador único de sessão (UID) seguro por baixo dos panos, sem exigir dados pessoais do aluno.
+A introdução de um **Sistema de Ranking e Progressão de Carreira** torna essencial que o aluno tenha uma **Conta de Jogador**, pois:
+* Em laboratórios de informática, múltiplos alunos utilizam a mesma máquina física. Sem login, o histórico e o elo seriam perdidos ou sobrescritos pelo próximo usuário.
+* Permite que o estudante jogue na faculdade e continue subindo de patente em casa no celular ou notebook.
+* Permite métricas de autoavaliação (ex: *"Sua taxa de acerto em Redes é 88%, mas em Banco de Dados é 55%"*).
 
-2. **Professores / Administradores (Game Master):**
-   * Migrar do PIN hardcoded (`admin`) para **Firebase Authentication** com E-mail e Senha exclusivos do professor (ou login Google institucional).
-   * O painel GM só renderiza os controles após validação do token JWT do Firebase, impedindo que alunos abram a sidebar inspecionando o código via DevTools (`F12`).
+#### A. Métodos de Acesso para os Alunos (Design de Baixa Fricção)
+
+```mermaid
+flowchart LR
+    A[Aluno acessa o LabCombat] --> Choice{Como deseja entrar?}
+    Choice -->|Mais Rápido| Google[Login com Google / E-mail Institucional]
+    Choice -->|Tradicional| Email[E-mail e Senha]
+    Choice -->|Partida Casual| Guest[Modo Convidado / Guest]
+    
+    Google --> Profile[Perfil Salvo: Elo, RP, Histórico e Vitórias]
+    Email --> Profile
+    Guest --> TempMatch[Joga a partida sem salvar no Ranking Global]
+    TempMatch --> ConvertPrompt[Banner Pós-Jogo: 'Vincule sua conta para salvar seus +25 RP!']
+    ConvertPrompt --> Google
+    ConvertPrompt --> Email
+```
+
+1. **Login com Google (1 Clique - Altamente Recomendado):**
+   * A maioria das escolas e universidades já utiliza Google Workspace institucional (`@aluno.instituicao.edu.br`) ou contas Google.
+   * O aluno autentica com 1 clique através de popup nativo do Firebase Auth, sem precisar preencher cadastros demorados nem decorar novas senhas.
+2. **E-mail e Senha Tradicional:**
+   * Cadastro simples solicitando apenas: **Apelido (Nickname)**, **E-mail** e **Senha**.
+3. **Modo Convidado com Conversão (Guest ➔ Registrado):**
+   * O aluno pode jogar uma partida instantânea como convidado. Ao vencer e ganhar pontos, uma notificação o convida a vincular uma conta para não perder os pontos conquistados.
+
+#### B. Proteção e Privacidade dos Dados dos Alunos (Conformidade LGPD)
+* **Visibilidade Pública Restrita:** O e-mail do aluno é armazenado de forma criptografada no Firebase Auth e **JAMAIS é exibido publicamente** na arena ou no ranking.
+* **O que os outros jogadores veem:** Apenas o **Nickname**, **Ícone do Lutador Favorito**, **Elo de Carreira** e **Pontos (RP)**.
+* **Direito de Eliminação (Art. 18, VI da LGPD):** O aluno terá um botão no seu perfil para excluir sua conta e remover seus dados da tabela de líderes a qualquer momento.
+
+#### C. Acesso do Professor / Game Master (Administração Segura)
+* O painel GM deixa de depender de PIN no código e passa a exigir login administrativo via Firebase Auth.
+* O Firebase valida se o e-mail do usuário possui o atributo de administrador (`customClaims: { role: 'gm' }`), impedindo que alunos acessem controles de moderador mesmo inspecionando o código.
 
 ### 4.2 Regras de Segurança do Firebase (`database.rules.json`)
 Para evitar que alunos trapaceiem editando o HP ou carga de especial diretamente pelo console do navegador, as regras de segurança do Realtime Database devem ser configuradas no console do Firebase:
