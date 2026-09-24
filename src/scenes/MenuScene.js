@@ -443,8 +443,13 @@ export class MenuScene extends Phaser.Scene {
                 const sessionPlayerId = sessionStorage.getItem('labcombat_player_id');
                 const sessionRoomId = sessionStorage.getItem('labcombat_room_id');
                 
-                const isP1 = (data.p1 && data.p1.nickname && data.p1.nickname.trim().toLowerCase() === nickname.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p1');
-                const isP2 = (data.p2 && data.p2.nickname && data.p2.nickname.trim().toLowerCase() === nickname.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p2');
+                
+                const lowerNick = nickname.trim().toLowerCase();
+                const isDefaultNick = (lowerNick === 'jogador 1' || lowerNick === 'jogador 2');
+                const isP1 = (sessionRoomId === targetRoomId && sessionPlayerId === 'p1') || 
+                             (!isDefaultNick && data.p1 && data.p1.nickname && data.p1.nickname.trim().toLowerCase() === lowerNick);
+                const isP2 = (sessionRoomId === targetRoomId && sessionPlayerId === 'p2') || 
+                             (!isDefaultNick && data.p2 && data.p2.nickname && data.p2.nickname.trim().toLowerCase() === lowerNick);
                 
                 // 1. Reconexão do Jogador 2
                 if (isP2) {
