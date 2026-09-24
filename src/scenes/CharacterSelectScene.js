@@ -18,6 +18,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.oppProfessorId = this.playerId === 'p1' ? 'web' : 'so';
         this.isLockedIn = false;
         this.hasStarted = false;
+        this.isStartingMatch = false;
         this.cards = [];
         this.countdownTargetTime = null;
         this.isCountingDown = false;
@@ -323,11 +324,8 @@ export class CharacterSelectScene extends Phaser.Scene {
                 .setStrokeStyle(1.5, 0x334155)
                 .setInteractive({ useHandCursor: true });
 
-            // Avatar do Professor
-            const maskShape = this.add.graphics();
-            maskShape.fillRect(x - 47, cardY - 37, 94, 74);
-            const portrait = this.add.sprite(0, 20, prof.atlasKey, 'idle').setScale(0.42);
-            portrait.setMask(maskShape.createGeometryMask());
+            // Avatar do Professor (Retrato recortado)
+            const portrait = this.add.image(0, -8, prof.portraitKey).setDisplaySize(48, 48);
 
             // Nome Curto
             const nameText = this.add.text(0, 24, prof.shortName.toUpperCase(), { 
@@ -724,8 +722,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     forceStartMatch() {
-        if (this.hasStarted) return;
-        this.hasStarted = true;
+        if (this.hasStarted || this.isStartingMatch) return;
+        this.isStartingMatch = true;
 
         logEvent('game', `[Sala ${this.roomId}] Forçando início de partida solo.`);
 
@@ -762,6 +760,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     startGame() {
         if (this.hasStarted) return;
         this.hasStarted = true;
+        this.isStartingMatch = true;
 
         logEvent('game', `[Sala ${this.roomId}] Batalha iniciada! Carregando arena...`);
 
@@ -811,8 +810,8 @@ export class CharacterSelectScene extends Phaser.Scene {
                 }
                 if (this.btnCancel) this.btnCancel.setVisible(false);
 
-                if (this.playerId === 'p1' && !this.hasStarted) {
-                    this.hasStarted = true;
+                if (this.playerId === 'p1' && !this.isStartingMatch) {
+                    this.isStartingMatch = true;
                     const randomQ = questions[Math.floor(Math.random() * questions.length)];
                     const roomRef = ref(db, `rooms/${this.roomId}`);
 
@@ -840,8 +839,9 @@ export class CharacterSelectScene extends Phaser.Scene {
                         console.error(e);
                         this.startGame();
                     });
-                } else if (this.playerId === 'p2' && !this.hasStarted) {
-                    this.time.delayedCall(400, () => {
+                } else if (this.playerId === 'p2' && !this.isStartingMatch) {
+                    this.isStartingMatch = true;
+                    this.time.delayedCall(800, () => {
                         if (!this.hasStarted) this.startGame();
                     });
                 }

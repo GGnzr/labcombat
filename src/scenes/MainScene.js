@@ -118,10 +118,7 @@ export class MainScene extends Phaser.Scene {
         
         // Avatar / Retrato do Professor P1 (Esquerda do Card)
         this.p1PortraitFrame = this.add.rectangle(56, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0x10b981);
-        const maskShapeP1 = this.add.graphics();
-        maskShapeP1.fillRect(56 - 33, 94 - 33, 66, 66);
-        this.p1Portrait = this.add.sprite(56, 114, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.40);
-        this.p1Portrait.setMask(maskShapeP1.createGeometryMask());
+        this.p1Portrait = this.add.image(56, 94, getProfessorById(this.p1Data?.characterId || 'so').portraitKey).setDisplaySize(58, 58);
 
         // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
         this.p1NickText = this.add.text(98, 68, 'JOGADOR 1', { 
@@ -171,10 +168,7 @@ export class MainScene extends Phaser.Scene {
 
         // Avatar / Retrato do Professor P2 (Direita do Card, espelhado)
         this.p2PortraitFrame = this.add.rectangle(968, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0xef4444);
-        const maskShapeP2 = this.add.graphics();
-        maskShapeP2.fillRect(968 - 33, 94 - 33, 66, 66);
-        this.p2Portrait = this.add.sprite(968, 114, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle').setScale(0.40).setFlipX(true);
-        this.p2Portrait.setMask(maskShapeP2.createGeometryMask());
+        this.p2Portrait = this.add.image(968, 94, getProfessorById(this.p2Data?.characterId || 'web').portraitKey).setDisplaySize(58, 58).setFlipX(true);
 
         // Linha 1: HP Numérico, Disciplina e Nickname (y = 68)
         this.p2HpText = this.add.text(570, 68, '100 HP', {
@@ -1322,8 +1316,9 @@ export class MainScene extends Phaser.Scene {
             if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
             
             // Retrato do Professor P1 no Card
-            if (this.p1Portrait && true) {
-                this.p1Portrait.setTexture(p1Prof.atlasKey, 'idle');
+            if (this.p1Portrait) {
+                this.p1Portrait.setTexture(p1Prof.portraitKey);
+                this.p1Portrait.setDisplaySize(58, 58);
             }
 
             // Nickname e Disciplina P1
@@ -1407,8 +1402,9 @@ export class MainScene extends Phaser.Scene {
             if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
             
             // Retrato do Professor P2 no Card
-            if (this.p2Portrait && true) {
-                this.p2Portrait.setTexture(p2Prof.atlasKey, 'idle');
+            if (this.p2Portrait) {
+                this.p2Portrait.setTexture(p2Prof.portraitKey);
+                this.p2Portrait.setDisplaySize(58, 58);
             }
 
             // Nickname e Disciplina P2
