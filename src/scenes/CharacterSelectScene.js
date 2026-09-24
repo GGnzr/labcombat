@@ -324,7 +324,7 @@ export class CharacterSelectScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
 
             // Avatar do Professor
-            const portrait = this.add.image(0, -8, prof.portraitKey).setDisplaySize(54, 46);
+            const portrait = this.add.sprite(0, -6, prof.atlasKey, 'idle').setScale(0.24);
 
             // Nome Curto
             const nameText = this.add.text(0, 24, prof.shortName.toUpperCase(), { 

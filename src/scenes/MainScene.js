@@ -118,7 +118,7 @@ export class MainScene extends Phaser.Scene {
         
         // Avatar / Retrato do Professor P1 (Esquerda do Card)
         this.p1PortraitFrame = this.add.rectangle(56, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0x10b981);
-        this.p1Portrait = this.add.image(56, 94, 'prof_so_portrait').setDisplaySize(62, 62);
+        this.p1Portrait = this.add.sprite(56, 94, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.24);
 
         // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
         this.p1NickText = this.add.text(98, 68, 'JOGADOR 1', { 
@@ -1057,10 +1057,10 @@ export class MainScene extends Phaser.Scene {
         this.isExecutingFinisher = true;
 
         if (winnerProf) {
-            if (this.textures.exists(winnerProf.portraitKey)) {
-                this.ultPortrait.setTexture(winnerProf.portraitKey);
+            if (true) {
+                this.ultPortrait.setTexture(winnerProf.atlasKey, 'idle');
             } else {
-                this.ultPortrait.setTexture(winnerProf.portraitKey);
+                this.ultPortrait.setTexture(winnerProf.atlasKey, 'idle');
             }
             this.ultMoveName.setText(winnerProf.ultimateName ? winnerProf.ultimateName.toUpperCase() : 'GOLPE FATAL');
             this.ultQuote.setText(winnerProf.ultimateQuote ? `"${winnerProf.ultimateQuote}"` : '"Duelo encerrado com perfeição."');
@@ -1316,8 +1316,8 @@ export class MainScene extends Phaser.Scene {
             if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
             
             // Retrato do Professor P1 no Card
-            if (this.p1Portrait && this.textures.exists(p1Prof.portraitKey)) {
-                this.p1Portrait.setTexture(p1Prof.portraitKey);
+            if (this.p1Portrait && true) {
+                this.p1Portrait.setTexture(p1Prof.atlasKey, 'idle');
             }
 
             // Nickname e Disciplina P1
@@ -1401,8 +1401,8 @@ export class MainScene extends Phaser.Scene {
             if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
             
             // Retrato do Professor P2 no Card
-            if (this.p2Portrait && this.textures.exists(p2Prof.portraitKey)) {
-                this.p2Portrait.setTexture(p2Prof.portraitKey);
+            if (this.p2Portrait && true) {
+                this.p2Portrait.setTexture(p2Prof.atlasKey, 'idle');
             }
 
             // Nickname e Disciplina P2
