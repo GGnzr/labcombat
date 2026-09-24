@@ -324,7 +324,12 @@ export class CharacterSelectScene extends Phaser.Scene {
                 .setInteractive({ useHandCursor: true });
 
             // Avatar do Professor
-            const portrait = this.add.sprite(0, -6, prof.atlasKey, 'idle').setScale(0.24);
+            const maskShape = this.make.graphics();
+            maskShape.fillStyle(0xffffff);
+            maskShape.fillRect(x - 47, cardY - 37, 94, 74);
+            const mask = maskShape.createGeometryMask();
+            const portrait = this.add.sprite(0, 15, prof.atlasKey, 'idle').setScale(0.40);
+            portrait.setMask(mask);
 
             // Nome Curto
             const nameText = this.add.text(0, 24, prof.shortName.toUpperCase(), { 

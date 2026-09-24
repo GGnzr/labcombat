@@ -118,7 +118,12 @@ export class MainScene extends Phaser.Scene {
         
         // Avatar / Retrato do Professor P1 (Esquerda do Card)
         this.p1PortraitFrame = this.add.rectangle(56, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0x10b981);
-        this.p1Portrait = this.add.sprite(56, 94, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.24);
+        const maskShapeP1 = this.make.graphics();
+        maskShapeP1.fillStyle(0xffffff);
+        maskShapeP1.fillRect(56 - 33, 94 - 33, 66, 66);
+        const maskP1 = maskShapeP1.createGeometryMask();
+        this.p1Portrait = this.add.sprite(56, 114, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.40);
+        this.p1Portrait.setMask(maskP1);
 
         // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
         this.p1NickText = this.add.text(98, 68, 'JOGADOR 1', { 
@@ -168,7 +173,12 @@ export class MainScene extends Phaser.Scene {
 
         // Avatar / Retrato do Professor P2 (Direita do Card, espelhado)
         this.p2PortraitFrame = this.add.rectangle(968, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0xef4444);
-        this.p2Portrait = this.add.image(968, 94, 'prof_web_portrait').setDisplaySize(62, 62).setFlipX(true);
+        const maskShapeP2 = this.make.graphics();
+        maskShapeP2.fillStyle(0xffffff);
+        maskShapeP2.fillRect(968 - 33, 94 - 33, 66, 66);
+        const maskP2 = maskShapeP2.createGeometryMask();
+        this.p2Portrait = this.add.sprite(968, 114, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle').setScale(0.40).setFlipX(true);
+        this.p2Portrait.setMask(maskP2);
 
         // Linha 1: HP Numérico, Disciplina e Nickname (y = 68)
         this.p2HpText = this.add.text(570, 68, '100 HP', {
@@ -326,7 +336,7 @@ export class MainScene extends Phaser.Scene {
         this.ultimateOverlay = this.add.container(512, 288).setDepth(260).setVisible(false);
         this.ultBackdrop = this.add.rectangle(0, 0, 1024, 576, 0x030712, 0.94);
         this.ultFlash = this.add.rectangle(0, 0, 1024, 576, 0xffffff, 0);
-        this.ultPortrait = this.add.image(0, -45, 'prof_so_portrait').setDisplaySize(160, 140);
+        this.ultPortrait = this.add.sprite(0, -60, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.85);
         this.ultHeader = this.add.text(0, 55, '⚡ ULTIMATE FINISHER! ⚡', {
             fontSize: '20px', fill: '#facc15', fontStyle: 'bold', letterSpacing: 2
         }).setOrigin(0.5);
