@@ -28,7 +28,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.load.image('arena_bg', '/assets/bg.jpg');
         
         professors.forEach(p => {
-            this.load.image(p.idleKey, p.idleUrl);
+            this.load.atlas(p.atlasKey, p.atlasImage, p.atlasJson);
             this.load.image(p.portraitKey, p.portraitUrl);
         });
     }
@@ -434,8 +434,8 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         if (side === 'p1') {
             if (this.p1Sprite) {
-                this.p1Sprite.setTexture(prof.idleKey);
-                this.p1Sprite.setDisplaySize(110, 185);
+                this.p1Sprite.setTexture(prof.atlasKey, 'idle');
+                this.p1Sprite.setScale(0.55); // Aspect ratio fixed
                 if (isOnline) {
                     this.p1Sprite.setAlpha(1);
                     this.p1Sprite.clearTint();
@@ -483,8 +483,8 @@ export class CharacterSelectScene extends Phaser.Scene {
             }
         } else {
             if (this.p2Sprite) {
-                this.p2Sprite.setTexture(prof.idleKey);
-                this.p2Sprite.setDisplaySize(110, 185);
+                this.p2Sprite.setTexture(prof.atlasKey, 'idle');
+                this.p2Sprite.setScale(0.55); // Aspect ratio fixed
                 this.p2Sprite.setFlipX(true);
                 if (isOnline) {
                     this.p2Sprite.setAlpha(1);

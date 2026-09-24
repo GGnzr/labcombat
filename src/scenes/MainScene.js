@@ -17,7 +17,7 @@ export class MainScene extends Phaser.Scene {
     preload() {
         this.load.image('arena_bg', '/assets/bg.jpg');
         professors.forEach(p => {
-            this.load.image(p.idleKey, p.idleUrl);
+            this.load.atlas(p.atlasKey, p.atlasImage, p.atlasJson);
             this.load.image(p.portraitKey, p.portraitUrl);
         });
     }
@@ -222,9 +222,9 @@ export class MainScene extends Phaser.Scene {
         const p1PadGlow = this.add.ellipse(0, 48, 80, 16, 0x10b981, 0.25);
         
         // Sprite Estático do Professor P1 (sem animação)
-        this.fighterP1Sprite = this.add.image(0, 48, 'prof_so_idle')
+        this.fighterP1Sprite = this.add.sprite(0, 48, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setDisplaySize(76, 140);
+            .setScale(0.55);
 
         this.fighterP1.add([p1Shadow, p1PadRing, p1PadGlow, this.fighterP1Sprite]);
         this.fighterP1.originalX = 260;
@@ -236,9 +236,9 @@ export class MainScene extends Phaser.Scene {
         const p2PadGlow = this.add.ellipse(0, 48, 80, 16, 0xef4444, 0.25);
 
         // Sprite Estático do Professor P2 (sem animação, espelhado para encarar o P1)
-        this.fighterP2Sprite = this.add.image(0, 48, 'prof_web_idle')
+        this.fighterP2Sprite = this.add.sprite(0, 48, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setDisplaySize(76, 140)
+            .setScale(0.55)
             .setFlipX(true);
 
         this.fighterP2.add([p2Shadow, p2PadRing, p2PadGlow, this.fighterP2Sprite]);
@@ -1060,7 +1060,7 @@ export class MainScene extends Phaser.Scene {
             if (this.textures.exists(winnerProf.portraitKey)) {
                 this.ultPortrait.setTexture(winnerProf.portraitKey);
             } else {
-                this.ultPortrait.setTexture(winnerProf.idleKey);
+                this.ultPortrait.setTexture(winnerProf.portraitKey);
             }
             this.ultMoveName.setText(winnerProf.ultimateName ? winnerProf.ultimateName.toUpperCase() : 'GOLPE FATAL');
             this.ultQuote.setText(winnerProf.ultimateQuote ? `"${winnerProf.ultimateQuote}"` : '"Duelo encerrado com perfeição."');
@@ -1313,7 +1313,7 @@ export class MainScene extends Phaser.Scene {
         if (data.p1) {
             const p1Prof = getProfessorById(data.p1.characterId || 'so');
             const p1Nick = data.p1.nickname || 'Jogador 1';
-            if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.idleKey);
+            if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
             
             // Retrato do Professor P1 no Card
             if (this.p1Portrait && this.textures.exists(p1Prof.portraitKey)) {
@@ -1398,7 +1398,7 @@ export class MainScene extends Phaser.Scene {
         if (data.p2) {
             const p2Prof = getProfessorById(data.p2.characterId || 'web');
             const p2Nick = data.p2.nickname || 'Jogador 2';
-            if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.idleKey);
+            if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
             
             // Retrato do Professor P2 no Card
             if (this.p2Portrait && this.textures.exists(p2Prof.portraitKey)) {

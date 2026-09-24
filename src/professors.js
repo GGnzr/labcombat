@@ -11,7 +11,10 @@ export const professors = [
         idleKey: 'prof_so_idle',
         portraitKey: 'prof_so_portrait',
         idleUrl: '/assets/professors/so_idle.png',
-        portraitUrl: '/assets/professors/so_portrait.png'
+        portraitUrl: '/assets/professors/so_portrait.png',
+        atlasKey: 'atlas_so',
+        atlasImage: '/assets/so/phaser/SO.png',
+        atlasJson: '/assets/so/phaser/SO.json'
     },
     {
         id: 'eng_soft',
@@ -25,7 +28,10 @@ export const professors = [
         idleKey: 'prof_eng_soft_idle',
         portraitKey: 'prof_eng_soft_portrait',
         idleUrl: '/assets/professors/eng_soft_idle.png',
-        portraitUrl: '/assets/professors/eng_soft_portrait.png'
+        portraitUrl: '/assets/professors/eng_soft_portrait.png',
+        atlasKey: 'atlas_eng_soft',
+        atlasImage: '/assets/eng/phaser/eng.png',
+        atlasJson: '/assets/eng/phaser/eng.json'
     },
     {
         id: 'poo',
@@ -39,7 +45,10 @@ export const professors = [
         idleKey: 'prof_poo_idle',
         portraitKey: 'prof_poo_portrait',
         idleUrl: '/assets/professors/poo_idle.png',
-        portraitUrl: '/assets/professors/poo_portrait.png'
+        portraitUrl: '/assets/professors/poo_portrait.png',
+        atlasKey: 'atlas_poo',
+        atlasImage: '/assets/poo/phaser/poo.png',
+        atlasJson: '/assets/poo/phaser/poo.json'
     },
     {
         id: 'web',
@@ -53,7 +62,10 @@ export const professors = [
         idleKey: 'prof_web_idle',
         portraitKey: 'prof_web_portrait',
         idleUrl: '/assets/professors/web_idle.png',
-        portraitUrl: '/assets/professors/web_portrait.png'
+        portraitUrl: '/assets/professors/web_portrait.png',
+        atlasKey: 'atlas_web',
+        atlasImage: '/assets/web/phaser/web.png',
+        atlasJson: '/assets/web/phaser/web.json'
     },
     {
         id: 'bd',
@@ -67,7 +79,10 @@ export const professors = [
         idleKey: 'prof_bd_idle',
         portraitKey: 'prof_bd_portrait',
         idleUrl: '/assets/professors/bd_idle.png',
-        portraitUrl: '/assets/professors/bd_portrait.png'
+        portraitUrl: '/assets/professors/bd_portrait.png',
+        atlasKey: 'atlas_bd',
+        atlasImage: '/assets/bd/phaser/bd.png',
+        atlasJson: '/assets/bd/phaser/bd.json'
     },
     {
         id: 'redes',
@@ -81,7 +96,10 @@ export const professors = [
         idleKey: 'prof_redes_idle',
         portraitKey: 'prof_redes_portrait',
         idleUrl: '/assets/professors/redes_idle.png',
-        portraitUrl: '/assets/professors/redes_portrait.png'
+        portraitUrl: '/assets/professors/redes_portrait.png',
+        atlasKey: 'atlas_redes',
+        atlasImage: '/assets/redes/phaser/redes.png',
+        atlasJson: '/assets/redes/phaser/redes.json'
     }
 ];
 
