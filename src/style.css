@@ -43,9 +43,9 @@ html, body {
 
 #app canvas {
   display: block;
+  box-shadow: none;
   image-rendering: pixelated;
   image-rendering: crisp-edges;
-  box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), 0 0 16px rgba(56, 189, 248, 0.12);
 }
 
 /* Quando o Modo GM está ativo e a Sidebar aberta, reserva 380px na lateral */

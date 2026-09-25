@@ -36,17 +36,20 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     create() {
         // 1. Fundo da Arena com Overlay Escuro Estilo Fighting Game
-        const bg = this.add.image(640, 360, 'arena_bg').setOrigin(0.5);
-        bg.setDisplaySize(1280, 720);
-        this.add.rectangle(640, 360, 1280, 720, 0x050814, 0.82);
+        const width = this.scale.width;
+        const centerX = width / 2;
+
+        const bg = this.add.image(centerX, 360, 'arena_bg').setOrigin(0.5);
+        bg.setDisplaySize(width, 720);
+        this.add.rectangle(centerX, 360, width, 720, 0x050814, 0.82);
 
         // Piso cibernético dos lutadores
-        this.add.line(640, 440, 0, 0, 1280, 0, 0x1e293b).setLineWidth(2);
-        this.add.line(640, 440, 0, 0, 800, 0, 0x38bdf8).setLineWidth(1).setAlpha(0.6);
+        this.add.line(centerX, 440, 0, 0, width, 0, 0x1e293b).setLineWidth(2);
+        this.add.line(centerX, 440, 0, 0, Math.min(width, 800), 0, 0x38bdf8).setLineWidth(1).setAlpha(0.6);
 
         // 2. Cabeçalho Superior Arcade
-        this.add.rectangle(640, 28, 1280, 56, 0x070c18, 0.95);
-        this.add.line(640, 56, 0, 0, 1280, 0, 0x1e293b).setLineWidth(1);
+        this.add.rectangle(centerX, 28, width, 56, 0x070c18, 0.95);
+        this.add.line(centerX, 56, 0, 0, width, 0, 0x1e293b).setLineWidth(1);
 
         // Botão Sair
         this.add.text(65, 28, '🚪 Sair', { 
@@ -61,18 +64,18 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.leaveToMenu());
 
         // Título Central Arcade
-        this.add.text(640, 20, 'SELECT YOUR FIGHTER', { 
+        this.add.text(centerX, 20, 'SELECT YOUR FIGHTER', { 
             fontSize: '20px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 3 
         }).setOrigin(0.5);
 
         const isHost = this.playerId === 'p1';
         const roleLabel = isHost ? 'HOST (1P)' : 'CHALLENGER (2P)';
-        this.add.text(640, 42, `VOCÊ É ${this.nickname.toUpperCase()} • ${roleLabel}`, { 
+        this.add.text(centerX, 42, `VOCÊ É ${this.nickname.toUpperCase()} • ${roleLabel}`, { 
             fontSize: '11px', fill: isHost ? '#34d399' : '#f87171', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
         // Badge de Código da Sala (Canto Superior Direito)
-        this.createRoomCodeBadge(1135, 28);
+        this.createRoomCodeBadge(width - 145, 28);
 
         // 3. Palco do Lutador 1 (P1 - Esquerda)
         this.createP1Stage();
@@ -183,7 +186,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     createP1Stage() {
-        const stageX = 240;
+        const width = this.scale.width;
+        const centerX = width / 2;
+        const stageX = Math.max(220, Math.min(centerX - 240, width * 0.20));
 
         // Card Consolidado do Jogador 1 (Topo esquerdo do palco, sem sobrepor o lutador)
         this.p1BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0x10b981);
@@ -229,7 +234,9 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     createP2Stage() {
-        const stageX = 1040;
+        const width = this.scale.width;
+        const centerX = width / 2;
+        const stageX = Math.min(width - 220, Math.max(centerX + 240, width * 0.80));
 
         // Card Consolidado do Jogador 2 (Topo direito do palco, sem sobrepor o lutador)
         this.p2BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0xef4444);
@@ -276,7 +283,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     createVsEmblem() {
-        const vsContainer = this.add.container(640, 240);
+        const vsContainer = this.add.container(this.scale.width / 2, 240);
 
         // Anel decorativo pulsante
         const ring = this.add.ellipse(0, 0, 100, 100).setStrokeStyle(2, 0x1e293b, 0.8);
@@ -304,15 +311,17 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     createArcadeRoster() {
         // Container e Moldura do Roster
-        this.add.rectangle(640, 545, 1040, 108, 0x070c18, 0.92).setStrokeStyle(1.5, 0x1e293b);
+        const width = this.scale.width;
+        const centerX = width / 2;
+        this.add.rectangle(centerX, 545, Math.min(width - 40, 1040), 108, 0x070c18, 0.92).setStrokeStyle(1.5, 0x1e293b);
 
-        this.add.text(640, 485, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
+        this.add.text(centerX, 485, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold', letterSpacing: 2
         }).setOrigin(0.5);
 
         this.cards = [];
-        const startX = 205;
         const spacingX = 174;
+        const startX = centerX - (2.5 * spacingX);
         const cardY = 545;
 
         professors.forEach((prof, idx) => {
@@ -537,10 +546,12 @@ export class CharacterSelectScene extends Phaser.Scene {
 
 
     createActionFooter() {
+        const width = this.scale.width;
+        const centerX = width / 2;
         const footY = 665;
 
         // Botão Principal de Confirmação (Arcade Lock-In)
-        this.btnConfirm = this.add.text(640, footY, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', { 
+        this.btnConfirm = this.add.text(centerX, footY, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', { 
             fontSize: '15px', fill: '#ffffff', backgroundColor: '#16a34a', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 10, bottom: 10, left: 32, right: 32 }, fontStyle: 'bold' 
@@ -552,7 +563,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.confirmSelection());
 
         // Container de Estado Pronto (quando o jogador confirmar)
-        this.readyBadgeContainer = this.add.container(560, footY).setVisible(false);
+        this.readyBadgeContainer = this.add.container(centerX - 80, footY).setVisible(false);
         this.readyBg = this.add.rectangle(0, 0, 310, 38, 0x064e3b, 0.95).setStrokeStyle(1.5, 0x10b981);
         this.readyTxt = this.add.text(0, 0, '🟢 VOCÊ ESTÁ PRONTO!', {
             fontSize: '13px', fill: '#34d399', fontStyle: 'bold',
@@ -561,7 +572,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.readyBadgeContainer.add([this.readyBg, this.readyTxt]);
 
         // Botão de Cancelar / Trocar Professor
-        this.btnCancel = this.add.text(780, footY, '↩️ Trocar', {
+        this.btnCancel = this.add.text(centerX + 140, footY, '↩️ Trocar', {
             fontSize: '12px', fill: '#ffffff', backgroundColor: '#991b1b',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 9, bottom: 9, left: 16, right: 16 }, fontStyle: 'bold'
@@ -574,14 +585,14 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.cancelSelection());
 
         // Banner Central de Contagem Regressiva
-        this.countdownBanner = this.add.text(640, footY, '', {
+        this.countdownBanner = this.add.text(centerX, footY, '', {
             fontSize: '14px', fill: '#facc15', backgroundColor: '#78350f',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 9, bottom: 9, left: 24, right: 24 }, fontStyle: 'bold'
         }).setOrigin(0.5).setVisible(false);
 
         // Botão Dev Solo (Canto Inferior Direito)
-        this.btnSolo = this.add.text(1185, 665, '⚡ Iniciar Solo', {
+        this.btnSolo = this.add.text(width - 95, 665, '⚡ Iniciar Solo', {
             fontSize: '10px', fill: '#94a3b8', backgroundColor: '#1e293b',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 5, bottom: 5, left: 8, right: 8 }, fontStyle: 'bold'
