@@ -23,31 +23,31 @@ export class MenuScene extends Phaser.Scene {
         }
 
         // 1. Fundo da Arena com Overlay Cinematográfico
-        const bg = this.add.image(512, 288, 'arena_bg').setOrigin(0.5);
-        bg.setDisplaySize(1024, 576);
+        const bg = this.add.image(640, 360, 'arena_bg').setOrigin(0.5);
+        bg.setDisplaySize(1280, 720);
 
         // Overlay escuro translúcido para destacar a interface
-        this.add.rectangle(512, 288, 1024, 576, 0x070b19, 0.72);
+        this.add.rectangle(640, 360, 1280, 720, 0x070b19, 0.72);
 
         // 2. Cabeçalho / Branding
-        this.add.text(512, 38, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
+        this.add.text(640, 42, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
             fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             backgroundColor: '#0a0f1d', padding: { top: 6, bottom: 6, left: 16, right: 16 } 
         }).setOrigin(0.5);
 
-        const titleText = this.add.text(512, 78, 'LABCOMBAT', { 
-            fontSize: '52px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6 
+        const titleText = this.add.text(640, 95, 'LABCOMBAT', { 
+            fontSize: '60px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6 
         }).setOrigin(0.5);
         titleText.setShadow(0, 0, '#38bdf8', 14, false, true);
 
-        this.add.text(512, 114, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
+        this.add.text(640, 142, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
             fontSize: '13px', fill: '#94a3b8' 
         }).setOrigin(0.5);
 
         // Barra de Definição de Apelido (Nickname)
         this.playerNickname = localStorage.getItem('labcombat_nickname') || 'Jogador 1';
-        this.createNicknameBar(512, 154);
+        this.createNicknameBar(640, 190);
 
         // 3. Card 1: Criar Sala (Host / P1)
         this.createHostCard();
@@ -56,7 +56,7 @@ export class MenuScene extends Phaser.Scene {
         this.createJoinCard();
 
         // 5. Mensagens de Status / Feedback
-        this.statusText = this.add.text(512, 450, '', { 
+        this.statusText = this.add.text(640, 560, '', { 
             fontSize: '13px', fill: '#facc15', fontStyle: 'bold', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             backgroundColor: '#0f172a', padding: { top: 6, bottom: 6, left: 16, right: 16 } 
@@ -66,12 +66,12 @@ export class MenuScene extends Phaser.Scene {
         this.createRulesFooter();
 
         // 7. Sub-rodapé informativo
-        this.add.text(512, 546, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
+        this.add.text(640, 680, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
             fontSize: '11px', fill: '#475569'
         }).setOrigin(0.5);
 
         // 8. Botão discreto de Acesso Professor / GM
-        this.add.text(945, 546, '🛡️ Modo GM', {
+        this.add.text(1180, 680, '🛡️ Modo GM', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
         })
@@ -176,12 +176,12 @@ export class MenuScene extends Phaser.Scene {
     }
 
     createHostCard() {
-        const cardX = 352;
-        const cardY = 316;
+        const cardX = 450;
+        const cardY = 375;
         const card = this.add.container(cardX, cardY);
 
         // Fundo do Card
-        const bg = this.add.rectangle(0, 0, 270, 216, 0x0c1322, 0.92)
+        const bg = this.add.rectangle(0, 0, 320, 250, 0x0c1322, 0.92)
             .setStrokeStyle(1.5, 0x059669)
             .setInteractive({ useHandCursor: true });
 
@@ -226,12 +226,12 @@ export class MenuScene extends Phaser.Scene {
     }
 
     createJoinCard() {
-        const cardX = 672;
-        const cardY = 316;
+        const cardX = 830;
+        const cardY = 375;
         const card = this.add.container(cardX, cardY);
 
         // Fundo do Card
-        const bg = this.add.rectangle(0, 0, 270, 216, 0x0c1322, 0.92)
+        const bg = this.add.rectangle(0, 0, 320, 250, 0x0c1322, 0.92)
             .setStrokeStyle(1.5, 0x2563eb)
             .setInteractive({ useHandCursor: true });
 
@@ -280,8 +280,8 @@ export class MenuScene extends Phaser.Scene {
     }
 
     createRulesFooter() {
-        const bar = this.add.container(512, 498);
-        const bg = this.add.rectangle(0, 0, 840, 42, 0x090d16, 0.95).setStrokeStyle(1.5, 0x1e293b);
+        const bar = this.add.container(640, 620);
+        const bg = this.add.rectangle(0, 0, 1020, 44, 0x090d16, 0.95).setStrokeStyle(1.5, 0x1e293b);
 
         const getLimit = () => parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 

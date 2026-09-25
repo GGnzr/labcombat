@@ -36,20 +36,20 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     create() {
         // 1. Fundo da Arena com Overlay Escuro Estilo Fighting Game
-        const bg = this.add.image(512, 288, 'arena_bg').setOrigin(0.5);
-        bg.setDisplaySize(1024, 576);
-        this.add.rectangle(512, 288, 1024, 576, 0x050814, 0.82);
+        const bg = this.add.image(640, 360, 'arena_bg').setOrigin(0.5);
+        bg.setDisplaySize(1280, 720);
+        this.add.rectangle(640, 360, 1280, 720, 0x050814, 0.82);
 
         // Piso cibernético dos lutadores
-        this.add.line(512, 355, 0, 0, 1024, 0, 0x1e293b).setLineWidth(2);
-        this.add.line(512, 355, 0, 0, 600, 0, 0x38bdf8).setLineWidth(1).setAlpha(0.6);
+        this.add.line(640, 440, 0, 0, 1280, 0, 0x1e293b).setLineWidth(2);
+        this.add.line(640, 440, 0, 0, 800, 0, 0x38bdf8).setLineWidth(1).setAlpha(0.6);
 
         // 2. Cabeçalho Superior Arcade
-        this.add.rectangle(512, 24, 1024, 48, 0x070c18, 0.95);
-        this.add.line(512, 48, 0, 0, 1024, 0, 0x1e293b).setLineWidth(1);
+        this.add.rectangle(640, 28, 1280, 56, 0x070c18, 0.95);
+        this.add.line(640, 56, 0, 0, 1280, 0, 0x1e293b).setLineWidth(1);
 
         // Botão Sair
-        this.add.text(55, 24, '🚪 Sair', { 
+        this.add.text(65, 28, '🚪 Sair', { 
             fontSize: '13px', fill: '#fff', backgroundColor: '#991b1b', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold' 
@@ -61,18 +61,18 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.leaveToMenu());
 
         // Título Central Arcade
-        this.add.text(480, 16, 'SELECT YOUR FIGHTER', { 
-            fontSize: '18px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 3 
+        this.add.text(640, 20, 'SELECT YOUR FIGHTER', { 
+            fontSize: '20px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 3 
         }).setOrigin(0.5);
 
         const isHost = this.playerId === 'p1';
         const roleLabel = isHost ? 'HOST (1P)' : 'CHALLENGER (2P)';
-        this.add.text(480, 36, `VOCÊ É ${this.nickname.toUpperCase()} • ${roleLabel}`, { 
+        this.add.text(640, 42, `VOCÊ É ${this.nickname.toUpperCase()} • ${roleLabel}`, { 
             fontSize: '11px', fill: isHost ? '#34d399' : '#f87171', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
         // Badge de Código da Sala (Canto Superior Direito)
-        this.createRoomCodeBadge(895, 24);
+        this.createRoomCodeBadge(1135, 28);
 
         // 3. Palco do Lutador 1 (P1 - Esquerda)
         this.createP1Stage();
@@ -183,100 +183,100 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     createP1Stage() {
-        const stageX = 180;
+        const stageX = 240;
 
         // Card Consolidado do Jogador 1 (Topo esquerdo do palco, sem sobrepor o lutador)
-        this.p1BannerBg = this.add.rectangle(stageX, 100, 340, 98, 0x0c1527, 0.95).setStrokeStyle(1.5, 0x10b981);
+        this.p1BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0x10b981);
         
         // Linha 1: Tag 1P, Nickname e Status
-        this.add.rectangle(stageX - 144, 66, 26, 18, 0x10b981).setStrokeStyle(1, 0xffffff);
-        this.add.text(stageX - 144, 66, '1P', { fontSize: '11px', fill: '#000000', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.rectangle(stageX - 160, 80, 26, 18, 0x10b981).setStrokeStyle(1, 0xffffff);
+        this.add.text(stageX - 160, 80, '1P', { fontSize: '11px', fill: '#000000', fontStyle: 'bold' }).setOrigin(0.5);
 
-        this.p1NickText = this.add.text(stageX - 124, 66, 'JOGADOR 1', { 
+        this.p1NickText = this.add.text(stageX - 140, 80, 'JOGADOR 1', { 
             fontSize: '12px', fill: '#ffffff', fontStyle: 'bold' 
         }).setOrigin(0, 0.5);
 
-        this.p1StatusBadge = this.add.text(stageX + 152, 66, 'ESCOLHENDO', {
+        this.p1StatusBadge = this.add.text(stageX + 165, 80, 'ESCOLHENDO', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
         }).setOrigin(1, 0.5);
 
         // Divisória sutil
-        this.add.line(stageX, 79, 0, 0, 316, 0, 0x1e293b).setLineWidth(1);
+        this.add.line(stageX, 95, 0, 0, 350, 0, 0x1e293b).setLineWidth(1);
 
         // Linha 2: Nome do Lutador Escolhido
-        this.p1FighterName = this.add.text(stageX, 95, 'SISTEMAS OPERACIONAIS', { 
+        this.p1FighterName = this.add.text(stageX, 114, 'SISTEMAS OPERACIONAIS', { 
             fontSize: '14px', fill: '#34d399', fontStyle: 'bold', letterSpacing: 1 
         }).setOrigin(0.5);
 
         // Linha 3: Disciplina / Especialidade
-        this.p1SubjectText = this.add.text(stageX, 115, 'Threads, Processos & Kernel', { 
+        this.p1SubjectText = this.add.text(stageX, 136, 'Threads, Processos & Kernel', { 
             fontSize: '11px', fill: '#94a3b8' 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
-        this.p1UltimateText = this.add.text(stageX, 134, '⚡ KERNEL PANIC (TELA AZUL)', { 
+        this.p1UltimateText = this.add.text(stageX, 158, '⚡ KERNEL PANIC (TELA AZUL)', { 
             fontSize: '11px', fill: '#facc15', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
         // Pedestal e Glow no Piso (Área da Arena Livre)
-        this.p1PadGlow = this.add.ellipse(stageX, 355, 140, 26, 0x10b981, 0.25);
-        this.p1PadRing = this.add.ellipse(stageX, 355, 130, 20).setStrokeStyle(2, 0x10b981, 0.9);
+        this.p1PadGlow = this.add.ellipse(stageX, 440, 160, 30, 0x10b981, 0.25);
+        this.p1PadRing = this.add.ellipse(stageX, 440, 150, 24).setStrokeStyle(2, 0x10b981, 0.9);
 
         // Sprite Estático do Lutador P1 (Pés no pedestal, cabeça abaixo do card superior)
-        this.p1Sprite = this.add.image(stageX, 355, 'prof_so_idle')
+        this.p1Sprite = this.add.sprite(stageX, 440, 'atlas_so', 'idle')
             .setOrigin(0.5, 1.0)
-            .setDisplaySize(110, 185);
+            .setScale(0.65);
     }
 
     createP2Stage() {
-        const stageX = 844;
+        const stageX = 1040;
 
         // Card Consolidado do Jogador 2 (Topo direito do palco, sem sobrepor o lutador)
-        this.p2BannerBg = this.add.rectangle(stageX, 100, 340, 98, 0x0c1527, 0.95).setStrokeStyle(1.5, 0xef4444);
+        this.p2BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0xef4444);
 
         // Linha 1: Status, Nickname e Tag 2P
-        this.p2StatusBadge = this.add.text(stageX - 152, 66, 'AGUARDANDO...', {
+        this.p2StatusBadge = this.add.text(stageX - 165, 80, 'AGUARDANDO...', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
-        this.p2NickText = this.add.text(stageX + 124, 66, 'AGUARDANDO P2', { 
+        this.p2NickText = this.add.text(stageX + 140, 80, 'AGUARDANDO P2', { 
             fontSize: '12px', fill: '#ffffff', fontStyle: 'bold' 
         }).setOrigin(1, 0.5);
 
-        this.add.rectangle(stageX + 144, 66, 26, 18, 0xef4444).setStrokeStyle(1, 0xffffff);
-        this.add.text(stageX + 144, 66, '2P', { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        this.add.rectangle(stageX + 160, 80, 26, 18, 0xef4444).setStrokeStyle(1, 0xffffff);
+        this.add.text(stageX + 160, 80, '2P', { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
 
         // Divisória sutil
-        this.add.line(stageX, 79, 0, 0, 316, 0, 0x1e293b).setLineWidth(1);
+        this.add.line(stageX, 95, 0, 0, 350, 0, 0x1e293b).setLineWidth(1);
 
         // Linha 2: Nome do Lutador Escolhido
-        this.p2FighterName = this.add.text(stageX, 95, 'WEB & MOBILE', { 
+        this.p2FighterName = this.add.text(stageX, 114, 'WEB & MOBILE', { 
             fontSize: '14px', fill: '#f87171', fontStyle: 'bold', letterSpacing: 1 
         }).setOrigin(0.5);
 
         // Linha 3: Disciplina / Especialidade
-        this.p2SubjectText = this.add.text(stageX, 115, 'Frontend, Fullstack & APIs', { 
+        this.p2SubjectText = this.add.text(stageX, 136, 'Frontend, Fullstack & APIs', { 
             fontSize: '11px', fill: '#94a3b8' 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
-        this.p2UltimateText = this.add.text(stageX, 134, '⚡ 404 NOT FOUND (CORS ERROR)', { 
+        this.p2UltimateText = this.add.text(stageX, 158, '⚡ 404 NOT FOUND (CORS ERROR)', { 
             fontSize: '11px', fill: '#facc15', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
         // Pedestal e Glow no Piso (Área da Arena Livre)
-        this.p2PadGlow = this.add.ellipse(stageX, 355, 140, 26, 0xef4444, 0.25);
-        this.p2PadRing = this.add.ellipse(stageX, 355, 130, 20).setStrokeStyle(2, 0xef4444, 0.9);
+        this.p2PadGlow = this.add.ellipse(stageX, 440, 160, 30, 0xef4444, 0.25);
+        this.p2PadRing = this.add.ellipse(stageX, 440, 150, 24).setStrokeStyle(2, 0xef4444, 0.9);
 
         // Sprite Estático do Lutador P2 (Espelhado)
-        this.p2Sprite = this.add.image(stageX, 355, 'prof_web_idle')
+        this.p2Sprite = this.add.sprite(stageX, 440, 'atlas_web', 'idle')
             .setOrigin(0.5, 1.0)
-            .setDisplaySize(110, 185)
+            .setScale(0.65)
             .setFlipX(true);
     }
 
     createVsEmblem() {
-        const vsContainer = this.add.container(512, 195);
+        const vsContainer = this.add.container(640, 240);
 
         // Anel decorativo pulsante
         const ring = this.add.ellipse(0, 0, 100, 100).setStrokeStyle(2, 0x1e293b, 0.8);
@@ -304,43 +304,43 @@ export class CharacterSelectScene extends Phaser.Scene {
 
     createArcadeRoster() {
         // Container e Moldura do Roster
-        this.add.rectangle(512, 420, 680, 96, 0x070c18, 0.92).setStrokeStyle(1.5, 0x1e293b);
+        this.add.rectangle(640, 545, 1040, 108, 0x070c18, 0.92).setStrokeStyle(1.5, 0x1e293b);
 
-        this.add.text(512, 380, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
+        this.add.text(640, 485, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold', letterSpacing: 2
         }).setOrigin(0.5);
 
         this.cards = [];
-        const startX = 247;
-        const spacingX = 106;
-        const cardY = 428;
+        const startX = 205;
+        const spacingX = 174;
+        const cardY = 545;
 
         professors.forEach((prof, idx) => {
             const x = startX + (idx * spacingX);
             const container = this.add.container(x, cardY);
 
             // Moldura do Card do Personagem (88x72)
-            const bg = this.add.rectangle(0, 0, 94, 74, 0x0f172a, 0.95)
+            const bg = this.add.rectangle(0, 0, 154, 88, 0x0f172a, 0.95)
                 .setStrokeStyle(1.5, 0x334155)
                 .setInteractive({ useHandCursor: true });
 
             // Avatar do Professor (Retrato recortado)
-            const portrait = this.add.image(0, -8, prof.portraitKey).setDisplaySize(48, 48);
+            const portrait = this.add.image(0, -10, prof.portraitKey).setDisplaySize(56, 56);
 
             // Nome Curto
-            const nameText = this.add.text(0, 24, prof.shortName.toUpperCase(), { 
-                fontSize: '9px', fill: '#e2e8f0', fontStyle: 'bold', align: 'center', wordWrap: { width: 90 }
+            const nameText = this.add.text(0, 27, prof.shortName.toUpperCase(), { 
+                fontSize: '10px', fill: '#e2e8f0', fontStyle: 'bold', align: 'center', wordWrap: { width: 140 }
             }).setOrigin(0.5);
 
             // Tag de Cursor 1P (Canto Superior Esquerdo)
-            const tag1P = this.add.container(-35, -26);
+            const tag1P = this.add.container(-62, -32);
             const tag1PBg = this.add.rectangle(0, 0, 20, 14, 0x10b981).setStrokeStyle(1, 0xffffff);
             const tag1PTxt = this.add.text(0, 0, '1P', { fontSize: '8px', fill: '#000000', fontStyle: 'bold' }).setOrigin(0.5);
             tag1P.add([tag1PBg, tag1PTxt]);
             tag1P.setVisible(false);
 
             // Tag de Cursor 2P (Canto Superior Direito)
-            const tag2P = this.add.container(35, -26);
+            const tag2P = this.add.container(62, -32);
             const tag2PBg = this.add.rectangle(0, 0, 20, 14, 0xef4444).setStrokeStyle(1, 0xffffff);
             const tag2PTxt = this.add.text(0, 0, '2P', { fontSize: '8px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
             tag2P.add([tag2PBg, tag2PTxt]);
@@ -436,7 +436,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (side === 'p1') {
             if (this.p1Sprite) {
                 this.p1Sprite.setTexture(prof.atlasKey, 'idle');
-                this.p1Sprite.setScale(0.55); // Aspect ratio fixed
+                this.p1Sprite.setScale(0.65); // Aspect ratio fixed
                 if (isOnline) {
                     this.p1Sprite.setAlpha(1);
                     this.p1Sprite.clearTint();
@@ -485,7 +485,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         } else {
             if (this.p2Sprite) {
                 this.p2Sprite.setTexture(prof.atlasKey, 'idle');
-                this.p2Sprite.setScale(0.55); // Aspect ratio fixed
+                this.p2Sprite.setScale(0.65); // Aspect ratio fixed
                 this.p2Sprite.setFlipX(true);
                 if (isOnline) {
                     this.p2Sprite.setAlpha(1);
@@ -537,10 +537,10 @@ export class CharacterSelectScene extends Phaser.Scene {
 
 
     createActionFooter() {
-        const footY = 516;
+        const footY = 665;
 
         // Botão Principal de Confirmação (Arcade Lock-In)
-        this.btnConfirm = this.add.text(512, footY, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', { 
+        this.btnConfirm = this.add.text(640, footY, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', { 
             fontSize: '15px', fill: '#ffffff', backgroundColor: '#16a34a', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 10, bottom: 10, left: 32, right: 32 }, fontStyle: 'bold' 
@@ -552,7 +552,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.confirmSelection());
 
         // Container de Estado Pronto (quando o jogador confirmar)
-        this.readyBadgeContainer = this.add.container(430, footY).setVisible(false);
+        this.readyBadgeContainer = this.add.container(560, footY).setVisible(false);
         this.readyBg = this.add.rectangle(0, 0, 310, 38, 0x064e3b, 0.95).setStrokeStyle(1.5, 0x10b981);
         this.readyTxt = this.add.text(0, 0, '🟢 VOCÊ ESTÁ PRONTO!', {
             fontSize: '13px', fill: '#34d399', fontStyle: 'bold',
@@ -561,7 +561,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.readyBadgeContainer.add([this.readyBg, this.readyTxt]);
 
         // Botão de Cancelar / Trocar Professor
-        this.btnCancel = this.add.text(640, footY, '↩️ Trocar', {
+        this.btnCancel = this.add.text(780, footY, '↩️ Trocar', {
             fontSize: '12px', fill: '#ffffff', backgroundColor: '#991b1b',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 9, bottom: 9, left: 16, right: 16 }, fontStyle: 'bold'
@@ -574,14 +574,14 @@ export class CharacterSelectScene extends Phaser.Scene {
             .on('pointerdown', () => this.cancelSelection());
 
         // Banner Central de Contagem Regressiva
-        this.countdownBanner = this.add.text(512, footY, '', {
+        this.countdownBanner = this.add.text(640, footY, '', {
             fontSize: '14px', fill: '#facc15', backgroundColor: '#78350f',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 9, bottom: 9, left: 24, right: 24 }, fontStyle: 'bold'
         }).setOrigin(0.5).setVisible(false);
 
         // Botão Dev Solo (Canto Inferior Direito)
-        this.btnSolo = this.add.text(955, 545, '⚡ Iniciar Solo', {
+        this.btnSolo = this.add.text(1185, 665, '⚡ Iniciar Solo', {
             fontSize: '10px', fill: '#94a3b8', backgroundColor: '#1e293b',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 5, bottom: 5, left: 8, right: 8 }, fontStyle: 'bold'

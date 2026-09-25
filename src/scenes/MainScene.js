@@ -65,30 +65,30 @@ export class MainScene extends Phaser.Scene {
 
     create() {
         // 0. Base de cor sólida cobrindo todo o canvas 1024x576
-        this.add.rectangle(512, 288, 1024, 576, 0x060913);
+        this.add.rectangle(640, 360, 1280, 720, 0x060913);
 
         // 1. Fundo da Arena (RESTRITO EXCLUSIVAMENTE à parte superior onde ficam os personagens: y=0 a y=330)
         // NÃO fica atrás das questões de forma alguma!
-        const arenaBg = this.add.image(512, 165, 'arena_bg');
-        arenaBg.setDisplaySize(1024, 576); // Proporção natural 16:9
+        const arenaBg = this.add.image(640, 215, 'arena_bg');
+        arenaBg.setDisplaySize(1280, 720);
         
         // Máscara geométrica para confinar o fundo da arena rigorosamente na área dos personagens
         const arenaMaskGfx = this.make.graphics();
         arenaMaskGfx.fillStyle(0xffffff);
-        arenaMaskGfx.fillRect(0, 0, 1024, 330);
+        arenaMaskGfx.fillRect(0, 0, 1280, 430);
         const arenaMask = arenaMaskGfx.createGeometryMask();
         arenaBg.setMask(arenaMask);
 
         // Overlay suave para integrar o fundo da arena
-        const arenaOverlay = this.add.rectangle(512, 165, 1024, 330, 0x000000, 0.15);
+        const arenaOverlay = this.add.rectangle(640, 215, 1280, 430, 0x000000, 0.15);
         arenaOverlay.setMask(arenaMask);
 
         // 2. Barra Superior Unificada (HUD Header)
-        this.add.rectangle(512, 24, 1024, 48, 0x0a0f1d, 0.95);
-        this.add.line(512, 48, 0, 0, 1024, 0, 0x1e293b).setLineWidth(1);
+        this.add.rectangle(640, 28, 1280, 56, 0x0a0f1d, 0.95);
+        this.add.line(640, 56, 0, 0, 1280, 0, 0x1e293b).setLineWidth(1);
 
         // Botão Sair da Sala (compacto e alinhado à esquerda)
-        this.add.text(55, 24, '🚪 Sair', { 
+        this.add.text(65, 28, '🚪 Sair', { 
             fontSize: '13px', fill: '#fff', backgroundColor: '#991b1b', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold' 
@@ -100,12 +100,12 @@ export class MainScene extends Phaser.Scene {
             .on('pointerdown', () => this.leaveRoom());
 
         // Título centralizado
-        this.add.text(512, 16, 'LABCOMBAT', { 
+        this.add.text(640, 20, 'LABCOMBAT', { 
             fontSize: '17px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 2 
         }).setOrigin(0.5);
 
         // Status da partida (logo abaixo do título, sem colidir)
-        this.statusText = this.add.text(512, 35, 'Conectando...', { 
+        this.statusText = this.add.text(640, 43, 'Conectando...', { 
             fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold' 
         }).setOrigin(0.5);
 
@@ -114,44 +114,44 @@ export class MainScene extends Phaser.Scene {
 
         // === CARD P1 (JOGADOR 1 - ESQUERDA) ===
         // Fundo do Card P1
-        this.p1PanelBg = this.add.rectangle(241, 94, 450, 84, 0x0c1527, 0.95).setStrokeStyle(2, 0x10b981);
+        this.p1PanelBg = this.add.rectangle(295, 110, 540, 92, 0x0c1527, 0.95).setStrokeStyle(2, 0x10b981);
         
         // Avatar / Retrato do Professor P1 (Esquerda do Card)
-        this.p1PortraitFrame = this.add.rectangle(56, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0x10b981);
-        this.p1Portrait = this.add.image(56, 94, getProfessorById(this.p1Data?.characterId || 'so').portraitKey).setDisplaySize(58, 58);
+        this.p1PortraitFrame = this.add.rectangle(65, 110, 70, 70, 0x020617).setStrokeStyle(1.5, 0x10b981);
+        this.p1Portrait = this.add.image(65, 110, getProfessorById(this.p1Data?.characterId || 'so').portraitKey).setDisplaySize(62, 62);
 
         // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
-        this.p1NickText = this.add.text(98, 68, 'JOGADOR 1', { 
+        this.p1NickText = this.add.text(112, 82, 'JOGADOR 1', { 
             fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
         }).setOrigin(0, 0.5);
 
-        this.p1ProfText = this.add.text(210, 68, '• SISTEMAS OP.', { 
+        this.p1ProfText = this.add.text(240, 82, '• SISTEMAS OP.', { 
             fontSize: '11px', fill: '#34d399', fontStyle: 'bold' 
         }).setOrigin(0, 0.5);
 
-        this.p1HpText = this.add.text(454, 68, '100 HP', {
+        this.p1HpText = this.add.text(550, 82, '100 HP', {
             fontSize: '12px', fill: '#34d399', fontStyle: 'bold'
         }).setOrigin(1, 0.5);
 
         // Linha 2: Barra de HP P1 (356px de largura, y = 89)
-        this.p1HpBarBg = this.add.rectangle(276, 89, 356, 12, 0x030712).setStrokeStyle(1, 0x334155);
-        this.p1HpBarFill = this.add.rectangle(98, 89, 356, 12, 0x10b981).setOrigin(0, 0.5);
+        this.p1HpBarBg = this.add.rectangle(331, 105, 438, 14, 0x030712).setStrokeStyle(1, 0x334155);
+        this.p1HpBarFill = this.add.rectangle(112, 105, 438, 14, 0x10b981).setOrigin(0, 0.5);
 
         // Linha 3: Medidor de Cargas e Buffs P1 (y = 114)
         this.p1ChargeSlots = [];
         this.p1SlotTexts = [];
         for (let s = 0; s < 3; s++) {
-            const slotBg = this.add.rectangle(112 + (s * 32), 114, 26, 15, 0x1e293b).setStrokeStyle(1, 0x334155);
-            const slotTxt = this.add.text(112 + (s * 32), 114, '⚡', {
+            const slotBg = this.add.rectangle(130 + (s * 36), 130, 28, 16, 0x1e293b).setStrokeStyle(1, 0x334155);
+            const slotTxt = this.add.text(130 + (s * 36), 130, '⚡', {
                 fontSize: '10px', fill: '#475569', fontStyle: 'bold'
             }).setOrigin(0.5);
             this.p1ChargeSlots.push(slotBg);
             this.p1SlotTexts.push(slotTxt);
         }
-        this.p1ChargeLabel = this.add.text(202, 114, 'ESPECIAL: 0/3', {
+        this.p1ChargeLabel = this.add.text(235, 130, 'ESPECIAL: 0/3', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
-        this.p1BuffIcons = this.add.text(454, 114, '', {
+        this.p1BuffIcons = this.add.text(550, 130, '', {
             fontSize: '11px', fontStyle: 'bold'
         }).setOrigin(1, 0.5);
 
@@ -164,44 +164,44 @@ export class MainScene extends Phaser.Scene {
 
         // === CARD P2 (JOGADOR 2 - DIREITA) ===
         // Fundo do Card P2
-        this.p2PanelBg = this.add.rectangle(783, 94, 450, 84, 0x0c1527, 0.95).setStrokeStyle(2, 0xef4444);
+        this.p2PanelBg = this.add.rectangle(985, 110, 540, 92, 0x0c1527, 0.95).setStrokeStyle(2, 0xef4444);
 
         // Avatar / Retrato do Professor P2 (Direita do Card, espelhado)
-        this.p2PortraitFrame = this.add.rectangle(968, 94, 66, 66, 0x020617).setStrokeStyle(1.5, 0xef4444);
-        this.p2Portrait = this.add.image(968, 94, getProfessorById(this.p2Data?.characterId || 'web').portraitKey).setDisplaySize(58, 58).setFlipX(true);
+        this.p2PortraitFrame = this.add.rectangle(1215, 110, 70, 70, 0x020617).setStrokeStyle(1.5, 0xef4444);
+        this.p2Portrait = this.add.image(1215, 110, getProfessorById(this.p2Data?.characterId || 'web').portraitKey).setDisplaySize(62, 62).setFlipX(true);
 
         // Linha 1: HP Numérico, Disciplina e Nickname (y = 68)
-        this.p2HpText = this.add.text(570, 68, '100 HP', {
+        this.p2HpText = this.add.text(730, 82, '100 HP', {
             fontSize: '12px', fill: '#f87171', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
-        this.p2ProfText = this.add.text(814, 68, 'WEB & MOBILE •', { 
+        this.p2ProfText = this.add.text(1040, 82, 'WEB & MOBILE •', { 
             fontSize: '11px', fill: '#f87171', fontStyle: 'bold' 
         }).setOrigin(1, 0.5);
 
-        this.p2NickText = this.add.text(926, 68, 'JOGADOR 2', { 
+        this.p2NickText = this.add.text(1168, 82, 'JOGADOR 2', { 
             fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
         }).setOrigin(1, 0.5);
 
         // Linha 2: Barra de HP P2 (356px de largura, y = 89)
         // Origin (1, 0.5) em x = 926 preenche de 570 a 926 quando 100%
-        this.p2HpBarBg = this.add.rectangle(748, 89, 356, 12, 0x030712).setStrokeStyle(1, 0x334155);
-        this.p2HpBarFill = this.add.rectangle(926, 89, 356, 12, 0x10b981).setOrigin(1, 0.5);
+        this.p2HpBarBg = this.add.rectangle(949, 105, 438, 14, 0x030712).setStrokeStyle(1, 0x334155);
+        this.p2HpBarFill = this.add.rectangle(1168, 105, 438, 14, 0x10b981).setOrigin(1, 0.5);
 
         // Linha 3: Buffs, Label de Especial e Medidor de Cargas P2 (y = 114)
-        this.p2BuffIcons = this.add.text(570, 114, '', {
+        this.p2BuffIcons = this.add.text(730, 130, '', {
             fontSize: '11px', fontStyle: 'bold'
         }).setOrigin(0, 0.5);
 
-        this.p2ChargeLabel = this.add.text(822, 114, 'ESPECIAL: 0/3', {
+        this.p2ChargeLabel = this.add.text(1040, 130, 'ESPECIAL: 0/3', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
         }).setOrigin(1, 0.5);
 
         this.p2ChargeSlots = [];
         this.p2SlotTexts = [];
         for (let s = 0; s < 3; s++) {
-            const slotBg = this.add.rectangle(846 + (s * 32), 114, 26, 15, 0x1e293b).setStrokeStyle(1, 0x334155);
-            const slotTxt = this.add.text(846 + (s * 32), 114, '⚡', {
+            const slotBg = this.add.rectangle(1072 + (s * 36), 130, 28, 16, 0x1e293b).setStrokeStyle(1, 0x334155);
+            const slotTxt = this.add.text(1072 + (s * 36), 130, '⚡', {
                 fontSize: '10px', fill: '#475569', fontStyle: 'bold'
             }).setOrigin(0.5);
             this.p2ChargeSlots.push(slotBg);
@@ -216,88 +216,88 @@ export class MainScene extends Phaser.Scene {
 
         // 4. Personagens e Bases de Combate (Ficam firmes no piso da arena superior)
         // P1 Fighter
-        this.fighterP1 = this.add.container(260, 246);
-        const p1Shadow = this.add.ellipse(0, 48, 100, 24, 0x000000, 0.5);
-        const p1PadRing = this.add.ellipse(0, 48, 92, 20).setStrokeStyle(2, 0x10b981, 0.9);
-        const p1PadGlow = this.add.ellipse(0, 48, 80, 16, 0x10b981, 0.25);
+        this.fighterP1 = this.add.container(320, 340);
+        const p1Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
+        const p1PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0x10b981, 0.9);
+        const p1PadGlow = this.add.ellipse(0, 68, 105, 20, 0x10b981, 0.25);
         
         // Sprite Estático do Professor P1 (sem animação)
-        this.fighterP1Sprite = this.add.sprite(0, 48, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle')
+        this.fighterP1Sprite = this.add.sprite(0, 68, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.55);
+            .setScale(0.65);
 
         this.fighterP1.add([p1Shadow, p1PadRing, p1PadGlow, this.fighterP1Sprite]);
-        this.fighterP1.originalX = 260;
+        this.fighterP1.originalX = 320;
 
         // P2 Fighter
-        this.fighterP2 = this.add.container(764, 246);
-        const p2Shadow = this.add.ellipse(0, 48, 100, 24, 0x000000, 0.5);
-        const p2PadRing = this.add.ellipse(0, 48, 92, 20).setStrokeStyle(2, 0xef4444, 0.9);
-        const p2PadGlow = this.add.ellipse(0, 48, 80, 16, 0xef4444, 0.25);
+        this.fighterP2 = this.add.container(960, 340);
+        const p2Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
+        const p2PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0xef4444, 0.9);
+        const p2PadGlow = this.add.ellipse(0, 68, 105, 20, 0xef4444, 0.25);
 
         // Sprite Estático do Professor P2 (sem animação, espelhado para encarar o P1)
-        this.fighterP2Sprite = this.add.sprite(0, 48, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle')
+        this.fighterP2Sprite = this.add.sprite(0, 68, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.55)
+            .setScale(0.65)
             .setFlipX(true);
 
         this.fighterP2.add([p2Shadow, p2PadRing, p2PadGlow, this.fighterP2Sprite]);
-        this.fighterP2.originalX = 764;
+        this.fighterP2.originalX = 960;
 
         // 5. Linha Divisória de Alta Tecnologia entre a Arena e o Terminal
         // A arena fica restrita acima de y=330. O terminal fica em y=330 a 576 com fundo 100% SÓLIDO!
-        this.add.rectangle(512, 330, 1024, 4, 0x0f172a);
-        this.add.line(512, 330, 0, 0, 1024, 0, 0x38bdf8).setLineWidth(2);
+        this.add.rectangle(640, 430, 1280, 4, 0x0f172a);
+        this.add.line(640, 430, 0, 0, 1280, 0, 0x38bdf8).setLineWidth(2);
 
         // Fundo 100% SÓLIDO do Terminal de Questões (NENHUMA parte do fundo da arena fica atrás!)
-        this.add.rectangle(512, 453, 1024, 246, 0x080c16);
+        this.add.rectangle(640, 575, 1280, 290, 0x080c16);
 
         // Moldura interna do Terminal Cyber
-        this.add.rectangle(512, 453, 996, 234, 0x0b1120)
+        this.add.rectangle(640, 575, 1248, 276, 0x0b1120)
             .setStrokeStyle(1.5, 0x1e293b);
 
         // Faixa de cabeçalho do terminal
-        this.add.rectangle(512, 350, 996, 30, 0x0f172a);
-        this.add.line(512, 365, 0, 0, 996, 0, 0x1e293b).setLineWidth(1);
+        this.add.rectangle(640, 452, 1248, 34, 0x0f172a);
+        this.add.line(640, 469, 0, 0, 1248, 0, 0x1e293b).setLineWidth(1);
 
-        this.add.text(28, 350, '💻 TERMINAL DE COMBATE', { 
+        this.add.text(35, 452, '💻 TERMINAL DE COMBATE', { 
             fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 4, bottom: 4, left: 6, right: 6 }
         }).setOrigin(0, 0.5);
 
         // Cronômetro integrado perfeitamente ao cabeçalho (sem sobreposição!)
-        this.timerText = this.add.text(512, 350, '⏱️ Tempo: --', { 
+        this.timerText = this.add.text(640, 452, '⏱️ Tempo: --', { 
             fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold', 
             backgroundColor: '#1e293b', 
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 6, bottom: 6, left: 14, right: 14 } 
         }).setOrigin(0.5);
 
-        this.add.text(996, 350, 'ARENA QUIZ 1V1', {
+        this.add.text(1245, 452, 'ARENA QUIZ 1V1', {
             fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
         }).setOrigin(1, 0.5);
 
         // Badge Modificador de Questão (Topo da Pergunta)
-        this.roundModifierBadge = this.add.text(512, 372, '', {
+        this.roundModifierBadge = this.add.text(640, 480, '', {
             fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             padding: { top: 3, bottom: 3, left: 12, right: 12 }
         }).setOrigin(0.5).setVisible(false);
 
         // Enunciado da questão (centralizado com leitura nítida e sem fundo poluído)
-        this.questionText = this.add.text(512, 396, '', { 
-            fontSize: '14px', fill: '#f8fafc', align: 'center', 
-            wordWrap: { width: 950 }, fontStyle: 'bold' 
+        this.questionText = this.add.text(640, 506, '', { 
+            fontSize: '15px', fill: '#f8fafc', align: 'center', 
+            wordWrap: { width: 1180 }, fontStyle: 'bold' 
         }).setOrigin(0.5);
 
         // Botões de opções (espaçamento de 32px, largura 960px)
         this.optionButtons = [];
         for (let i = 0; i < 4; i++) {
-            let btn = this.add.text(512, 432 + (i * 32), '', { 
-                fontSize: '12px', fill: '#ffffff', backgroundColor: '#1e293b',
-                fixedWidth: 960,
-                padding: { x: 16, y: 6 }, align: 'left'
+            let btn = this.add.text(640, 548 + (i * 40), '', { 
+                fontSize: '13px', fill: '#ffffff', backgroundColor: '#1e293b',
+                fixedWidth: 1210,
+                padding: { x: 20, y: 7 }, align: 'left'
             }).setOrigin(0.5).setInteractive({ useHandCursor: true });
             
             btn.on('pointerover', () => {
@@ -315,7 +315,7 @@ export class MainScene extends Phaser.Scene {
         }
 
         // Banner Central de Notificações de Combate
-        this.combatAlertBanner = this.add.text(512, 175, '', {
+        this.combatAlertBanner = this.add.text(640, 220, '', {
             fontSize: '14px', fill: '#ffffff', fontStyle: 'bold',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
             backgroundColor: '#030712f0',
@@ -323,9 +323,9 @@ export class MainScene extends Phaser.Scene {
         }).setOrigin(0.5).setVisible(false).setDepth(120);
 
         // Overlay de Ultimate Finisher Cinematográfico
-        this.ultimateOverlay = this.add.container(512, 288).setDepth(260).setVisible(false);
-        this.ultBackdrop = this.add.rectangle(0, 0, 1024, 576, 0x030712, 0.94);
-        this.ultFlash = this.add.rectangle(0, 0, 1024, 576, 0xffffff, 0);
+        this.ultimateOverlay = this.add.container(640, 360).setDepth(260).setVisible(false);
+        this.ultBackdrop = this.add.rectangle(0, 0, 1280, 720, 0x030712, 0.94);
+        this.ultFlash = this.add.rectangle(0, 0, 1280, 720, 0xffffff, 0);
         this.ultPortrait = this.add.sprite(0, -60, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle').setScale(0.85);
         this.ultHeader = this.add.text(0, 55, '⚡ ULTIMATE FINISHER! ⚡', {
             fontSize: '20px', fill: '#facc15', fontStyle: 'bold', letterSpacing: 2
@@ -339,10 +339,10 @@ export class MainScene extends Phaser.Scene {
         this.ultimateOverlay.add([this.ultBackdrop, this.ultFlash, this.ultPortrait, this.ultHeader, this.ultMoveName, this.ultQuote]);
 
         // 6. Painel Game Over (Reformulado, Perfeitamente Centralizado e com Múltiplas Opções)
-        this.gameOverPanel = this.add.container(512, 288).setDepth(200).setVisible(false);
+        this.gameOverPanel = this.add.container(640, 360).setDepth(200).setVisible(false);
 
         // Backdrop escuro total que bloqueia interações com a tela de combate de fundo
-        const goBackdrop = this.add.rectangle(0, 0, 1024, 576, 0x030712, 0.94)
+        const goBackdrop = this.add.rectangle(0, 0, 1280, 720, 0x030712, 0.94)
             .setInteractive();
 
         // Card Central de Alta Fidelidade (Glow + Fundo + Borda Temática)
@@ -544,8 +544,8 @@ export class MainScene extends Phaser.Scene {
         ]);
 
         // 7. Painel de Contagem Inicial
-        this.pausePanel = this.add.container(512, 288).setDepth(15).setVisible(false);
-        const pauseBg = this.add.rectangle(0, 0, 1024, 576, 0x000000, 0.88);
+        this.pausePanel = this.add.container(640, 360).setDepth(15).setVisible(false);
+        const pauseBg = this.add.rectangle(0, 0, 1280, 720, 0x000000, 0.88);
         this.pauseTitle = this.add.text(0, -50, 'AGUARDANDO OPONENTE...', { 
             fontSize: '36px', fontStyle: 'bold', fill: '#facc15' 
         }).setOrigin(0.5);
@@ -1346,7 +1346,7 @@ export class MainScene extends Phaser.Scene {
             }
 
             if (this.p1HpBarFill) {
-                this.p1HpBarFill.setSize(356 * p1Ratio, 12);
+                this.p1HpBarFill.setSize(438 * p1Ratio, 14);
                 this.p1HpBarFill.setFillStyle(p1Color, 1);
             }
             if (this.p1HpText) {
@@ -1432,7 +1432,7 @@ export class MainScene extends Phaser.Scene {
             }
 
             if (this.p2HpBarFill) {
-                this.p2HpBarFill.setSize(356 * p2Ratio, 12);
+                this.p2HpBarFill.setSize(438 * p2Ratio, 14);
                 this.p2HpBarFill.setFillStyle(p2Color, 1);
             }
             if (this.p2HpText) {

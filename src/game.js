@@ -11,9 +11,9 @@ const config = {
     autoFocus: true,
     scale: {
         mode: Phaser.Scale.FIT,
-        autoCenter: Phaser.Scale.NO_CENTER,
-        width: 1024,
-        height: 576
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+        width: 1280,
+        height: 720
     },
     fps: {
         target: 60,
