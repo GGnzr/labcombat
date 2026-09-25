@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, onDisconnect } from "firebase/database";
 import { logEvent } from '../logger.js';
+import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
 
 export class MenuScene extends Phaser.Scene {
     constructor() {
@@ -9,7 +10,7 @@ export class MenuScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('arena_bg', '/assets/bg.jpg');
+        this.load.image('menu_bg', '/assets/campus_veranopolis.jpg');
     }
 
     create() {
@@ -22,30 +23,33 @@ export class MenuScene extends Phaser.Scene {
             return;
         }
 
-        // 1. Fundo da Arena com Overlay Cinematográfico
+        // 1. Fundo do Campus Instituto Federal Veranópolis com Overlay Suave
         const width = this.scale.width;
         const centerX = width / 2;
 
-        const bg = this.add.image(centerX, 360, 'arena_bg').setOrigin(0.5);
+        const bg = this.add.image(centerX, 360, 'menu_bg').setOrigin(0.5);
         bg.setDisplaySize(width, 720);
 
-        // Overlay escuro translúcido para destacar a interface
-        this.add.rectangle(centerX, 360, width, 720, 0x070b19, 0.72);
+        // Overlay suave neutro para valorizar a arte do campus sem escurecer como modo noturno
+        this.add.rectangle(centerX, 360, width, 720, 0x181e26, 0.20);
 
-        // 2. Cabeçalho / Branding
-        this.add.text(centerX, 42, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
-            fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            backgroundColor: '#0a0f1d', padding: { top: 6, bottom: 6, left: 16, right: 16 } 
+        // 2. Cabeçalho / Branding Suave Arcade
+        const topBadge = this.add.container(centerX, 42);
+        const topBadgeGfx = this.add.graphics();
+        drawRoundedRect(topBadgeGfx, -170, -14, 340, 28, 14, 0x242a35, 0.95, 0x475569, 1.2);
+        const topBadgeTxt = this.add.text(0, 0, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
+            fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
+        topBadge.add([topBadgeGfx, topBadgeTxt]);
 
         const titleText = this.add.text(centerX, 95, 'LABCOMBAT', { 
-            fontSize: '60px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6 
+            fontSize: '62px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6, resolution: 2,
+            fontFamily: '"Impact", "Arial Black", system-ui, sans-serif'
         }).setOrigin(0.5);
-        titleText.setShadow(0, 0, '#38bdf8', 14, false, true);
+        titleText.setShadow(0, 0, '#d97706', 14, false, true);
 
         this.add.text(centerX, 142, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
-            fontSize: '13px', fill: '#94a3b8' 
+            fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
         // Barra de Definição de Apelido (Nickname)
@@ -58,33 +62,37 @@ export class MenuScene extends Phaser.Scene {
         // 4. Card 2: Entrar em Sala (Client / P2)
         this.createJoinCard();
 
-        // 5. Mensagens de Status / Feedback
-        this.statusText = this.add.text(centerX, 560, '', { 
-            fontSize: '13px', fill: '#facc15', fontStyle: 'bold', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            backgroundColor: '#0f172a', padding: { top: 6, bottom: 6, left: 16, right: 16 } 
-        }).setOrigin(0.5).setVisible(false);
+        // 5. Mensagens de Status / Feedback (Suave e Arredondado)
+        this.statusText = createSmoothBanner(this, centerX, 560, '', { 
+            radius: 14,
+            fillColor: 0x242a35,
+            strokeColor: 0x475569,
+            strokeWidth: 1.5,
+            fontSize: '13px',
+            textColor: '#f59e0b',
+            fontStyle: 'bold',
+            paddingX: 18,
+            paddingY: 6
+        }).setVisible(false);
 
         // 6. Rodapé: Regras Rápidas da Partida
         this.createRulesFooter();
 
         // 7. Sub-rodapé informativo
         this.add.text(centerX, 680, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
-            fontSize: '11px', fill: '#475569'
+            fontSize: '11px', fill: '#94a3b8', resolution: 2
         }).setOrigin(0.5);
 
-        // 8. Botão discreto de Acesso Professor / GM
-        this.add.text(width - 100, 680, '🛡️ Modo GM', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', function() { this.setStyle({ fill: '#38bdf8' }); })
-            .on('pointerout', function() { this.setStyle({ fill: '#64748b' }); })
-            .on('pointerdown', () => {
-                window.dispatchEvent(new CustomEvent('open-gm-modal'));
-            });
+        // 8. Botão discreto de Acesso Professor / GM (Suave)
+        createSmoothButton(this, width - 90, 680, 110, 28, '🛡️ Modo GM', {
+            radius: 14,
+            fillColor: 0x242a35,
+            hoverFillColor: 0x323a48,
+            strokeColor: 0x475569,
+            textColor: '#cbd5e1',
+            fontSize: '11px',
+            onClick: () => window.dispatchEvent(new CustomEvent('open-gm-modal'))
+        });
 
         // Ocultar Overlay do HTML sempre que a cena carregar
         const overlay = document.getElementById('join-overlay');
@@ -116,57 +124,49 @@ export class MenuScene extends Phaser.Scene {
     createNicknameBar(x, y) {
         this.nicknameContainer = this.add.container(x, y);
 
-        const bg = this.add.rectangle(0, 0, 440, 40, 0x0c1322, 0.95)
-            .setStrokeStyle(1.5, 0x1e293b)
-            .setInteractive({ useHandCursor: true });
+        const bgGfx = this.add.graphics();
+        const renderBg = (fColor, sColor) => {
+            bgGfx.clear();
+            drawRoundedRect(bgGfx, -220, -20, 440, 40, 20, fColor, 0.96, sColor, 1.5);
+        };
+        renderBg(0x242a35, 0x475569);
 
-        const avatarBg = this.add.circle(-186, 0, 14, 0x1e293b, 0.9);
+        const avatarBg = this.add.circle(-186, 0, 14, 0x334155, 1);
         const icon = this.add.text(-186, 0, '👤', { 
             fontSize: '16px',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 8, bottom: 8, left: 8, right: 8 }
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
         }).setOrigin(0.5);
 
         const label = this.add.text(-160, 0, 'SEU APELIDO:', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold' 
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
         this.nicknameDisplayText = this.add.text(-68, 0, this.playerNickname, { 
-            fontSize: '15px', fill: '#38bdf8', fontStyle: 'bold' 
+            fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
-
-        const btnEdit = this.add.text(155, 0, '✏️ Alterar', {
-            fontSize: '11px', fill: '#ffffff', backgroundColor: '#1e293b',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold'
-        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-        btnEdit.on('pointerover', () => {
-            btnEdit.setStyle({ backgroundColor: '#2563eb' });
-            bg.setStrokeStyle(1.5, 0x38bdf8);
-        });
-        btnEdit.on('pointerout', () => {
-            btnEdit.setStyle({ backgroundColor: '#1e293b' });
-            bg.setStrokeStyle(1.5, 0x1e293b);
-        });
-        
-        bg.on('pointerover', () => {
-            bg.setStrokeStyle(1.5, 0x38bdf8);
-            btnEdit.setStyle({ backgroundColor: '#2563eb' });
-        });
-        bg.on('pointerout', () => {
-            bg.setStrokeStyle(1.5, 0x1e293b);
-            btnEdit.setStyle({ backgroundColor: '#1e293b' });
-        });
 
         const openModal = () => {
             window.dispatchEvent(new CustomEvent('open-nickname-modal'));
         };
 
-        bg.on('pointerdown', openModal);
-        btnEdit.on('pointerdown', openModal);
+        const btnEdit = createSmoothButton(this, 155, 0, 96, 28, '✏️ Alterar', {
+            radius: 14,
+            fillColor: 0x323a48,
+            hoverFillColor: 0x3e4758,
+            strokeColor: 0x526075,
+            textColor: '#f59e0b',
+            fontSize: '11px',
+            onClick: openModal
+        });
 
-        this.nicknameContainer.add([bg, avatarBg, icon, label, this.nicknameDisplayText, btnEdit]);
+        this.nicknameContainer.add([bgGfx, avatarBg, icon, label, this.nicknameDisplayText, btnEdit]);
+
+        this.nicknameContainer.setSize(440, 40);
+        this.nicknameContainer.setInteractive({ useHandCursor: true });
+
+        this.nicknameContainer.on('pointerover', () => renderBg(0x2d3544, 0xd97706));
+        this.nicknameContainer.on('pointerout', () => renderBg(0x242a35, 0x475569));
+        this.nicknameContainer.on('pointerdown', openModal);
 
         // Ouvir mudanças de apelido vindas do modal
         this.handleNicknameChanged = (e) => {
@@ -183,49 +183,52 @@ export class MenuScene extends Phaser.Scene {
         const cardY = 375;
         const card = this.add.container(cardX, cardY);
 
-        // Fundo do Card
-        const bg = this.add.rectangle(0, 0, 320, 250, 0x0c1322, 0.92)
-            .setStrokeStyle(1.5, 0x059669)
-            .setInteractive({ useHandCursor: true });
+        const bgGfx = this.add.graphics();
+        const renderBg = (fColor, sColor, sWidth = 1.5) => {
+            bgGfx.clear();
+            drawRoundedRect(bgGfx, -160, -125, 320, 250, 20, fColor, 0.96, sColor, sWidth);
+        };
+        renderBg(0x242a35, 0x2563eb, 1.5);
 
-        // Glow circular atrás do ícone
-        const glow = this.add.circle(0, -56, 24, 0x10b981, 0.15);
+        const glow = this.add.circle(0, -56, 26, 0x2563eb, 0.18);
 
-        // Ícone e Textos
         const icon = this.add.text(0, -56, '⚔️', { 
-            fontSize: '38px',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 16, bottom: 16, left: 16, right: 16 }
+            fontSize: '38px'
         }).setOrigin(0.5);
-        const title = this.add.text(0, -18, 'CRIAR SALA', { 
-            fontSize: '18px', fill: '#34d399', fontStyle: 'bold', letterSpacing: 2 
+        const title = this.add.text(0, -18, 'CRIAR SALA (1P)', { 
+            fontSize: '19px', fill: '#60a5fa', fontStyle: 'bold', letterSpacing: 2, resolution: 2 
         }).setOrigin(0.5);
 
         const desc = this.add.text(0, 20, 'Inicie como Jogador 1 (Host).\nCompartilhe o código da sala e\ndesafie seu colega em tempo real.', { 
-            fontSize: '12px', fill: '#94a3b8', align: 'center', lineSpacing: 5 
+            fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
         }).setOrigin(0.5);
 
-        const btnPill = this.add.text(0, 74, '[ + Criar Nova Sala ]', { 
-            fontSize: '13px', fill: '#ffffff', backgroundColor: '#059669', 
-            padding: { x: 22, y: 9 }, fontStyle: 'bold' 
-        }).setOrigin(0.5);
+        const btnPill = createSmoothButton(this, 0, 78, 220, 38, '+ Criar Nova Sala', {
+            radius: 19,
+            fillColor: 0x2563eb,
+            hoverFillColor: 0x3b82f6,
+            strokeColor: 0x60a5fa,
+            strokeWidth: 1.5,
+            fontSize: '13px',
+            onClick: () => this.createRoom()
+        });
 
-        card.add([bg, glow, icon, title, desc, btnPill]);
+        card.add([bgGfx, glow, icon, title, desc, btnPill]);
 
-        // Efeitos de Hover
-        bg.on('pointerover', () => {
+        card.setSize(320, 250);
+        card.setInteractive({ useHandCursor: true });
+
+        card.on('pointerover', () => {
             this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
-            bg.setStrokeStyle(2, 0x34d399);
-            bg.setFillStyle(0x111c30, 0.95);
-            btnPill.setStyle({ backgroundColor: '#10b981' });
+            renderBg(0x2d3544, 0x60a5fa, 2);
         });
-        bg.on('pointerout', () => {
+        card.on('pointerout', () => {
             this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
-            bg.setStrokeStyle(1.5, 0x059669);
-            bg.setFillStyle(0x0c1322, 0.92);
-            btnPill.setStyle({ backgroundColor: '#059669' });
+            renderBg(0x242a35, 0x2563eb, 1.5);
         });
-        bg.on('pointerdown', () => this.createRoom());
+        card.on('pointerdown', (ptr, lx, ly, ev) => {
+            if (ly < 55) this.createRoom();
+        });
     }
 
     createJoinCard() {
@@ -233,68 +236,75 @@ export class MenuScene extends Phaser.Scene {
         const cardY = 375;
         const card = this.add.container(cardX, cardY);
 
-        // Fundo do Card
-        const bg = this.add.rectangle(0, 0, 320, 250, 0x0c1322, 0.92)
-            .setStrokeStyle(1.5, 0x2563eb)
-            .setInteractive({ useHandCursor: true });
+        const bgGfx = this.add.graphics();
+        const renderBg = (fColor, sColor, sWidth = 1.5) => {
+            bgGfx.clear();
+            drawRoundedRect(bgGfx, -160, -125, 320, 250, 20, fColor, 0.96, sColor, sWidth);
+        };
+        renderBg(0x242a35, 0xdc2626, 1.5);
 
-        // Glow circular atrás do ícone
-        const glow = this.add.circle(0, -56, 24, 0x38bdf8, 0.15);
+        const glow = this.add.circle(0, -56, 26, 0xdc2626, 0.18);
 
-        // Ícone e Textos
         const icon = this.add.text(0, -56, '📡', { 
-            fontSize: '38px',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 16, bottom: 16, left: 16, right: 16 }
+            fontSize: '38px'
         }).setOrigin(0.5);
-        const title = this.add.text(0, -18, 'ENTRAR EM SALA', { 
-            fontSize: '18px', fill: '#60a5fa', fontStyle: 'bold', letterSpacing: 2 
+        const title = this.add.text(0, -18, 'ENTRAR EM SALA (2P)', { 
+            fontSize: '19px', fill: '#f87171', fontStyle: 'bold', letterSpacing: 2, resolution: 2 
         }).setOrigin(0.5);
 
         const desc = this.add.text(0, 20, 'Escolha uma sala aberta na lista\nou digite o código de 4 dígitos\npara disputar o combate.', { 
-            fontSize: '12px', fill: '#94a3b8', align: 'center', lineSpacing: 5 
+            fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
         }).setOrigin(0.5);
 
-        const btnPill = this.add.text(0, 74, '[ Ver Salas / Inserir Código ]', { 
-            fontSize: '12px', fill: '#ffffff', backgroundColor: '#2563eb', 
-            padding: { x: 16, y: 9 }, fontStyle: 'bold' 
-        }).setOrigin(0.5);
+        const btnPill = createSmoothButton(this, 0, 78, 230, 38, '📡 Ver Salas / Inserir Código', {
+            radius: 19,
+            fillColor: 0xdc2626,
+            hoverFillColor: 0xef4444,
+            strokeColor: 0xfca5a5,
+            strokeWidth: 1.5,
+            fontSize: '12px',
+            onClick: () => this.showJoinOverlay()
+        });
 
-        card.add([bg, glow, icon, title, desc, btnPill]);
+        card.add([bgGfx, glow, icon, title, desc, btnPill]);
 
-        // Efeitos de Hover
-        bg.on('pointerover', () => {
+        card.setSize(320, 250);
+        card.setInteractive({ useHandCursor: true });
+
+        card.on('pointerover', () => {
             this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
-            bg.setStrokeStyle(2, 0x60a5fa);
-            bg.setFillStyle(0x111c30, 0.95);
-            btnPill.setStyle({ backgroundColor: '#3b82f6' });
+            renderBg(0x2d3544, 0xfca5a5, 2);
         });
-        bg.on('pointerout', () => {
+        card.on('pointerout', () => {
             this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
-            bg.setStrokeStyle(1.5, 0x2563eb);
-            bg.setFillStyle(0x0c1322, 0.92);
-            btnPill.setStyle({ backgroundColor: '#2563eb' });
+            renderBg(0x242a35, 0xdc2626, 1.5);
         });
-        bg.on('pointerdown', () => {
-            const overlay = document.getElementById('join-overlay');
-            if (overlay && overlay.style.display === 'flex') return;
-            this.showJoinOverlay();
+        card.on('pointerdown', (ptr, lx, ly) => {
+            if (ly < 55) {
+                const overlay = document.getElementById('join-overlay');
+                if (overlay && overlay.style.display === 'flex') return;
+                this.showJoinOverlay();
+            }
         });
     }
 
     createRulesFooter() {
-        const bar = this.add.container(this.scale.width / 2, 620);
-        const bg = this.add.rectangle(0, 0, 1020, 44, 0x090d16, 0.95).setStrokeStyle(1.5, 0x1e293b);
+        const barWidth = Math.min(this.scale.width - 40, 1020);
+        const bar = createSmoothCard(this, this.scale.width / 2, 620, barWidth, 44, {
+            radius: 16,
+            fillColor: 0x242a35,
+            fillAlpha: 0.95,
+            strokeColor: 0x475569,
+            strokeWidth: 1.5
+        });
 
         const getLimit = () => parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
         this.rulesText = this.add.text(0, 0, `💚 100 HP  •  ⚡ 3 Cargas de Especial  •  💥 Super Golpe & Ultimate K.O.  •  ⏱️ ${getLimit()}s por Questão`, {
-            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 8, bottom: 8, left: 12, right: 12 }
+            fontSize: '13px', fill: '#f1f5f9', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
-        bar.add([bg, this.rulesText]);
+        bar.add(this.rulesText);
 
         this.handleDevTimersChanged = (e) => {
             const limit = e?.detail?.questionTimeLimit || getLimit();

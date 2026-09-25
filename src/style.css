@@ -8,8 +8,10 @@ html, body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
-  background-color: #050811;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Segoe UI Emoji', 'Apple Color Emoji', 'Noto Color Emoji', sans-serif;
+  background-color: #181e26;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif, 'Segoe UI Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   touch-action: manipulation;
   user-select: none;
   -webkit-user-select: none;
@@ -37,15 +39,13 @@ html, body {
   overflow: hidden;
   border: none;
   flex: 1;
-  background-color: #050811;
+  background-color: #181e26;
   transition: width 0.15s ease-out;
 }
 
 #app canvas {
   display: block;
   box-shadow: none;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
 }
 
 /* Quando o Modo GM está ativo e a Sidebar aberta, reserva 380px na lateral */

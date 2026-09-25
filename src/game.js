@@ -25,10 +25,29 @@ export function getGameSize() {
 
 const initialSize = getGameSize();
 
+// Configuração tipográfica moderna global para garantir nitidez cristalina em todos os textos do Phaser
+if (Phaser?.GameObjects?.TextStyle?.prototype?.setStyle) {
+    const originalSetStyle = Phaser.GameObjects.TextStyle.prototype.setStyle;
+    Phaser.GameObjects.TextStyle.prototype.setStyle = function(style, updateText, setDefaults) {
+        if (!style) style = {};
+        if (setDefaults) {
+            if (!style.fontFamily) {
+                style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+            }
+            if (style.resolution === undefined || style.resolution === 0) {
+                style.resolution = 2;
+            }
+        }
+        return originalSetStyle.call(this, style, updateText, setDefaults);
+    };
+}
+
 const config = {
     type: Phaser.AUTO,
     parent: 'app',
-    pixelArt: true,
+    pixelArt: false,
+    antialias: true,
+    roundPixels: false,
     autoFocus: true,
     scale: {
         mode: Phaser.Scale.FIT,

@@ -14,7 +14,8 @@ export const professors = [
         portraitUrl: '/assets/professors/so_portrait.png',
         atlasKey: 'atlas_so',
         atlasImage: '/assets/so/phaser/SO.png',
-        atlasJson: '/assets/so/phaser/SO.json'
+        atlasJson: '/assets/so/phaser/SO.json',
+        scale: 0.65
     },
     {
         id: 'eng_soft',
@@ -31,7 +32,8 @@ export const professors = [
         portraitUrl: '/assets/professors/eng_soft_portrait.png',
         atlasKey: 'atlas_eng_soft',
         atlasImage: '/assets/eng/phaser/eng.png',
-        atlasJson: '/assets/eng/phaser/eng.json'
+        atlasJson: '/assets/eng/phaser/eng.json',
+        scale: 0.65
     },
     {
         id: 'poo',
@@ -48,7 +50,8 @@ export const professors = [
         portraitUrl: '/assets/professors/poo_portrait.png',
         atlasKey: 'atlas_poo',
         atlasImage: '/assets/poo/phaser/poo.png',
-        atlasJson: '/assets/poo/phaser/poo.json'
+        atlasJson: '/assets/poo/phaser/poo.json',
+        scale: 0.65
     },
     {
         id: 'web',
@@ -65,7 +68,8 @@ export const professors = [
         portraitUrl: '/assets/professors/web_portrait.png',
         atlasKey: 'atlas_web',
         atlasImage: '/assets/web/phaser/web.png',
-        atlasJson: '/assets/web/phaser/web.json'
+        atlasJson: '/assets/web/phaser/web.json',
+        scale: 0.65
     },
     {
         id: 'bd',
@@ -82,7 +86,10 @@ export const professors = [
         portraitUrl: '/assets/professors/bd_portrait.png',
         atlasKey: 'atlas_bd',
         atlasImage: '/assets/bd/phaser/bd.png',
-        atlasJson: '/assets/bd/phaser/bd.json'
+        atlasJson: '/assets/bd/phaser/bd.json',
+        scale: 0.728, // Calibrado para ter a mesma altura do Eng. de Software (345 * 0.65 = 224.25px vs 308 * 0.728 = 224.22px)
+        portraitScale: 1.12,
+        portraitOffsetY: -1
     },
     {
         id: 'redes',
@@ -99,7 +106,8 @@ export const professors = [
         portraitUrl: '/assets/professors/redes_portrait.png',
         atlasKey: 'atlas_redes',
         atlasImage: '/assets/redes/phaser/redes.png',
-        atlasJson: '/assets/redes/phaser/redes.json'
+        atlasJson: '/assets/redes/phaser/redes.json',
+        scale: 0.65
     }
 ];
 

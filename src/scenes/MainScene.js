@@ -3,6 +3,8 @@ import { ref, set, onValue, get, update, remove } from 'firebase/database';
 import { db } from '../firebase.js';
 import { questions } from '../questions.js';
 import { professors, getProfessorById } from '../professors.js';
+import { arenas, getArenaById, getRandomArena } from '../arenas.js';
+import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -15,7 +17,9 @@ export class MainScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('arena_bg', '/assets/bg.jpg');
+        arenas.forEach(a => {
+            this.load.image(a.key, a.image);
+        });
         professors.forEach(p => {
             this.load.atlas(p.atlasKey, p.atlasImage, p.atlasJson);
             this.load.image(p.portraitKey, p.portraitUrl);
@@ -26,6 +30,8 @@ export class MainScene extends Phaser.Scene {
         this.roomId = data.roomId;
         this.playerId = data.playerId;
         this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || localStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
+        this.arenaId = data?.arenaId || getRandomArena().id;
+        this.currentArenaId = this.arenaId;
         this.isWaitingForOpponent = true;
         
         // Reset flags so they don't leak between reconnects
@@ -68,12 +74,14 @@ export class MainScene extends Phaser.Scene {
         const width = this.scale.width;
         const centerX = width / 2;
 
-        this.add.rectangle(centerX, 360, width, 720, 0x060913);
+        this.add.rectangle(centerX, 360, width, 720, 0x181e26);
 
         // 1. Fundo da Arena (RESTRITO EXCLUSIVAMENTE à parte superior onde ficam os personagens: y=0 a y=330)
         // NÃO fica atrás das questões de forma alguma!
-        const arenaBg = this.add.image(centerX, 215, 'arena_bg');
+        const currentArena = getArenaById(this.arenaId);
+        const arenaBg = this.add.image(centerX, 215, currentArena.key);
         arenaBg.setDisplaySize(width, 720);
+        this.arenaBg = arenaBg;
         
         // Máscara geométrica para confinar o fundo da arena rigorosamente na área dos personagens
         const arenaMaskGfx = this.make.graphics();
@@ -86,77 +94,93 @@ export class MainScene extends Phaser.Scene {
         const arenaOverlay = this.add.rectangle(centerX, 215, width, 430, 0x000000, 0.15);
         arenaOverlay.setMask(arenaMask);
 
-        // 2. Barra Superior Unificada (HUD Header)
-        this.add.rectangle(centerX, 28, width, 56, 0x0a0f1d, 0.95);
-        this.add.line(centerX, 56, 0, 0, width, 0, 0x1e293b).setLineWidth(1);
+        // 2. Barra Superior Unificada (HUD Header Neutro Arcade)
+        this.add.rectangle(centerX, 28, width, 56, 0x242a35, 0.96);
+        this.add.line(centerX, 56, 0, 0, width, 0, 0x475569).setLineWidth(1);
 
-        // Botão Sair da Sala (compacto e alinhado à esquerda)
-        this.add.text(65, 28, '🚪 Sair', { 
-            fontSize: '13px', fill: '#fff', backgroundColor: '#991b1b', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', function() { this.setStyle({ backgroundColor: '#b91c1c' }); })
-            .on('pointerout', function() { this.setStyle({ backgroundColor: '#991b1b' }); })
-            .on('pointerdown', () => this.leaveRoom());
+        // Botão Sair da Sala Retrô Suave
+        createSmoothButton(this, 65, 28, 88, 32, '🚪 Sair', {
+            radius: 16,
+            fillColor: 0x7f1d1d,
+            hoverFillColor: 0x991b1b,
+            strokeColor: 0xb91c1c,
+            fontSize: '12px',
+            onClick: () => this.leaveRoom()
+        });
 
-        // Título centralizado
+        // Título centralizado Arcade Gold
         this.add.text(centerX, 20, 'LABCOMBAT', { 
-            fontSize: '17px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 2 
+            fontSize: '17px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
-        // Status da partida (logo abaixo do título, sem colidir)
+        // Status da partida
         this.statusText = this.add.text(centerX, 43, 'Conectando...', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold' 
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         // 3. Painéis dos Jogadores - Fighter HUD Cards (P1 à esquerda, P2 à direita)
-        // Dimensões: 450px de largura x 84px de altura. Espaço central de 92px entre os cards.
+        // 3. Painéis dos Jogadores - Fighter HUD Cards Responsivos (P1 à esquerda, P2 à direita)
+        // Largura adaptativa: garante que em telas 4:3, 16:9 ou ultrawide os cards NUNCA se sobreponham
+        const maxCardWidth = Math.min(540, Math.floor((width - 40) / 2));
+        const cardWidth = Math.max(360, maxCardWidth);
+        const p1CardX = Math.min(centerX - cardWidth / 2 - 10, Math.max(16 + cardWidth / 2, centerX - 345));
+        const p2CardX = Math.max(centerX + cardWidth / 2 + 10, Math.min(width - 16 - cardWidth / 2, centerX + 345));
+
+        const p1Left = p1CardX - cardWidth / 2;
+        const p1Right = p1CardX + cardWidth / 2;
+        const p1ContentX = p1Left + 84;
+
+        const p2Left = p2CardX - cardWidth / 2;
+        const p2Right = p2CardX + cardWidth / 2;
+        const p2ContentX = p2Right - 84;
+
+        this.hpBarFullWidth = cardWidth - 102;
 
         // === CARD P1 (JOGADOR 1 - ESQUERDA) ===
-        // Fundo do Card P1
-        const p1CardX = Math.max(295, centerX - 345);
-        this.p1PanelBg = this.add.rectangle(p1CardX, 110, 540, 92, 0x0c1527, 0.95).setStrokeStyle(2, 0x10b981);
+        this.p1PanelBg = createSmoothCard(this, p1CardX, 110, cardWidth, 92, {
+            radius: 18,
+            fillColor: 0x242a35,
+            fillAlpha: 0.96,
+            strokeColor: 0x2563eb,
+            strokeWidth: 1.5
+        });
         
-        // Avatar / Retrato do Professor P1 (Esquerda do Card)
-        this.p1PortraitFrame = this.add.rectangle(p1CardX - 230, 110, 70, 70, 0x020617).setStrokeStyle(1.5, 0x10b981);
-        this.p1Portrait = this.add.image(p1CardX - 230, 110, getProfessorById(this.p1Data?.characterId || 'so').portraitKey).setDisplaySize(62, 62);
+        // Avatar / Retrato do Professor P1 (Posicionado diretamente sobre o card, sem borda interna)
+        this.p1Portrait = this.add.image(p1Left + 42, 110, getProfessorById(this.p1Data?.characterId || 'so').portraitKey).setDisplaySize(64, 64);
 
-        // Linha 1: Nickname, Disciplina e HP Numérico (y = 68)
-        this.p1NickText = this.add.text(p1CardX - 183, 82, 'JOGADOR 1', { 
-            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
+        // Linha 1: Nickname, Disciplina e HP Numérico (y = 82)
+        this.p1NickText = this.add.text(p1ContentX, 82, 'JOGADOR 1', { 
+            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
-        this.p1ProfText = this.add.text(p1CardX - 55, 82, '• SISTEMAS OP.', { 
-            fontSize: '11px', fill: '#34d399', fontStyle: 'bold' 
+        this.p1ProfText = this.add.text(p1ContentX + 120, 82, '• SISTEMAS OP.', { 
+            fontSize: '11px', fill: '#93c5fd', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
-        this.p1HpText = this.add.text(p1CardX + 255, 82, '100 HP', {
-            fontSize: '12px', fill: '#34d399', fontStyle: 'bold'
+        this.p1HpText = this.add.text(p1Right - 15, 82, '100 HP', {
+            fontSize: '12px', fill: '#4ade80', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
-        // Linha 2: Barra de HP P1 (356px de largura, y = 89)
-        this.p1HpBarBg = this.add.rectangle(p1CardX + 36, 105, 438, 14, 0x030712).setStrokeStyle(1, 0x334155);
-        this.p1HpBarFill = this.add.rectangle(p1CardX - 183, 105, 438, 14, 0x10b981).setOrigin(0, 0.5);
+        // Linha 2: Barra de HP P1 (y = 105)
+        this.p1HpBarBg = this.add.rectangle(p1ContentX, 105, this.hpBarFullWidth, 14, 0x1e2430).setStrokeStyle(1, 0x475569).setOrigin(0, 0.5);
+        this.p1HpBarFill = this.add.rectangle(p1ContentX, 105, this.hpBarFullWidth, 14, 0x16a34a).setOrigin(0, 0.5);
 
-        // Linha 3: Medidor de Cargas e Buffs P1 (y = 114)
+        // Linha 3: Medidor de Cargas e Buffs P1 (y = 130)
         this.p1ChargeSlots = [];
         this.p1SlotTexts = [];
         for (let s = 0; s < 3; s++) {
-            const slotBg = this.add.rectangle((p1CardX - 165) + (s * 36), 130, 28, 16, 0x1e293b).setStrokeStyle(1, 0x334155);
-            const slotTxt = this.add.text((p1CardX - 165) + (s * 36), 130, '⚡', {
-                fontSize: '10px', fill: '#475569', fontStyle: 'bold'
+            const slotBg = this.add.rectangle(p1ContentX + 14 + (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
+            const slotTxt = this.add.text(p1ContentX + 14 + (s * 36), 130, '⚡', {
+                fontSize: '10px', fill: '#64748b', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p1ChargeSlots.push(slotBg);
             this.p1SlotTexts.push(slotTxt);
         }
-        this.p1ChargeLabel = this.add.text(p1CardX - 60, 130, 'ESPECIAL: 0/3', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        this.p1ChargeLabel = this.add.text(p1ContentX + 120, 130, 'ESPECIAL: 0/3', {
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
-        this.p1BuffIcons = this.add.text(p1CardX + 255, 130, '', {
-            fontSize: '11px', fontStyle: 'bold'
+        this.p1BuffIcons = this.add.text(p1Right - 15, 130, '', {
+            fontSize: '11px', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         // Aliases para compatibilidade
@@ -167,47 +191,49 @@ export class MainScene extends Phaser.Scene {
 
 
         // === CARD P2 (JOGADOR 2 - DIREITA) ===
-        // Fundo do Card P2
-        const p2CardX = Math.min(width - 295, centerX + 345);
-        this.p2PanelBg = this.add.rectangle(p2CardX, 110, 540, 92, 0x0c1527, 0.95).setStrokeStyle(2, 0xef4444);
+        this.p2PanelBg = createSmoothCard(this, p2CardX, 110, cardWidth, 92, {
+            radius: 18,
+            fillColor: 0x242a35,
+            fillAlpha: 0.96,
+            strokeColor: 0xdc2626,
+            strokeWidth: 1.5
+        });
 
-        // Avatar / Retrato do Professor P2 (Direita do Card, espelhado)
-        this.p2PortraitFrame = this.add.rectangle(p2CardX + 230, 110, 70, 70, 0x020617).setStrokeStyle(1.5, 0xef4444);
-        this.p2Portrait = this.add.image(p2CardX + 230, 110, getProfessorById(this.p2Data?.characterId || 'web').portraitKey).setDisplaySize(62, 62).setFlipX(true);
+        // Avatar / Retrato do Professor P2 (Posicionado diretamente sobre o card, espelhado, sem borda interna)
+        this.p2Portrait = this.add.image(p2Right - 42, 110, getProfessorById(this.p2Data?.characterId || 'web').portraitKey).setDisplaySize(64, 64).setFlipX(true);
 
-        // Linha 1: HP Numérico, Disciplina e Nickname (y = 68)
-        this.p2HpText = this.add.text(p2CardX - 255, 82, '100 HP', {
-            fontSize: '12px', fill: '#f87171', fontStyle: 'bold'
+        // Linha 1: HP Numérico, Disciplina e Nickname (y = 82)
+        this.p2HpText = this.add.text(p2Left + 15, 82, '100 HP', {
+            fontSize: '12px', fill: '#f87171', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
-        this.p2ProfText = this.add.text(p2CardX + 55, 82, 'WEB & MOBILE •', { 
-            fontSize: '11px', fill: '#f87171', fontStyle: 'bold' 
+        this.p2ProfText = this.add.text(p2ContentX - 120, 82, 'WEB & MOBILE •', { 
+            fontSize: '11px', fill: '#fca5a5', fontStyle: 'bold', resolution: 2 
         }).setOrigin(1, 0.5);
 
-        this.p2NickText = this.add.text(p2CardX + 183, 82, 'JOGADOR 2', { 
-            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold' 
+        this.p2NickText = this.add.text(p2ContentX, 82, 'JOGADOR 2', { 
+            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(1, 0.5);
 
-        // Linha 2: Barra de HP P2 (356px de largura, y = 89)
-        // Origin (1, 0.5) em x = 926 preenche de 570 a 926 quando 100%
-        this.p2HpBarBg = this.add.rectangle(p2CardX - 36, 105, 438, 14, 0x030712).setStrokeStyle(1, 0x334155);
-        this.p2HpBarFill = this.add.rectangle(p2CardX + 183, 105, 438, 14, 0x10b981).setOrigin(1, 0.5);
+        // Linha 2: Barra de HP P2 (y = 105)
+        this.p2HpBarBg = this.add.rectangle(p2ContentX, 105, this.hpBarFullWidth, 14, 0x1e2430).setStrokeStyle(1, 0x475569).setOrigin(1, 0.5);
+        this.p2HpBarFill = this.add.rectangle(p2ContentX, 105, this.hpBarFullWidth, 14, 0x16a34a).setOrigin(1, 0.5);
 
-        // Linha 3: Buffs, Label de Especial e Medidor de Cargas P2 (y = 114)
-        this.p2BuffIcons = this.add.text(p2CardX - 255, 130, '', {
-            fontSize: '11px', fontStyle: 'bold'
+        // Linha 3: Buffs, Label de Especial e Medidor de Cargas P2 (y = 130)
+        this.p2BuffIcons = this.add.text(p2Left + 15, 130, '', {
+            fontSize: '11px', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
-        this.p2ChargeLabel = this.add.text(p2CardX + 55, 130, 'ESPECIAL: 0/3', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        this.p2ChargeLabel = this.add.text(p2ContentX - 120, 130, 'ESPECIAL: 0/3', {
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         this.p2ChargeSlots = [];
         this.p2SlotTexts = [];
         for (let s = 0; s < 3; s++) {
-            const slotBg = this.add.rectangle((p2CardX + 87) + (s * 36), 130, 28, 16, 0x1e293b).setStrokeStyle(1, 0x334155);
-            const slotTxt = this.add.text((p2CardX + 87) + (s * 36), 130, '⚡', {
-                fontSize: '10px', fill: '#475569', fontStyle: 'bold'
+            const slotBg = this.add.rectangle(p2ContentX - 14 - (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
+            const slotTxt = this.add.text(p2ContentX - 14 - (s * 36), 130, '⚡', {
+                fontSize: '10px', fill: '#64748b', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p2ChargeSlots.push(slotBg);
             this.p2SlotTexts.push(slotTxt);
@@ -224,13 +250,14 @@ export class MainScene extends Phaser.Scene {
         const fighter1X = Math.max(280, centerX - 320);
         this.fighterP1 = this.add.container(fighter1X, 340);
         const p1Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
-        const p1PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0x10b981, 0.9);
-        const p1PadGlow = this.add.ellipse(0, 68, 105, 20, 0x10b981, 0.25);
+        const p1PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0x2563eb, 0.9);
+        const p1PadGlow = this.add.ellipse(0, 68, 105, 20, 0x2563eb, 0.25);
         
         // Sprite Estático do Professor P1 (sem animação)
-        this.fighterP1Sprite = this.add.sprite(0, 68, getProfessorById(this.p1Data?.characterId || 'so').atlasKey, 'idle')
+        const p1Prof = getProfessorById(this.p1Data?.characterId || 'so');
+        this.fighterP1Sprite = this.add.sprite(0, 68, p1Prof.atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.65);
+            .setScale(p1Prof.scale || 0.65);
 
         this.fighterP1.add([p1Shadow, p1PadRing, p1PadGlow, this.fighterP1Sprite]);
         this.fighterP1.originalX = fighter1X;
@@ -239,13 +266,14 @@ export class MainScene extends Phaser.Scene {
         const fighter2X = Math.min(width - 280, centerX + 320);
         this.fighterP2 = this.add.container(fighter2X, 340);
         const p2Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
-        const p2PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0xef4444, 0.9);
-        const p2PadGlow = this.add.ellipse(0, 68, 105, 20, 0xef4444, 0.25);
+        const p2PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0xdc2626, 0.9);
+        const p2PadGlow = this.add.ellipse(0, 68, 105, 20, 0xdc2626, 0.25);
 
         // Sprite Estático do Professor P2 (sem animação, espelhado para encarar o P1)
-        this.fighterP2Sprite = this.add.sprite(0, 68, getProfessorById(this.p2Data?.characterId || 'web').atlasKey, 'idle')
+        const p2Prof = getProfessorById(this.p2Data?.characterId || 'web');
+        this.fighterP2Sprite = this.add.sprite(0, 68, p2Prof.atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.65)
+            .setScale(p2Prof.scale || 0.65)
             .setFlipX(true);
 
         this.fighterP2.add([p2Shadow, p2PadRing, p2PadGlow, this.fighterP2Sprite]);
@@ -253,81 +281,156 @@ export class MainScene extends Phaser.Scene {
 
         // 5. Linha Divisória de Alta Tecnologia entre a Arena e o Terminal
         // A arena fica restrita acima de y=330. O terminal fica em y=330 a 576 com fundo 100% SÓLIDO!
-        this.add.rectangle(centerX, 430, width, 4, 0x0f172a);
-        this.add.line(centerX, 430, 0, 0, width, 0, 0x38bdf8).setLineWidth(2);
+        this.add.rectangle(centerX, 430, width, 4, 0x181e26);
+        this.add.line(centerX, 430, 0, 0, width, 0, 0x475569).setLineWidth(2);
 
         // Fundo 100% SÓLIDO do Terminal de Questões (NENHUMA parte do fundo da arena fica atrás!)
-        this.add.rectangle(centerX, 575, width, 290, 0x080c16);
+        this.add.rectangle(centerX, 575, width, 290, 0x1a202c);
 
-        // Moldura interna do Terminal Cyber
-        this.add.rectangle(centerX, 575, width - 32, 276, 0x0b1120)
-            .setStrokeStyle(1.5, 0x1e293b);
+        // Moldura interna do Terminal Arcade Neutro com cantos arredondados suaves
+        const termWidth = width - 32;
+        const termGfx = this.add.graphics();
+        drawRoundedRect(termGfx, centerX - termWidth / 2, 437, termWidth, 276, 18, 0x242a35, 0.98, 0x475569, 1.5);
 
         // Faixa de cabeçalho do terminal
-        this.add.rectangle(centerX, 452, width - 32, 34, 0x0f172a);
-        this.add.line(centerX, 469, 0, 0, width - 32, 0, 0x1e293b).setLineWidth(1);
+        const termHeaderGfx = this.add.graphics();
+        drawRoundedRect(termHeaderGfx, centerX - termWidth / 2, 437, termWidth, 34, 14, 0x2d3544, 0.95, 0x475569, 1);
 
-        this.add.text(35, 452, '💻 TERMINAL DE COMBATE', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
+        this.add.text(35, 454, '💻 TERMINAL DE COMBATE', { 
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2,
             padding: { top: 4, bottom: 4, left: 6, right: 6 }
         }).setOrigin(0, 0.5);
 
-        // Cronômetro integrado perfeitamente ao cabeçalho (sem sobreposição!)
-        this.timerText = this.add.text(centerX, 452, '⏱️ Tempo: --', { 
-            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold', 
-            backgroundColor: '#1e293b', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 6, bottom: 6, left: 14, right: 14 } 
+        // Cronômetro integrado perfeitamente ao cabeçalho (Cápsula Suave)
+        const timerContainer = createSmoothCard(this, centerX, 454, 160, 26, {
+            radius: 13,
+            fillColor: 0x1e2430,
+            strokeColor: 0xf59e0b,
+            strokeWidth: 1.2
+        });
+        this.timerText = this.add.text(0, 0, '⏱️ Tempo: --', { 
+            fontSize: '12px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
+        timerContainer.add(this.timerText);
 
-        this.add.text(width - 45, 452, 'ARENA QUIZ 1V1', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+        this.arenaIndicatorText = this.add.text(width - 45, 454, `🏟️ ${currentArena.name.toUpperCase()}`, {
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
-        // Badge Modificador de Questão (Topo da Pergunta)
-        this.roundModifierBadge = this.add.text(centerX, 480, '', {
-            fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 3, bottom: 3, left: 12, right: 12 }
-        }).setOrigin(0.5).setVisible(false);
+        // Badge Modificador de Questão (Topo da Pergunta - Suave e Arredondado)
+        this.roundModifierBadge = createSmoothBanner(this, centerX, 480, '', {
+            radius: 12,
+            fontSize: '11px',
+            textColor: '#f59e0b',
+            fontStyle: 'bold',
+            paddingX: 14,
+            paddingY: 4
+        }).setVisible(false);
 
         // Enunciado da questão (centralizado com leitura nítida e sem fundo poluído)
         this.questionText = this.add.text(centerX, 506, '', { 
             fontSize: '15px', fill: '#f8fafc', align: 'center', 
-            wordWrap: { width: Math.min(width - 80, 1180) }, fontStyle: 'bold' 
+            wordWrap: { width: Math.min(width - 80, 1180) }, fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        // Botões de opções (espaçamento de 32px, largura 960px)
+        // Botões de opções modernos e suaves com cantos arredondados
+        const btnWidth = Math.min(width - 60, 1210);
+        const btnHeight = 36;
         this.optionButtons = [];
         for (let i = 0; i < 4; i++) {
-            let btn = this.add.text(centerX, 548 + (i * 40), '', { 
-                fontSize: '13px', fill: '#ffffff', backgroundColor: '#1e293b',
-                fixedWidth: Math.min(width - 60, 1210),
-                padding: { x: 20, y: 7 }, align: 'left'
-            }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+            const btn = this.add.container(centerX, 548 + (i * 40));
             
+            // Fundo arredondado suave (radius: 12px)
+            const bgGfx = this.add.graphics();
+            const drawBtnBg = (fColor = 0x2d3544, sColor = 0x475569, sWidth = 1.5) => {
+                bgGfx.clear();
+                drawRoundedRect(bgGfx, -btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12, fColor, 0.96, sColor, sWidth);
+            };
+            drawBtnBg(0x2d3544, 0x475569, 1.5);
+
+            // Badge com letra A, B, C, D com cantos arredondados
+            const badgeGfx = this.add.graphics();
+            drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x202734, 1, 0x475569, 1);
+            const badgeTxt = this.add.text(-btnWidth / 2 + 22, 0, String.fromCharCode(65 + i), {
+                fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
+            }).setOrigin(0.5);
+
+            // Texto da opção
+            const labelTxt = this.add.text(-btnWidth / 2 + 44, 0, '', {
+                fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2
+            }).setOrigin(0, 0.5);
+
+            btn.add([bgGfx, badgeGfx, badgeTxt, labelTxt]);
+
+            btn.setSize(btnWidth, btnHeight);
+            btn.setInteractive({ useHandCursor: true });
+
+            btn.text = '';
+            btn.setText = (txt) => {
+                btn.text = txt;
+                let cleanTxt = txt;
+                if (/^[A-D]\)\s*/.test(txt)) {
+                    cleanTxt = txt.replace(/^[A-D]\)\s*/, '');
+                }
+                labelTxt.setText(cleanTxt);
+                return btn;
+            };
+
+            btn.setStyle = (styleObj) => {
+                if (styleObj.fill) labelTxt.setStyle({ fill: styleObj.fill });
+                if (styleObj.backgroundColor) {
+                    const bg = styleObj.backgroundColor;
+                    if (bg === '#16a34a' || bg === 0x16a34a) {
+                        drawBtnBg(0x14532d, 0x22c55e, 2);
+                        badgeGfx.clear();
+                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x16a34a, 1, 0x22c55e, 1);
+                        badgeTxt.setStyle({ fill: '#ffffff' });
+                    } else if (bg === '#dc2626' || bg === '#ef4444' || bg === 0xdc2626) {
+                        drawBtnBg(0x7f1d1d, 0xef4444, 2);
+                        badgeGfx.clear();
+                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0xdc2626, 1, 0xef4444, 1);
+                        badgeTxt.setStyle({ fill: '#ffffff' });
+                    } else if (bg === '#374151' || bg === '#334155') {
+                        drawBtnBg(0x2d3544, 0xd97706, 2);
+                    } else {
+                        drawBtnBg(0x2d3544, 0x475569, 1.5);
+                        badgeGfx.clear();
+                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x202734, 1, 0x475569, 1);
+                        badgeTxt.setStyle({ fill: '#f59e0b' });
+                    }
+                }
+                return btn;
+            };
+
             btn.on('pointerover', () => {
                 if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
-                    btn.setStyle({ backgroundColor: '#334155' });
+                    drawBtnBg(0x374151, 0x60a5fa, 2);
+                    this.tweens.add({ targets: btn, scaleX: 1.01, scaleY: 1.01, duration: 80, ease: 'Power1' });
                 }
             });
             btn.on('pointerout', () => {
                 if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
-                    btn.setStyle({ backgroundColor: '#1e293b' });
+                    drawBtnBg(0x2d3544, 0x475569, 1.5);
+                    this.tweens.add({ targets: btn, scaleX: 1.0, scaleY: 1.0, duration: 80, ease: 'Power1' });
                 }
             });
             btn.on('pointerdown', () => this.handleAnswer(i));
+
             this.optionButtons.push(btn);
         }
 
-        // Banner Central de Notificações de Combate
-        this.combatAlertBanner = this.add.text(centerX, 220, '', {
-            fontSize: '14px', fill: '#ffffff', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            backgroundColor: '#030712f0',
-            padding: { top: 8, bottom: 8, left: 24, right: 24 }
-        }).setOrigin(0.5).setVisible(false).setDepth(120);
+        // Banner Central de Notificações de Combate (Suave e Arredondado)
+        this.combatAlertBanner = createSmoothBanner(this, centerX, 220, '', {
+            radius: 18,
+            fillColor: 0x030712,
+            fillAlpha: 0.94,
+            strokeColor: 0xd97706,
+            strokeWidth: 1.5,
+            fontSize: '14px',
+            textColor: '#ffffff',
+            paddingX: 24,
+            paddingY: 9
+        }).setVisible(false).setDepth(120);
 
         // Overlay de Ultimate Finisher Cinematográfico
         this.ultimateOverlay = this.add.container(centerX, 360).setDepth(260).setVisible(false);
@@ -348,188 +451,212 @@ export class MainScene extends Phaser.Scene {
         // 6. Painel Game Over (Reformulado, Perfeitamente Centralizado e com Múltiplas Opções)
         this.gameOverPanel = this.add.container(centerX, 360).setDepth(200).setVisible(false);
 
-        // Backdrop escuro total que bloqueia interações com a tela de combate de fundo
-        const goBackdrop = this.add.rectangle(0, 0, width, 720, 0x030712, 0.94)
+        // Backdrop escuro que bloqueia interações com a tela de combate de fundo
+        const goBackdrop = this.add.rectangle(0, 0, width, 720, 0x181e26, 0.88)
             .setInteractive();
 
-        // Card Central de Alta Fidelidade (Glow + Fundo + Borda Temática)
-        this.goCardGlow = this.add.rectangle(0, 0, 610, 440, 0x38bdf8, 0.22);
-        this.goCardBg = this.add.rectangle(0, 0, 600, 430, 0x0c1322, 0.98)
-            .setStrokeStyle(2, 0x38bdf8);
+        // Card Central de Alta Fidelidade (Glow + Fundo + Borda Temática Suave Arredondada)
+        this.goCardGlow = this.add.graphics();
+        this.goCardBg = this.add.graphics();
 
-        // Faixa de Cabeçalho do Card
-        const goCardHeader = this.add.rectangle(0, -170, 600, 70, 0x080d1a, 0.9);
-        const goHeaderLine = this.add.line(0, -135, -300, 0, 300, 0, 0x1e293b).setLineWidth(1);
+        this.updateGameOverTheme = (themeColor = 0xd97706) => {
+            this.goCardGlow.clear();
+            drawRoundedRect(this.goCardGlow, -305, -220, 610, 440, 24, themeColor, 0.22);
+            this.goCardBg.clear();
+            drawRoundedRect(this.goCardBg, -300, -215, 600, 430, 20, 0x242a35, 0.98, themeColor, 2);
+        };
+        this.updateGameOverTheme(0xd97706);
+
+        // Fallback handlers para chamadas legadas
+        this.goCardGlow.setFillStyle = (color) => {
+            let col = color;
+            if (typeof col === 'string') col = parseInt(col.replace('#', '0x'), 16);
+            this.updateGameOverTheme(col);
+            return this.goCardGlow;
+        };
+        this.goCardBg.setStrokeStyle = (w, color) => {
+            let col = color;
+            if (typeof col === 'string') col = parseInt(col.replace('#', '0x'), 16);
+            this.updateGameOverTheme(col);
+            return this.goCardBg;
+        };
+
+        // Faixa de Cabeçalho do Card (com cantos arredondados)
+        const goCardHeader = this.add.graphics();
+        drawRoundedRect(goCardHeader, -290, -205, 580, 65, 14, 0x2d3544, 0.95, 0x475569, 1);
+        const goHeaderLine = this.add.line(0, -135, -280, 0, 280, 0, 0x475569).setLineWidth(1);
 
         // Ícone e Títulos
         this.goIconText = this.add.text(0, -182, '🏆', { 
-            fontSize: '34px',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+            fontSize: '34px'
         }).setOrigin(0.5);
 
         this.goTitleText = this.add.text(0, -145, 'VITÓRIA ACADÊMICA!', { 
-            fontSize: '26px', fontStyle: 'bold', fill: '#34d399',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+            fontSize: '26px', fontStyle: 'bold', fill: '#4ade80', resolution: 2
         }).setOrigin(0.5);
 
         this.goSubText = this.add.text(0, -108, 'Parabéns! Você dominou o duelo.', { 
             fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            align: 'center'
+            align: 'center', resolution: 2
         }).setOrigin(0.5);
 
-        // Resumo / Placar da Partida (Stats Box Centralizado)
-        const statsBoxBg = this.add.rectangle(0, -28, 540, 92, 0x030712, 0.9)
-            .setStrokeStyle(1.5, 0x1e293b);
+        // Resumo / Placar da Partida (Stats Box Centralizado Suave)
+        const statsBoxBg = this.add.graphics();
+        drawRoundedRect(statsBoxBg, -270, -74, 540, 92, 14, 0x1e2430, 0.95, 0x475569, 1.5);
 
         // Coluna P1
         this.goP1Nick = this.add.text(-170, -52, 'P1: JOGADOR 1', { 
-            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold' 
+            fontSize: '13px', fill: '#60a5fa', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
         this.goP1Prof = this.add.text(-170, -32, '[ SISTEMAS OP. ]', { 
-            fontSize: '11px', fill: '#94a3b8' 
+            fontSize: '11px', fill: '#94a3b8', resolution: 2 
         }).setOrigin(0.5);
         this.goP1Hearts = this.add.text(-170, -8, '100 HP', { 
-            fontSize: '13px', fill: '#34d399', fontStyle: 'bold' 
+            fontSize: '13px', fill: '#4ade80', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
         // Separador Central (VS & Rodadas)
         const vsBadge = this.add.text(0, -50, 'VS', { 
-            fontSize: '14px', fill: '#facc15', fontStyle: 'bold' 
+            fontSize: '14px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
         this.goRoundsText = this.add.text(0, -30, '🎯 4 Rodadas', { 
-            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold' 
+            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
         const modeBadge = this.add.text(0, -10, 'Duelo 1v1', { 
-            fontSize: '10px', fill: '#64748b' 
+            fontSize: '10px', fill: '#64748b', resolution: 2 
         }).setOrigin(0.5);
 
         // Coluna P2
         this.goP2Nick = this.add.text(170, -52, 'P2: JOGADOR 2', { 
-            fontSize: '13px', fill: '#f87171', fontStyle: 'bold' 
+            fontSize: '13px', fill: '#f87171', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
         this.goP2Prof = this.add.text(170, -32, '[ WEB & MOBILE ]', { 
-            fontSize: '11px', fill: '#94a3b8' 
+            fontSize: '11px', fill: '#94a3b8', resolution: 2 
         }).setOrigin(0.5);
         this.goP2Hearts = this.add.text(170, -8, '💀 0 HP (K.O.)', { 
-            fontSize: '13px', fill: '#ef4444', fontStyle: 'bold' 
+            fontSize: '13px', fill: '#ef4444', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        // Banner temporário de recusa de solicitação (posicionado acima dos botões)
-        this.requestDeclinedBanner = this.add.text(0, 22, '', { 
-            fontSize: '12px', fill: '#f87171', backgroundColor: '#450a0a',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 4, bottom: 4, left: 14, right: 14 }, fontStyle: 'bold' 
-        }).setOrigin(0.5).setVisible(false);
+        // Banner temporário de recusa de solicitação (Suave e Arredondado)
+        this.requestDeclinedBanner = createSmoothBanner(this, 0, 22, '', { 
+            radius: 14,
+            fillColor: 0x450a0a,
+            strokeColor: 0xef4444,
+            strokeWidth: 1.5,
+            fontSize: '12px',
+            textColor: '#f87171',
+            paddingX: 18,
+            paddingY: 6
+        }).setVisible(false);
 
-        // --- GRUPO 1: Botões de Ação Padrão ---
+        // --- GRUPO 1: Botões de Ação Padrão (Suaves e Arredondados) ---
         // Botão 1 (Principal): Jogar Novamente (Revanche na Mesma Sala)
-        this.btnRematch = this.add.text(0, 56, '⚔️ Jogar Novamente (Revanche)', { 
-            fontSize: '15px', fill: '#ffffff', backgroundColor: '#16a34a',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 460, padding: { top: 11, bottom: 11 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.btnRematch.setStyle({ backgroundColor: '#22c55e' }))
-            .on('pointerout', () => this.btnRematch.setStyle({ backgroundColor: '#16a34a' }))
-            .on('pointerdown', () => this.handleRematch());
+        this.btnRematch = createSmoothButton(this, 0, 56, 460, 42, '⚔️ Jogar Novamente (Revanche)', {
+            radius: 21,
+            fillColor: 0x16a34a,
+            hoverFillColor: 0x22c55e,
+            strokeColor: 0x34d399,
+            strokeWidth: 1.5,
+            fontSize: '15px',
+            onClick: () => this.handleRematch()
+        });
 
         // Botão 2: Trocar Personagem (Volta para a Seleção mantendo a sala)
-        this.btnChangeProf = this.add.text(-125, 118, '🔄 Trocar Personagem', { 
-            fontSize: '12px', fill: '#38bdf8', backgroundColor: '#1e293b',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 210, padding: { top: 9, bottom: 9 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.btnChangeProf.setStyle({ backgroundColor: '#334155' }))
-            .on('pointerout', () => this.btnChangeProf.setStyle({ backgroundColor: '#1e293b' }))
-            .on('pointerdown', () => this.handleChangeProfessor());
+        this.btnChangeProf = createSmoothButton(this, -125, 118, 210, 38, '🔄 Trocar Personagem', {
+            radius: 19,
+            fillColor: 0x323a48,
+            hoverFillColor: 0x3e4758,
+            strokeColor: 0x526075,
+            strokeWidth: 1.5,
+            textColor: '#f59e0b',
+            fontSize: '12px',
+            onClick: () => this.handleChangeProfessor()
+        });
 
         // Botão 3: Menu Principal (Limpa e Sai)
-        this.btnMainMenu = this.add.text(125, 118, '🏠 Menu Principal', { 
-            fontSize: '12px', fill: '#fca5a5', backgroundColor: '#450a0a',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 210, padding: { top: 9, bottom: 9 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.btnMainMenu.setStyle({ backgroundColor: '#7f1d1d' }))
-            .on('pointerout', () => this.btnMainMenu.setStyle({ backgroundColor: '#450a0a' }))
-            .on('pointerdown', () => this.leaveToMenu());
+        this.btnMainMenu = createSmoothButton(this, 125, 118, 210, 38, '🏠 Menu Principal', {
+            radius: 19,
+            fillColor: 0x7f1d1d,
+            hoverFillColor: 0x991b1b,
+            strokeColor: 0xb91c1c,
+            strokeWidth: 1.5,
+            textColor: '#fca5a5',
+            fontSize: '12px',
+            onClick: () => this.leaveToMenu()
+        });
 
         // --- GRUPO 2: Painel de Espera (Para quem ENVIOU a solicitação) ---
-        this.waitingBox = this.add.rectangle(0, 94, 520, 92, 0x030712, 0.96)
-            .setStrokeStyle(1.5, 0x38bdf8).setVisible(false);
+        this.waitingBox = createSmoothCard(this, 0, 94, 520, 92, {
+            radius: 14,
+            fillColor: 0x1e2430,
+            fillAlpha: 0.96,
+            strokeColor: 0xd97706,
+            strokeWidth: 1.5
+        }).setVisible(false);
 
         this.waitingText = this.add.text(0, 74, '', { 
-            fontSize: '13px', fill: '#38bdf8', fontStyle: 'bold', align: 'center',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            wordWrap: { width: 480 } 
+            fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', align: 'center',
+            wordWrap: { width: 480 }, resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
-        this.btnCancelRequest = this.add.text(0, 116, '✕ Cancelar Solicitação', { 
-            fontSize: '12px', fill: '#cbd5e1', backgroundColor: '#334155',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 7, bottom: 7, left: 18, right: 18 }, fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setVisible(false)
-            .on('pointerover', () => this.btnCancelRequest.setStyle({ backgroundColor: '#475569' }))
-            .on('pointerout', () => this.btnCancelRequest.setStyle({ backgroundColor: '#334155' }))
-            .on('pointerdown', () => this.cancelPostMatchRequest());
+        this.btnCancelRequest = createSmoothButton(this, 0, 116, 200, 34, '✕ Cancelar Solicitação', {
+            radius: 17,
+            fillColor: 0x323a48,
+            hoverFillColor: 0x3e4758,
+            strokeColor: 0x526075,
+            strokeWidth: 1.5,
+            textColor: '#cbd5e1',
+            fontSize: '12px',
+            onClick: () => this.cancelPostMatchRequest()
+        }).setVisible(false);
 
         // --- GRUPO 3: Painel de Decisão (Para quem RECEBEU a solicitação) ---
-        this.promptBox = this.add.rectangle(0, 94, 520, 102, 0x030712, 0.96)
-            .setStrokeStyle(2, 0xfacc15).setVisible(false);
+        this.promptBox = createSmoothCard(this, 0, 94, 520, 102, {
+            radius: 14,
+            fillColor: 0x1e2430,
+            fillAlpha: 0.96,
+            strokeColor: 0xd97706,
+            strokeWidth: 2
+        }).setVisible(false);
 
         this.promptTitle = this.add.text(0, 64, '', { 
-            fontSize: '14px', fill: '#facc15', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+            fontSize: '14px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
         this.promptSub = this.add.text(0, 86, '', { 
-            fontSize: '11px', fill: '#94a3b8',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+            fontSize: '11px', fill: '#94a3b8', resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
-        this.btnAcceptRequest = this.add.text(-165, 120, '✓ Aceitar', { 
-            fontSize: '12px', fill: '#ffffff', backgroundColor: '#16a34a',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 145, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setVisible(false)
-            .on('pointerover', () => this.btnAcceptRequest.setStyle({ backgroundColor: '#22c55e' }))
-            .on('pointerout', () => this.btnAcceptRequest.setStyle({ backgroundColor: '#16a34a' }))
-            .on('pointerdown', () => this.acceptPostMatchRequest());
+        this.btnAcceptRequest = createSmoothButton(this, -165, 120, 145, 34, '✓ Aceitar', {
+            radius: 17,
+            fillColor: 0x16a34a,
+            hoverFillColor: 0x22c55e,
+            strokeColor: 0x34d399,
+            strokeWidth: 1.5,
+            fontSize: '12px',
+            onClick: () => this.acceptPostMatchRequest()
+        }).setVisible(false);
 
-        this.btnPromptChangeProf = this.add.text(0, 120, '🔄 Trocar Personagem', { 
-            fontSize: '12px', fill: '#ffffff', backgroundColor: '#2563eb',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 155, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setVisible(false)
-            .on('pointerover', () => this.btnPromptChangeProf.setStyle({ backgroundColor: '#1d4ed8' }))
-            .on('pointerout', () => this.btnPromptChangeProf.setStyle({ backgroundColor: '#2563eb' }))
-            .on('pointerdown', () => this.executeChangeProfessorDirectly());
+        this.btnPromptChangeProf = createSmoothButton(this, 0, 120, 155, 34, '🔄 Trocar Personagem', {
+            radius: 17,
+            fillColor: 0x2563eb,
+            hoverFillColor: 0x1d4ed8,
+            strokeColor: 0x60a5fa,
+            strokeWidth: 1.5,
+            fontSize: '12px',
+            onClick: () => this.executeChangeProfessorDirectly()
+        }).setVisible(false);
 
-        this.btnDeclineRequest = this.add.text(165, 120, '✕ Recusar (Encerrar)', { 
-            fontSize: '12px', fill: '#fca5a5', backgroundColor: '#7f1d1d',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            fixedWidth: 145, padding: { top: 8, bottom: 8 }, align: 'center', fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setVisible(false)
-            .on('pointerover', () => this.btnDeclineRequest.setStyle({ backgroundColor: '#991b1b' }))
-            .on('pointerout', () => this.btnDeclineRequest.setStyle({ backgroundColor: '#7f1d1d' }))
-            .on('pointerdown', () => this.declinePostMatchRequest());
+        this.btnDeclineRequest = createSmoothButton(this, 165, 120, 145, 34, '✕ Recusar (Encerrar)', {
+            radius: 17,
+            fillColor: 0x7f1d1d,
+            hoverFillColor: 0x991b1b,
+            strokeColor: 0xf87171,
+            strokeWidth: 1.5,
+            textColor: '#fca5a5',
+            fontSize: '12px',
+            onClick: () => this.declinePostMatchRequest()
+        }).setVisible(false);
 
         // Rodapé do Card
         this.goFooterHint = this.add.text(0, 172, `Código da Sala: ${this.roomId} • Duelo Finalizado`, {
@@ -558,15 +685,17 @@ export class MainScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.pauseSub = this.add.text(0, 20, `Código da Sala: ${this.roomId}`, { 
             fontSize: '28px', fill: '#34d399', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 8, bottom: 8, left: 12, right: 12 }
+            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
         }).setOrigin(0.5);
-        const pauseLeaveBtn = this.add.text(0, 100, '[ Fechar / Sair da Sala ]', { 
-            fontSize: '20px', backgroundColor: '#991b1b', padding: { x: 20, y: 10 }, fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerdown', () => this.leaveToMenu());
+        const pauseLeaveBtn = createSmoothButton(this, 0, 100, 240, 44, '🚪 Sair da Sala', {
+            radius: 22,
+            fillColor: 0x991b1b,
+            hoverFillColor: 0xef4444,
+            strokeColor: 0xf87171,
+            strokeWidth: 1.5,
+            fontSize: '16px',
+            onClick: () => this.leaveToMenu()
+        });
 
         this.pausePanel.add([pauseBg, this.pauseTitle, this.pauseSub, pauseLeaveBtn]);
 
@@ -650,8 +779,11 @@ export class MainScene extends Phaser.Scene {
         if (!this.roomId) return;
         try {
             const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 3;
+            const newArena = getRandomArena();
+            this.setArena(newArena.id);
             await update(ref(db, `rooms/${this.roomId}`), {
                 postMatchRequest: null,
+                arenaId: newArena.id,
                 'p1/hp': 100,
                 'p1/charges': 0,
                 'p1/hasShield': false,
@@ -1016,6 +1148,21 @@ export class MainScene extends Phaser.Scene {
         this.tweens.add({ targets: fighter, alpha: 0.3, duration: 100, yoyo: true, repeat: 2 });
     }
 
+    setArena(arenaId) {
+        if (!arenaId || arenaId === this.currentArenaId) return;
+        const arena = getArenaById(arenaId);
+        if (!arena) return;
+        this.currentArenaId = arena.id;
+        this.arenaId = arena.id;
+        if (this.arenaBg && this.textures.exists(arena.key)) {
+            this.arenaBg.setTexture(arena.key);
+            this.arenaBg.setDisplaySize(this.scale.width, 720);
+        }
+        if (this.arenaIndicatorText) {
+            this.arenaIndicatorText.setText(`🏟️ ${arena.name.toUpperCase()}`);
+        }
+    }
+
     clearQuestion() {
         this.currentQuestionData = null;
         this.localQuestionStartTime = null;
@@ -1311,6 +1458,11 @@ export class MainScene extends Phaser.Scene {
             this.currentRound = data.round;
         }
 
+        // Sincronizar Arena da Partida
+        if (data.arenaId && data.arenaId !== this.currentArenaId) {
+            this.setArena(data.arenaId);
+        }
+
         // 1. Atualizar Visual dos Lutadores, HP, Cargas e Buffs
         const p1Hp = data.p1?.hp != null ? data.p1.hp : 100;
         const p2Hp = data.p2?.hp != null ? data.p2.hp : 100;
@@ -1320,12 +1472,16 @@ export class MainScene extends Phaser.Scene {
         if (data.p1) {
             const p1Prof = getProfessorById(data.p1.characterId || 'so');
             const p1Nick = data.p1.nickname || 'Jogador 1';
-            if (this.fighterP1Sprite) this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
+            if (this.fighterP1Sprite) {
+                this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
+                this.fighterP1Sprite.setScale(p1Prof.scale || 0.65);
+            }
             
             // Retrato do Professor P1 no Card
             if (this.p1Portrait) {
                 this.p1Portrait.setTexture(p1Prof.portraitKey);
-                this.p1Portrait.setDisplaySize(58, 58);
+                const pScale = p1Prof.portraitScale || 1.0;
+                this.p1Portrait.setDisplaySize(58 * pScale, 58 * pScale);
             }
 
             // Nickname e Disciplina P1
@@ -1353,7 +1509,7 @@ export class MainScene extends Phaser.Scene {
             }
 
             if (this.p1HpBarFill) {
-                this.p1HpBarFill.setSize(438 * p1Ratio, 14);
+                this.p1HpBarFill.setSize((this.hpBarFullWidth || 438) * p1Ratio, 14);
                 this.p1HpBarFill.setFillStyle(p1Color, 1);
             }
             if (this.p1HpText) {
@@ -1370,10 +1526,10 @@ export class MainScene extends Phaser.Scene {
                             this.p1SlotTexts[s].setStyle({ fill: '#000000' });
                         }
                     } else {
-                        this.p1ChargeSlots[s].setFillStyle(0x1e293b, 1);
-                        this.p1ChargeSlots[s].setStrokeStyle(1, 0x334155);
+                        this.p1ChargeSlots[s].setFillStyle(0x1e2430, 1);
+                        this.p1ChargeSlots[s].setStrokeStyle(1, 0x475569);
                         if (this.p1SlotTexts && this.p1SlotTexts[s]) {
-                            this.p1SlotTexts[s].setStyle({ fill: '#475569' });
+                            this.p1SlotTexts[s].setStyle({ fill: '#64748b' });
                         }
                     }
                 }
@@ -1406,12 +1562,17 @@ export class MainScene extends Phaser.Scene {
         if (data.p2) {
             const p2Prof = getProfessorById(data.p2.characterId || 'web');
             const p2Nick = data.p2.nickname || 'Jogador 2';
-            if (this.fighterP2Sprite) this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
+            if (this.fighterP2Sprite) {
+                this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
+                this.fighterP2Sprite.setScale(p2Prof.scale || 0.65);
+                this.fighterP2Sprite.setFlipX(true);
+            }
             
             // Retrato do Professor P2 no Card
             if (this.p2Portrait) {
                 this.p2Portrait.setTexture(p2Prof.portraitKey);
-                this.p2Portrait.setDisplaySize(58, 58);
+                const pScale = p2Prof.portraitScale || 1.0;
+                this.p2Portrait.setDisplaySize(58 * pScale, 58 * pScale);
             }
 
             // Nickname e Disciplina P2
@@ -1439,7 +1600,7 @@ export class MainScene extends Phaser.Scene {
             }
 
             if (this.p2HpBarFill) {
-                this.p2HpBarFill.setSize(438 * p2Ratio, 14);
+                this.p2HpBarFill.setSize((this.hpBarFullWidth || 438) * p2Ratio, 14);
                 this.p2HpBarFill.setFillStyle(p2Color, 1);
             }
             if (this.p2HpText) {
@@ -1456,10 +1617,10 @@ export class MainScene extends Phaser.Scene {
                             this.p2SlotTexts[s].setStyle({ fill: '#000000' });
                         }
                     } else {
-                        this.p2ChargeSlots[s].setFillStyle(0x1e293b, 1);
-                        this.p2ChargeSlots[s].setStrokeStyle(1, 0x334155);
+                        this.p2ChargeSlots[s].setFillStyle(0x1e2430, 1);
+                        this.p2ChargeSlots[s].setStrokeStyle(1, 0x475569);
                         if (this.p2SlotTexts && this.p2SlotTexts[s]) {
-                            this.p2SlotTexts[s].setStyle({ fill: '#475569' });
+                            this.p2SlotTexts[s].setStyle({ fill: '#64748b' });
                         }
                     }
                 }
@@ -1690,7 +1851,7 @@ export class MainScene extends Phaser.Scene {
 
         for (let i = 0; i < 4; i++) {
             this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${q.options[i]}`);
-            this.optionButtons[i].setStyle({ backgroundColor: '#1e293b', fill: '#ffffff' }); 
+            this.optionButtons[i].setStyle({ backgroundColor: '#2d3544', fill: '#ffffff' }); 
             if (!this.isGameOver) {
                 this.optionButtons[i].setInteractive(); 
             }

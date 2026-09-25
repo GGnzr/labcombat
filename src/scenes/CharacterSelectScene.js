@@ -4,6 +4,8 @@ import { ref, get, set, update, remove, onValue } from "firebase/database";
 import { professors, getProfessorById } from '../professors.js';
 import { questions } from '../questions.js';
 import { logEvent } from '../logger.js';
+import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
+import { getRandomArena } from '../arenas.js';
 
 export class CharacterSelectScene extends Phaser.Scene {
     constructor() {
@@ -26,7 +28,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('arena_bg', '/assets/bg.jpg');
+        this.load.image('menu_bg', '/assets/campus_veranopolis.jpg');
         
         professors.forEach(p => {
             this.load.atlas(p.atlasKey, p.atlasImage, p.atlasJson);
@@ -35,43 +37,40 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     create() {
-        // 1. Fundo da Arena com Overlay Escuro Estilo Fighting Game
+        // 1. Fundo do Campus IF Veranópolis com enquadramento focado no pátio dos lutadores
         const width = this.scale.width;
         const centerX = width / 2;
 
-        const bg = this.add.image(centerX, 360, 'arena_bg').setOrigin(0.5);
-        bg.setDisplaySize(width, 720);
-        this.add.rectangle(centerX, 360, width, 720, 0x050814, 0.82);
+        const bg = this.add.image(centerX, 360, 'menu_bg').setOrigin(0.5);
+        const bgScale = Math.max(width / bg.width, 720 / bg.height);
+        bg.setScale(bgScale);
 
-        // Piso cibernético dos lutadores
-        this.add.line(centerX, 440, 0, 0, width, 0, 0x1e293b).setLineWidth(2);
-        this.add.line(centerX, 440, 0, 0, Math.min(width, 800), 0, 0x38bdf8).setLineWidth(1).setAlpha(0.6);
+        // Overlay suave neutro para manter a luz diurna natural do pátio
+        this.add.rectangle(centerX, 360, width, 720, 0x181e26, 0.22);
 
-        // 2. Cabeçalho Superior Arcade
-        this.add.rectangle(centerX, 28, width, 56, 0x070c18, 0.95);
-        this.add.line(centerX, 56, 0, 0, width, 0, 0x1e293b).setLineWidth(1);
+        // 2. Cabeçalho Superior Arcade Neutro
+        this.add.rectangle(centerX, 28, width, 56, 0x242a35, 0.96);
+        this.add.line(centerX, 56, 0, 0, width, 0, 0x475569).setLineWidth(1);
 
-        // Botão Sair
-        this.add.text(65, 28, '🚪 Sair', { 
-            fontSize: '13px', fill: '#fff', backgroundColor: '#991b1b', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 6, bottom: 6, left: 12, right: 12 }, fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', function() { this.setStyle({ backgroundColor: '#b91c1c' }); })
-            .on('pointerout', function() { this.setStyle({ backgroundColor: '#991b1b' }); })
-            .on('pointerdown', () => this.leaveToMenu());
+        // Botão Sair Suave Arcade
+        createSmoothButton(this, 65, 28, 88, 32, '🚪 Sair', {
+            radius: 16,
+            fillColor: 0x7f1d1d,
+            hoverFillColor: 0x991b1b,
+            strokeColor: 0xb91c1c,
+            fontSize: '12px',
+            onClick: () => this.leaveToMenu()
+        });
 
         // Título Central Arcade
         this.add.text(centerX, 20, 'SELECT YOUR FIGHTER', { 
-            fontSize: '20px', fill: '#38bdf8', fontStyle: 'bold', letterSpacing: 3 
+            fontSize: '20px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 3, resolution: 2 
         }).setOrigin(0.5);
 
         const isHost = this.playerId === 'p1';
         const roleLabel = isHost ? 'HOST (1P)' : 'CHALLENGER (2P)';
         this.add.text(centerX, 42, `VOCÊ É ${this.nickname.toUpperCase()} • ${roleLabel}`, { 
-            fontSize: '11px', fill: isHost ? '#34d399' : '#f87171', fontStyle: 'bold' 
+            fontSize: '11px', fill: isHost ? '#60a5fa' : '#f87171', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
         // Badge de Código da Sala (Canto Superior Direito)
@@ -110,43 +109,39 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     createRoomCodeBadge(x, y) {
-        const badge = this.add.container(x, y);
+        const badge = createSmoothCard(this, x, y, 226, 36, {
+            radius: 18,
+            fillColor: 0x242a35,
+            fillAlpha: 0.96,
+            strokeColor: 0x475569,
+            strokeWidth: 1.5
+        });
 
-        const bg = this.add.rectangle(0, 0, 220, 36, 0x0f172a, 0.95)
-            .setStrokeStyle(1.5, 0x38bdf8);
-
-        const lbl = this.add.text(-72, 0, '🔑 SALA:', {
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+        const lbl = this.add.text(-74, 0, '🔑 SALA:', {
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         const codeText = this.add.text(-22, 0, this.roomId, {
-            fontSize: '16px', fill: '#facc15', fontStyle: 'bold', fontFamily: 'monospace', letterSpacing: 2
+            fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', fontFamily: 'monospace', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
-        const btnCopy = this.add.text(62, 0, '📋 Copiar', {
-            fontSize: '11px', fill: '#ffffff', backgroundColor: '#2563eb',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 5, bottom: 5, left: 8, right: 8 }, fontStyle: 'bold'
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true });
-
-        btnCopy.on('pointerover', () => {
-            if (btnCopy.text.includes('Copiar')) btnCopy.setStyle({ backgroundColor: '#1d4ed8' });
-        });
-        btnCopy.on('pointerout', () => {
-            if (btnCopy.text.includes('Copiar')) btnCopy.setStyle({ backgroundColor: '#2563eb' });
+        const btnCopy = createSmoothButton(this, 66, 0, 78, 26, '📋 Copiar', {
+            radius: 13,
+            fillColor: 0x323a48,
+            hoverFillColor: 0x3e4758,
+            strokeColor: 0x526075,
+            textColor: '#f59e0b',
+            fontSize: '11px'
         });
 
         const doCopy = () => {
             const copySuccess = () => {
                 btnCopy.setText('✓ Copiado!');
-                btnCopy.setStyle({ backgroundColor: '#16a34a' });
+                btnCopy.setColors(0x16a34a, 0x22c55e);
                 this.time.delayedCall(2000, () => {
                     if (btnCopy && btnCopy.active) {
                         btnCopy.setText('📋 Copiar');
-                        btnCopy.setStyle({ backgroundColor: '#2563eb' });
+                        btnCopy.setColors(0x2563eb, 0x38bdf8);
                     }
                 });
             };
@@ -182,7 +177,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         btnCopy.on('pointerdown', doCopy);
         codeText.setInteractive({ useHandCursor: true }).on('pointerdown', doCopy);
 
-        badge.add([bg, lbl, codeText, btnCopy]);
+        badge.add([lbl, codeText, btnCopy]);
     }
 
     createP1Stage() {
@@ -190,47 +185,60 @@ export class CharacterSelectScene extends Phaser.Scene {
         const centerX = width / 2;
         const stageX = Math.max(220, Math.min(centerX - 240, width * 0.20));
 
-        // Card Consolidado do Jogador 1 (Topo esquerdo do palco, sem sobrepor o lutador)
-        this.p1BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0x10b981);
+        // Card Consolidado do Jogador 1 (com cantos arredondados suaves)
+        this.p1BannerBg = createSmoothCard(this, stageX, 120, 380, 108, {
+            radius: 16,
+            fillColor: 0x242a35,
+            fillAlpha: 0.96,
+            strokeColor: 0x2563eb,
+            strokeWidth: 1.5
+        });
         
         // Linha 1: Tag 1P, Nickname e Status
-        this.add.rectangle(stageX - 160, 80, 26, 18, 0x10b981).setStrokeStyle(1, 0xffffff);
-        this.add.text(stageX - 160, 80, '1P', { fontSize: '11px', fill: '#000000', fontStyle: 'bold' }).setOrigin(0.5);
+        const tag1PContainer = this.add.container(stageX - 160, 80);
+        const tag1PGfx = this.add.graphics();
+        drawRoundedRect(tag1PGfx, -13, -9, 26, 18, 5, 0x2563eb, 1, 0xffffff, 1);
+        const tag1PTxt = this.add.text(0, 0, '1P', { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 }).setOrigin(0.5);
+        tag1PContainer.add([tag1PGfx, tag1PTxt]);
 
-        this.p1NickText = this.add.text(stageX - 140, 80, 'JOGADOR 1', { 
-            fontSize: '12px', fill: '#ffffff', fontStyle: 'bold' 
+        this.p1NickText = this.add.text(stageX - 138, 80, 'JOGADOR 1', { 
+            fontSize: '12px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
         this.p1StatusBadge = this.add.text(stageX + 165, 80, 'ESCOLHENDO', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         // Divisória sutil
-        this.add.line(stageX, 95, 0, 0, 350, 0, 0x1e293b).setLineWidth(1);
+        this.add.line(stageX, 95, 0, 0, 350, 0, 0x334155).setLineWidth(1);
 
         // Linha 2: Nome do Lutador Escolhido
         this.p1FighterName = this.add.text(stageX, 114, 'SISTEMAS OPERACIONAIS', { 
-            fontSize: '14px', fill: '#34d399', fontStyle: 'bold', letterSpacing: 1 
+            fontSize: '14px', fill: '#60a5fa', fontStyle: 'bold', letterSpacing: 1, resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 3: Disciplina / Especialidade
         this.p1SubjectText = this.add.text(stageX, 136, 'Threads, Processos & Kernel', { 
-            fontSize: '11px', fill: '#94a3b8' 
+            fontSize: '11px', fill: '#94a3b8', resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
         this.p1UltimateText = this.add.text(stageX, 158, '⚡ KERNEL PANIC (TELA AZUL)', { 
-            fontSize: '11px', fill: '#facc15', fontStyle: 'bold' 
+            fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        // Pedestal e Glow no Piso (Área da Arena Livre)
-        this.p1PadGlow = this.add.ellipse(stageX, 440, 160, 30, 0x10b981, 0.25);
-        this.p1PadRing = this.add.ellipse(stageX, 440, 150, 24).setStrokeStyle(2, 0x10b981, 0.9);
+        // Pedestal e Sombra do Lutador no Chão do Pátio Aberto
+        const fighterX = centerX - Math.min(235, Math.max(180, width * 0.18));
+        const fighterY = 460;
+        this.p1Shadow = this.add.ellipse(fighterX, fighterY, 130, 24, 0x000000, 0.45);
+        this.p1PadGlow = this.add.ellipse(fighterX, fighterY, 140, 24, 0x2563eb, 0.22);
+        this.p1PadRing = this.add.ellipse(fighterX, fighterY, 140, 20).setStrokeStyle(2, 0x2563eb, 0.9);
 
-        // Sprite Estático do Lutador P1 (Pés no pedestal, cabeça abaixo do card superior)
-        this.p1Sprite = this.add.sprite(stageX, 440, 'atlas_so', 'idle')
+        // Sprite Estático do Lutador P1 (Pés plantados no chão de pedra do pátio aberto)
+        const p1Prof = getProfessorById(this.selectedProfessorId || 'so');
+        this.p1Sprite = this.add.sprite(fighterX, fighterY, p1Prof.atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.65);
+            .setScale(p1Prof.scale || 0.65);
     }
 
     createP2Stage() {
@@ -238,47 +246,60 @@ export class CharacterSelectScene extends Phaser.Scene {
         const centerX = width / 2;
         const stageX = Math.min(width - 220, Math.max(centerX + 240, width * 0.80));
 
-        // Card Consolidado do Jogador 2 (Topo direito do palco, sem sobrepor o lutador)
-        this.p2BannerBg = this.add.rectangle(stageX, 120, 380, 108, 0x0c1527, 0.95).setStrokeStyle(1.5, 0xef4444);
+        // Card Consolidado do Jogador 2 (com cantos arredondados suaves)
+        this.p2BannerBg = createSmoothCard(this, stageX, 120, 380, 108, {
+            radius: 16,
+            fillColor: 0x242a35,
+            fillAlpha: 0.96,
+            strokeColor: 0xdc2626,
+            strokeWidth: 1.5
+        });
 
         // Linha 1: Status, Nickname e Tag 2P
         this.p2StatusBadge = this.add.text(stageX - 165, 80, 'AGUARDANDO...', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold'
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
-        this.p2NickText = this.add.text(stageX + 140, 80, 'AGUARDANDO P2', { 
-            fontSize: '12px', fill: '#ffffff', fontStyle: 'bold' 
+        this.p2NickText = this.add.text(stageX + 138, 80, 'AGUARDANDO P2', { 
+            fontSize: '12px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(1, 0.5);
 
-        this.add.rectangle(stageX + 160, 80, 26, 18, 0xef4444).setStrokeStyle(1, 0xffffff);
-        this.add.text(stageX + 160, 80, '2P', { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        const tag2PContainer = this.add.container(stageX + 160, 80);
+        const tag2PGfx = this.add.graphics();
+        drawRoundedRect(tag2PGfx, -13, -9, 26, 18, 5, 0xdc2626, 1, 0xffffff, 1);
+        const tag2PTxt = this.add.text(0, 0, '2P', { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 }).setOrigin(0.5);
+        tag2PContainer.add([tag2PGfx, tag2PTxt]);
 
         // Divisória sutil
-        this.add.line(stageX, 95, 0, 0, 350, 0, 0x1e293b).setLineWidth(1);
+        this.add.line(stageX, 95, 0, 0, 350, 0, 0x334155).setLineWidth(1);
 
         // Linha 2: Nome do Lutador Escolhido
         this.p2FighterName = this.add.text(stageX, 114, 'WEB & MOBILE', { 
-            fontSize: '14px', fill: '#f87171', fontStyle: 'bold', letterSpacing: 1 
+            fontSize: '14px', fill: '#f87171', fontStyle: 'bold', letterSpacing: 1, resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 3: Disciplina / Especialidade
         this.p2SubjectText = this.add.text(stageX, 136, 'Frontend, Fullstack & APIs', { 
-            fontSize: '11px', fill: '#94a3b8' 
+            fontSize: '11px', fill: '#94a3b8', resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
         this.p2UltimateText = this.add.text(stageX, 158, '⚡ 404 NOT FOUND (CORS ERROR)', { 
-            fontSize: '11px', fill: '#facc15', fontStyle: 'bold' 
+            fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        // Pedestal e Glow no Piso (Área da Arena Livre)
-        this.p2PadGlow = this.add.ellipse(stageX, 440, 160, 30, 0xef4444, 0.25);
-        this.p2PadRing = this.add.ellipse(stageX, 440, 150, 24).setStrokeStyle(2, 0xef4444, 0.9);
+        // Pedestal e Sombra do Lutador no Chão do Pátio Aberto
+        const fighterX = centerX + Math.min(235, Math.max(180, width * 0.18));
+        const fighterY = 460;
+        this.p2Shadow = this.add.ellipse(fighterX, fighterY, 130, 24, 0x000000, 0.45);
+        this.p2PadGlow = this.add.ellipse(fighterX, fighterY, 140, 24, 0xdc2626, 0.22);
+        this.p2PadRing = this.add.ellipse(fighterX, fighterY, 140, 20).setStrokeStyle(2, 0xdc2626, 0.9);
 
-        // Sprite Estático do Lutador P2 (Espelhado)
-        this.p2Sprite = this.add.sprite(stageX, 440, 'atlas_web', 'idle')
+        // Sprite Estático do Lutador P2 (Espelhado, pés plantados no chão de pedra do pátio aberto)
+        const p2Prof = getProfessorById(this.oppProfessorId || 'web');
+        this.p2Sprite = this.add.sprite(fighterX, fighterY, p2Prof.atlasKey, 'idle')
             .setOrigin(0.5, 1.0)
-            .setScale(0.65)
+            .setScale(p2Prof.scale || 0.65)
             .setFlipX(true);
     }
 
@@ -291,9 +312,9 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         // Texto VS em tipografia de jogo de luta (centralizado, sem o texto DUELO 1V1 inferior)
         this.vsText = this.add.text(0, 0, 'VS', { 
-            fontSize: '44px', fill: '#facc15', fontStyle: 'bold italic' 
+            fontSize: '44px', fill: '#f59e0b', fontStyle: 'bold italic', resolution: 2
         }).setOrigin(0.5);
-        this.vsText.setShadow(0, 0, '#ea580c', 16, true, true);
+        this.vsText.setShadow(0, 0, '#b45309', 16, true, true);
 
         vsContainer.add([ring, innerRing, this.vsText]);
 
@@ -310,13 +331,16 @@ export class CharacterSelectScene extends Phaser.Scene {
 
 
     createArcadeRoster() {
-        // Container e Moldura do Roster
+        // Container e Moldura do Roster com Cantos Arredondados
         const width = this.scale.width;
         const centerX = width / 2;
-        this.add.rectangle(centerX, 545, Math.min(width - 40, 1040), 108, 0x070c18, 0.92).setStrokeStyle(1.5, 0x1e293b);
+        const rosterWidth = Math.min(width - 40, 1040);
+        
+        const rosterFrame = this.add.graphics();
+        drawRoundedRect(rosterFrame, centerX - rosterWidth / 2, 545 - 54, rosterWidth, 108, 18, 0x242a35, 0.95, 0x475569, 1.5);
 
         this.add.text(centerX, 485, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
-            fontSize: '10px', fill: '#64748b', fontStyle: 'bold', letterSpacing: 2
+            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
         this.cards = [];
@@ -328,43 +352,53 @@ export class CharacterSelectScene extends Phaser.Scene {
             const x = startX + (idx * spacingX);
             const container = this.add.container(x, cardY);
 
-            // Moldura do Card do Personagem (88x72)
-            const bg = this.add.rectangle(0, 0, 154, 88, 0x0f172a, 0.95)
-                .setStrokeStyle(1.5, 0x334155)
-                .setInteractive({ useHandCursor: true });
+            // Moldura do Card do Personagem (Cantos arredondados suaves radius: 12px)
+            const bgGfx = this.add.graphics();
+            const drawCardBg = (fColor, fAlpha, sColor, sWidth) => {
+                bgGfx.clear();
+                drawRoundedRect(bgGfx, -77, -44, 154, 88, 12, fColor, fAlpha, sColor, sWidth);
+            };
+            drawCardBg(0x2d3544, 0.95, 0x475569, 1.5);
 
             // Avatar do Professor (Retrato recortado)
-            const portrait = this.add.image(0, -10, prof.portraitKey).setDisplaySize(56, 56);
+            const pScale = prof.portraitScale || 1.0;
+            const pOffY = prof.portraitOffsetY || 0;
+            const portrait = this.add.image(0, -10 + pOffY, prof.portraitKey).setDisplaySize(56 * pScale, 56 * pScale);
 
             // Nome Curto
             const nameText = this.add.text(0, 27, prof.shortName.toUpperCase(), { 
-                fontSize: '10px', fill: '#e2e8f0', fontStyle: 'bold', align: 'center', wordWrap: { width: 140 }
+                fontSize: '10px', fill: '#cbd5e1', fontStyle: 'bold', align: 'center', wordWrap: { width: 140 }, resolution: 2
             }).setOrigin(0.5);
 
             // Tag de Cursor 1P (Canto Superior Esquerdo)
             const tag1P = this.add.container(-62, -32);
-            const tag1PBg = this.add.rectangle(0, 0, 20, 14, 0x10b981).setStrokeStyle(1, 0xffffff);
-            const tag1PTxt = this.add.text(0, 0, '1P', { fontSize: '8px', fill: '#000000', fontStyle: 'bold' }).setOrigin(0.5);
+            const tag1PBg = this.add.graphics();
+            drawRoundedRect(tag1PBg, -10, -7, 20, 14, 5, 0x2563eb, 1, 0xffffff, 1);
+            const tag1PTxt = this.add.text(0, 0, '1P', { fontSize: '8px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 }).setOrigin(0.5);
             tag1P.add([tag1PBg, tag1PTxt]);
             tag1P.setVisible(false);
 
             // Tag de Cursor 2P (Canto Superior Direito)
             const tag2P = this.add.container(62, -32);
-            const tag2PBg = this.add.rectangle(0, 0, 20, 14, 0xef4444).setStrokeStyle(1, 0xffffff);
-            const tag2PTxt = this.add.text(0, 0, '2P', { fontSize: '8px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+            const tag2PBg = this.add.graphics();
+            drawRoundedRect(tag2PBg, -10, -7, 20, 14, 5, 0xdc2626, 1, 0xffffff, 1);
+            const tag2PTxt = this.add.text(0, 0, '2P', { fontSize: '8px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 }).setOrigin(0.5);
             tag2P.add([tag2PBg, tag2PTxt]);
             tag2P.setVisible(false);
 
-            container.add([bg, portrait, nameText, tag1P, tag2P]);
+            container.add([bgGfx, portrait, nameText, tag1P, tag2P]);
 
-            bg.on('pointerover', () => {
+            container.setSize(154, 88);
+            container.setInteractive({ useHandCursor: true });
+
+            container.on('pointerover', () => {
                 this.tweens.add({ targets: container, scale: 1.05, duration: 80, ease: 'Power1' });
             });
-            bg.on('pointerout', () => {
+            container.on('pointerout', () => {
                 this.tweens.add({ targets: container, scale: 1.0, duration: 80, ease: 'Power1' });
             });
 
-            bg.on('pointerdown', () => {
+            container.on('pointerdown', () => {
                 if (this.isLockedIn) {
                     this.cancelSelection();
                 }
@@ -378,18 +412,22 @@ export class CharacterSelectScene extends Phaser.Scene {
                 // Punchy visual kick ao trocar de personagem
                 const targetSprite = isHost ? this.p1Sprite : this.p2Sprite;
                 if (targetSprite) {
+                    const baseFighterScale = prof.scale || 0.65;
                     this.tweens.add({
                         targets: targetSprite,
-                        scaleX: 1.15,
-                        scaleY: 1.15,
+                        scaleX: baseFighterScale * 1.15,
+                        scaleY: baseFighterScale * 1.15,
                         duration: 70,
                         yoyo: true,
-                        ease: 'Power2'
+                        ease: 'Power2',
+                        onComplete: () => {
+                            targetSprite.setScale(baseFighterScale);
+                        }
                     });
                 }
             });
 
-            this.cards.push({ id: prof.id, container, bg, nameText, tag1P, tag2P, prof });
+            this.cards.push({ id: prof.id, container, drawCardBg, nameText, tag1P, tag2P, prof });
         });
 
         this.updateRosterCursors();
@@ -408,21 +446,17 @@ export class CharacterSelectScene extends Phaser.Scene {
             c.tag2P.setVisible(isP2);
 
             if (isP1 && isP2) {
-                c.bg.setStrokeStyle(2.5, 0xa855f7); // Destaque roxo se ambos escolherem o mesmo
-                c.bg.setFillStyle(0x1e1b4b, 0.95);
-                c.nameText.setStyle({ fill: '#c084fc' });
+                c.drawCardBg(0x4c1d95, 0.95, 0xa855f7, 2);
+                c.nameText.setStyle({ fill: '#e9d5ff' });
             } else if (isP1) {
-                c.bg.setStrokeStyle(2, 0x10b981); // Destaque verde P1
-                c.bg.setFillStyle(0x064e3b, 0.7);
-                c.nameText.setStyle({ fill: '#34d399' });
+                c.drawCardBg(0x1e3a8a, 0.92, 0x3b82f6, 2);
+                c.nameText.setStyle({ fill: '#bfdbfe' });
             } else if (isP2) {
-                c.bg.setStrokeStyle(2, 0xef4444); // Destaque vermelho P2
-                c.bg.setFillStyle(0x7f1d1d, 0.7);
-                c.nameText.setStyle({ fill: '#f87171' });
+                c.drawCardBg(0x7f1d1d, 0.92, 0xef4444, 2);
+                c.nameText.setStyle({ fill: '#fecaca' });
             } else {
-                c.bg.setStrokeStyle(1.5, 0x334155);
-                c.bg.setFillStyle(0x0f172a, 0.95);
-                c.nameText.setStyle({ fill: '#94a3b8' });
+                c.drawCardBg(0x2d3544, 0.95, 0x475569, 1.5);
+                c.nameText.setStyle({ fill: '#cbd5e1' });
             }
         });
     }
@@ -445,7 +479,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (side === 'p1') {
             if (this.p1Sprite) {
                 this.p1Sprite.setTexture(prof.atlasKey, 'idle');
-                this.p1Sprite.setScale(0.65); // Aspect ratio fixed
+                this.p1Sprite.setScale(prof.scale || 0.65); // Aspect ratio fixed
                 if (isOnline) {
                     this.p1Sprite.setAlpha(1);
                     this.p1Sprite.clearTint();
@@ -485,16 +519,16 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.p1StatusBadge.setStyle({ fill: '#ef4444' });
                 } else {
                     this.p1StatusBadge.setText(isReady ? '🟢 PRONTO' : '⏳ ESCOLHENDO');
-                    this.p1StatusBadge.setStyle({ fill: isReady ? '#34d399' : '#94a3b8' });
+                    this.p1StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#94a3b8' });
                 }
             }
             if (this.p1BannerBg) {
-                this.p1BannerBg.setStrokeStyle(isReady ? 2.5 : 1.5, isReady ? 0x22c55e : 0x10b981);
+                this.p1BannerBg.setStrokeStyle(isReady ? 2.5 : 1.5, isReady ? 0x16a34a : 0x2563eb);
             }
         } else {
             if (this.p2Sprite) {
                 this.p2Sprite.setTexture(prof.atlasKey, 'idle');
-                this.p2Sprite.setScale(0.65); // Aspect ratio fixed
+                this.p2Sprite.setScale(prof.scale || 0.65); // Aspect ratio fixed
                 this.p2Sprite.setFlipX(true);
                 if (isOnline) {
                     this.p2Sprite.setAlpha(1);
@@ -535,11 +569,11 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.p2StatusBadge.setStyle({ fill: '#ef4444' });
                 } else {
                     this.p2StatusBadge.setText(isReady ? '🟢 PRONTO' : '⏳ ESCOLHENDO');
-                    this.p2StatusBadge.setStyle({ fill: isReady ? '#34d399' : '#94a3b8' });
+                    this.p2StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#94a3b8' });
                 }
             }
-            if (this.p2BannerBg) {
-                this.p2BannerBg.setStrokeStyle(isReady ? 2.5 : 1.5, isReady ? 0x22c55e : 0xef4444);
+            if (this.p2BannerBg && typeof this.p2BannerBg.setCardStyle === 'function') {
+                this.p2BannerBg.setCardStyle(0x242a35, 0.96, isReady ? 0x16a34a : 0xdc2626, isReady ? 2.5 : 1.5);
             }
         }
     }
@@ -550,58 +584,64 @@ export class CharacterSelectScene extends Phaser.Scene {
         const centerX = width / 2;
         const footY = 665;
 
-        // Botão Principal de Confirmação (Arcade Lock-In)
-        this.btnConfirm = this.add.text(centerX, footY, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', { 
-            fontSize: '15px', fill: '#ffffff', backgroundColor: '#16a34a', 
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 10, bottom: 10, left: 32, right: 32 }, fontStyle: 'bold' 
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.btnConfirm.setStyle({ backgroundColor: '#15803d' }))
-            .on('pointerout', () => this.btnConfirm.setStyle({ backgroundColor: '#16a34a' }))
-            .on('pointerdown', () => this.confirmSelection());
+        // Botão Principal de Confirmação (Arcade Lock-In) - Cápsula Suave
+        this.btnConfirm = createSmoothButton(this, centerX, footY, 360, 44, '⚔️ CONFIRMAR PROFESSOR (LOCK IN)', {
+            radius: 22,
+            fillColor: 0x16a34a,
+            hoverFillColor: 0x15803d,
+            strokeColor: 0x22c55e,
+            strokeWidth: 2,
+            fontSize: '14px',
+            onClick: () => this.confirmSelection()
+        });
 
         // Container de Estado Pronto (quando o jogador confirmar)
-        this.readyBadgeContainer = this.add.container(centerX - 80, footY).setVisible(false);
-        this.readyBg = this.add.rectangle(0, 0, 310, 38, 0x064e3b, 0.95).setStrokeStyle(1.5, 0x10b981);
+        this.readyBadgeContainer = createSmoothCard(this, centerX - 70, footY, 320, 42, {
+            radius: 21,
+            fillColor: 0x064e3b,
+            fillAlpha: 0.95,
+            strokeColor: 0x16a34a,
+            strokeWidth: 1.5
+        }).setVisible(false);
         this.readyTxt = this.add.text(0, 0, '🟢 VOCÊ ESTÁ PRONTO!', {
-            fontSize: '13px', fill: '#34d399', fontStyle: 'bold',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
+            fontSize: '13px', fill: '#4ade80', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
-        this.readyBadgeContainer.add([this.readyBg, this.readyTxt]);
+        this.readyBadgeContainer.add(this.readyTxt);
 
-        // Botão de Cancelar / Trocar Professor
-        this.btnCancel = this.add.text(centerX + 140, footY, '↩️ Trocar', {
-            fontSize: '12px', fill: '#ffffff', backgroundColor: '#991b1b',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 9, bottom: 9, left: 16, right: 16 }, fontStyle: 'bold'
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .setVisible(false)
-            .on('pointerover', () => this.btnCancel.setStyle({ backgroundColor: '#b91c1c' }))
-            .on('pointerout', () => this.btnCancel.setStyle({ backgroundColor: '#991b1b' }))
-            .on('pointerdown', () => this.cancelSelection());
+        // Botão de Cancelar / Trocar Professor (Posicionado sem sobrepor o banner)
+        this.btnCancel = createSmoothButton(this, centerX + 180, footY, 130, 42, '↩️ Trocar', {
+            radius: 21,
+            fillColor: 0x991b1b,
+            hoverFillColor: 0xb91c1c,
+            strokeColor: 0xef4444,
+            strokeWidth: 1.5,
+            fontSize: '12px',
+            onClick: () => this.cancelSelection()
+        }).setVisible(false);
 
-        // Banner Central de Contagem Regressiva
-        this.countdownBanner = this.add.text(centerX, footY, '', {
-            fontSize: '14px', fill: '#facc15', backgroundColor: '#78350f',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 9, bottom: 9, left: 24, right: 24 }, fontStyle: 'bold'
-        }).setOrigin(0.5).setVisible(false);
+        // Banner Central de Contagem Regressiva (Posicionado sem sobrepor o botão trocar)
+        this.countdownBanner = createSmoothCard(this, centerX - 70, footY, 360, 42, {
+            radius: 21,
+            fillColor: 0x78350f,
+            fillAlpha: 0.95,
+            strokeColor: 0xf59e0b,
+            strokeWidth: 1.5
+        }).setVisible(false);
+        this.countdownTxt = this.add.text(0, 0, '', {
+            fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5);
+        this.countdownBanner.add(this.countdownTxt);
 
         // Botão Dev Solo (Canto Inferior Direito)
-        this.btnSolo = this.add.text(width - 95, 665, '⚡ Iniciar Solo', {
-            fontSize: '10px', fill: '#94a3b8', backgroundColor: '#1e293b',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
-            padding: { top: 5, bottom: 5, left: 8, right: 8 }, fontStyle: 'bold'
-        })
-            .setOrigin(0.5)
-            .setInteractive({ useHandCursor: true })
-            .on('pointerover', () => this.btnSolo.setStyle({ backgroundColor: '#334155', fill: '#f1f5f9' }))
-            .on('pointerout', () => this.btnSolo.setStyle({ backgroundColor: '#1e293b', fill: '#94a3b8' }))
-            .on('pointerdown', () => this.forceStartMatch());
+        this.btnSolo = createSmoothButton(this, width - 95, 665, 115, 32, '⚡ Iniciar Solo', {
+            radius: 16,
+            fillColor: 0x323a48,
+            hoverFillColor: 0x3e4758,
+            strokeColor: 0x526075,
+            textColor: '#cbd5e1',
+            fontSize: '11px',
+            onClick: () => this.forceStartMatch()
+        });
     }
 
     setupFirebaseSync() {
@@ -680,7 +720,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
             // Iniciar combate se rodada ativa for criada
             if (data.round && data.round >= 1 && !this.hasStarted) {
-                this.startGame();
+                this.startGame(data.arenaId);
             }
         });
     }
@@ -745,7 +785,9 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
+        const randomArena = getRandomArena();
         update(roomRef, {
+            arenaId: randomArena.id,
             [`${this.playerId}/characterId`]: this.selectedProfessorId,
             [`${this.playerId}/nickname`]: this.nickname,
             'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false,
@@ -762,13 +804,13 @@ export class CharacterSelectScene extends Phaser.Scene {
             countdownStartTime: null,
             matchStartTime: null
         }).then(() => {
-            this.startGame();
+            this.startGame(randomArena.id);
         }).catch(() => {
-            this.startGame();
+            this.startGame(randomArena.id);
         });
     }
 
-    startGame() {
+    startGame(arenaId = null) {
         if (this.hasStarted) return;
         this.hasStarted = true;
         this.isStartingMatch = true;
@@ -779,7 +821,13 @@ export class CharacterSelectScene extends Phaser.Scene {
             this.roomListener();
             this.roomListener = null;
         }
-        this.scene.start('MainScene', { roomId: this.roomId, playerId: this.playerId, nickname: this.nickname });
+        const chosenArena = arenaId || getRandomArena().id;
+        this.scene.start('MainScene', { 
+            roomId: this.roomId, 
+            playerId: this.playerId, 
+            nickname: this.nickname,
+            arenaId: chosenArena
+        });
     }
 
     leaveToMenu() {
@@ -807,23 +855,34 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         if (this.isCountingDown && this.countdownTargetTime) {
             const remaining = Math.ceil((this.countdownTargetTime - Date.now()) / 1000);
+            const centerX = this.scale.width / 2;
+            const footY = 665;
 
             if (remaining > 0) {
                 if (this.readyBadgeContainer) this.readyBadgeContainer.setVisible(false);
                 if (this.btnConfirm) this.btnConfirm.setVisible(false);
                 if (this.countdownBanner) {
-                    this.countdownBanner.setText(`⚡ COMBATE INICIA EM: ${remaining}s... PREPARE-SE!`).setVisible(true);
+                    this.countdownBanner.setPosition(centerX - 70, footY);
+                    this.countdownTxt.setText(`⚡ COMBATE INICIA EM: ${remaining}s... PREPARE-SE!`);
+                    this.countdownBanner.setVisible(true);
                 }
-                if (this.btnCancel) this.btnCancel.setVisible(true);
+                if (this.btnCancel) {
+                    this.btnCancel.setPosition(centerX + 180, footY);
+                    this.btnCancel.setVisible(true);
+                }
             } else {
-                if (this.countdownBanner) {
-                    this.countdownBanner.setText('⚔️ LUTEM! CARREGANDO ARENA...').setStyle({ backgroundColor: '#15803d' });
-                }
                 if (this.btnCancel) this.btnCancel.setVisible(false);
-
+                if (this.countdownBanner) {
+                    this.countdownBanner.setPosition(centerX, footY);
+                    this.countdownTxt.setText('⚔️ LUTEM! CARREGANDO ARENA...');
+                    if (typeof this.countdownBanner.setCardStyle === 'function') {
+                        this.countdownBanner.setCardStyle(0x15803d, 0.95, 0x22c55e, 1.5);
+                    }
+                }
                 if (this.playerId === 'p1' && !this.isStartingMatch) {
                     this.isStartingMatch = true;
                     const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                    const randomArena = getRandomArena();
                     const roomRef = ref(db, `rooms/${this.roomId}`);
 
                     let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
@@ -843,12 +902,13 @@ export class CharacterSelectScene extends Phaser.Scene {
                         currentQuestionId: randomQ.id,
                         questionStartedAt: Date.now(),
                         countdownStartTime: null,
-                        matchStartTime: null
+                        matchStartTime: null,
+                        arenaId: randomArena.id
                     }).then(() => {
-                        this.startGame();
+                        this.startGame(randomArena.id);
                     }).catch(e => {
                         console.error(e);
-                        this.startGame();
+                        this.startGame(randomArena.id);
                     });
                 } else if (this.playerId === 'p2' && !this.isStartingMatch) {
                     this.isStartingMatch = true;
