@@ -921,6 +921,7 @@ export class MainScene extends Phaser.Scene {
                 'p2/streak': 0,
                 'p2/answered': false,
                 'p2/answeredAt': null,
+                round: 0,
                 'p2/answerCorrect': null,
                 'p2/answeredChoice': null,
                 round: 0,

@@ -727,7 +727,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             }
 
             // Iniciar combate se rodada ativa for criada
-            if (data.round && data.round >= 1 && !this.hasStarted) {
+            if (data.state !== 'character_select' && data.round && data.round >= 1 && !this.hasStarted) {
                 this.startGame(data.arenaId);
             }
         });
@@ -815,6 +815,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             'p1/answered': false, 'p1/answeredAt': null, 'p1/answerCorrect': null,
             'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false,
             'p2/answered': false, 'p2/answeredAt': null, 'p2/answerCorrect': null,
+            state: 'in_match',
             round: 1,
             roundModifier: 'normal',
             roundResolved: false,
@@ -929,6 +930,7 @@ export class CharacterSelectScene extends Phaser.Scene {
                         'p1/answered': false, 'p1/answeredAt': null, 'p1/answerCorrect': null,
                         'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false,
                         'p2/answered': false, 'p2/answeredAt': null, 'p2/answerCorrect': null,
+                        state: 'in_match',
                         round: 1,
                         roundModifier: 'normal',
                         roundResolved: false,
