@@ -6,6 +6,17 @@
 const MAX_LOGS = 120;
 const logsHistory = [];
 
+function normalizeLogData(value) {
+    if (value instanceof Error) {
+        return {
+            name: value.name,
+            message: value.message,
+            stack: value.stack
+        };
+    }
+    return value;
+}
+
 /**
  * Registra um evento de diagnóstico
  * @param {'info'|'room'|'join'|'error'|'warn'|'game'} type 
@@ -17,7 +28,7 @@ export function logEvent(type, message, data = null) {
     const logItem = {
         type: (type || 'info').toLowerCase(),
         message,
-        data,
+        data: normalizeLogData(data),
         timestamp,
         id: Date.now() + Math.random().toString(36).substring(2, 5)
     };
@@ -29,11 +40,11 @@ export function logEvent(type, message, data = null) {
 
     const prefix = `[${timestamp}] [${logItem.type.toUpperCase()}]`;
     if (logItem.type === 'error') {
-        console.error(prefix, message, data || '');
+        console.error(prefix, message, logItem.data || '');
     } else if (logItem.type === 'warn') {
-        console.warn(prefix, message, data || '');
+        console.warn(prefix, message, logItem.data || '');
     } else {
-        console.log(prefix, message, data || '');
+        console.log(prefix, message, logItem.data || '');
     }
 
     if (typeof window !== 'undefined') {

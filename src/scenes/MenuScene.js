@@ -247,17 +247,7 @@ export class MenuScene extends Phaser.Scene {
             fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
         }).setOrigin(0.5);
 
-        const btnPill = createSmoothButton(this, 0, 78, 220, 38, '+ Criar Nova Sala', {
-            radius: 19,
-            fillColor: 0x2563eb,
-            hoverFillColor: 0x3b82f6,
-            strokeColor: 0x60a5fa,
-            strokeWidth: 1.5,
-            fontSize: '13px',
-            onClick: () => this.createRoom()
-        });
-
-        card.add([bgGfx, glow, icon, title, desc, btnPill]);
+        card.add([bgGfx, glow, icon, title, desc]);
 
         card.setSize(320, 250);
         card.setInteractive({ useHandCursor: true });
@@ -271,11 +261,9 @@ export class MenuScene extends Phaser.Scene {
             this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
             renderBg(0x242a35, 0x2563eb, 1.5);
         });
-        card.on('pointerdown', (ptr, lx, ly, ev) => {
-            if (ly < 55) {
-                SoundManager.playClick();
-                this.createRoom();
-            }
+        card.on('pointerdown', () => {
+            SoundManager.playClick();
+            this.createRoom();
         });
     }
 
@@ -304,17 +292,7 @@ export class MenuScene extends Phaser.Scene {
             fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
         }).setOrigin(0.5);
 
-        const btnPill = createSmoothButton(this, 0, 78, 230, 38, '📡 Ver Salas / Inserir Código', {
-            radius: 19,
-            fillColor: 0xdc2626,
-            hoverFillColor: 0xef4444,
-            strokeColor: 0xfca5a5,
-            strokeWidth: 1.5,
-            fontSize: '12px',
-            onClick: () => this.showJoinOverlay()
-        });
-
-        card.add([bgGfx, glow, icon, title, desc, btnPill]);
+        card.add([bgGfx, glow, icon, title, desc]);
 
         card.setSize(320, 250);
         card.setInteractive({ useHandCursor: true });
@@ -328,13 +306,11 @@ export class MenuScene extends Phaser.Scene {
             this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
             renderBg(0x242a35, 0xdc2626, 1.5);
         });
-        card.on('pointerdown', (ptr, lx, ly) => {
-            if (ly < 55) {
-                const overlay = document.getElementById('join-overlay');
-                if (overlay && overlay.style.display === 'flex') return;
-                SoundManager.playClick();
-                this.showJoinOverlay();
-            }
+        card.on('pointerdown', () => {
+            const overlay = document.getElementById('join-overlay');
+            if (overlay && overlay.style.display === 'flex') return;
+            SoundManager.playClick();
+            this.showJoinOverlay();
         });
     }
 

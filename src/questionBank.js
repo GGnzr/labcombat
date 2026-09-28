@@ -1,5 +1,6 @@
 import { get, ref } from 'firebase/database';
 import { db } from './firebase.js';
+import { logEvent } from './logger.js';
 
 function isValidQuestion(question) {
     return question && question.id != null && typeof question.text === 'string'
@@ -9,21 +10,58 @@ function isValidQuestion(question) {
 }
 
 export async function loadQuestionBank(professorId) {
+    const startedAt = Date.now();
     try {
         const snapshot = await get(ref(db, `questionBanks/${professorId}`));
         const bank = snapshot.val();
         const entries = Array.isArray(bank) ? bank : Object.values(bank || {});
-        return entries.filter(isValidQuestion);
+        const questions = entries.filter(isValidQuestion);
+        const invalidCount = entries.length - questions.length;
+
+        if (questions.length === 0) {
+            logEvent('error', `[Questões] Banco vazio ou ausente para "${professorId}".`, {
+                professorId,
+                rawEntries: entries.length,
+                durationMs: Date.now() - startedAt
+            });
+        } else if (invalidCount > 0) {
+            logEvent('warn', `[Questões] Banco "${professorId}" possui questões inválidas.`, {
+                professorId,
+                loaded: questions.length,
+                invalid: invalidCount,
+                durationMs: Date.now() - startedAt
+            });
+        } else {
+            logEvent('info', `[Questões] Banco "${professorId}" carregado.`, {
+                professorId,
+                loaded: questions.length,
+                durationMs: Date.now() - startedAt
+            });
+        }
+        return questions;
     } catch (error) {
-        console.error(`Erro ao carregar banco de questões de ${professorId}:`, error);
+        logEvent('error', `[Questões] Falha ao carregar banco "${professorId}".`, {
+            professorId,
+            durationMs: Date.now() - startedAt,
+            error
+        });
         return [];
     }
 }
 
 export async function loadQuestionBanks(professorIds) {
     const uniqueIds = [...new Set(professorIds.filter(Boolean))];
+    logEvent('info', '[Questões] Iniciando carregamento dos bancos da partida.', {
+        professorIds: uniqueIds
+    });
     const banks = await Promise.all(uniqueIds.map(loadQuestionBank));
-    return banks.flat();
+    const questions = banks.flat();
+    if (questions.length === 0) {
+        logEvent('error', '[Questões] Nenhuma questão disponível para a partida.', {
+            professorIds: uniqueIds
+        });
+    }
+    return questions;
 }
 
 export function validateQuestionBank(value) {

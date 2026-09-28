@@ -6,6 +6,7 @@ import { professors, getProfessorById } from '../professors.js';
 import { arenas, getArenaById, getRandomArena } from '../arenas.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
 import { SoundManager } from '../audio/SoundManager.js';
+import { logEvent } from '../logger.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -39,6 +40,10 @@ export class MainScene extends Phaser.Scene {
         this.isGameOver = false;
         this.hasAnsweredLocal = false;
         this.currentQuestionData = null;
+        this.questionCatalog = [];
+        this.questionCatalogPromise = null;
+        this.questionCatalogKey = null;
+        this.pendingQuestionPick = false;
         this.optionButtons = [];
         this.isLeaving = false;
         this.localQuestionStartTime = null;
@@ -735,6 +740,10 @@ export class MainScene extends Phaser.Scene {
 
     async buildQuestionCatalog(data) {
         const professorIds = [data?.p1?.characterId, data?.p2?.characterId].filter(Boolean);
+        logEvent('game', `[Sala ${this.roomId}] Preparando catálogo de questões.`, {
+            playerId: this.playerId,
+            professorIds
+        });
         return loadQuestionBanks(professorIds);
     }
 
@@ -809,6 +818,12 @@ export class MainScene extends Phaser.Scene {
         const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
         if (!hasP2) {
             // Modo solo: reinicia imediatamente sem pedir confirmação
+            return this.executeRematchDirectly();
+        }
+
+        const currentRequest = this.latestData?.postMatchRequest;
+        if (currentRequest?.type === 'rematch' && currentRequest.from !== this.playerId) {
+            // Se os dois jogadores clicarem, o segundo clique confirma a revanche.
             return this.executeRematchDirectly();
         }
 
@@ -1639,12 +1654,30 @@ export class MainScene extends Phaser.Scene {
     updateState(data) {
         if (!data) return;
         this.latestData = data;
-        this.buildQuestionCatalog(data).then((catalog) => {
-            this.questionCatalog = catalog;
-            if (data.currentQuestionId != null && this.currentQuestionData?.id !== data.currentQuestionId) {
-                this.renderQuestion(data.currentQuestionId);
-            }
-        });
+        const catalogKey = [data.p1?.characterId, data.p2?.characterId].filter(Boolean).join('|');
+        if (!this.questionCatalogPromise || this.questionCatalogKey !== catalogKey) {
+            this.questionCatalogKey = catalogKey;
+            this.questionCatalogPromise = this.buildQuestionCatalog(data).then((catalog) => {
+                if (this.questionCatalogKey !== catalogKey) return catalog;
+
+                this.questionCatalog = catalog;
+                logEvent(catalog.length > 0 ? 'game' : 'error', `[Sala ${this.roomId}] Catálogo de questões ${catalog.length > 0 ? 'pronto' : 'vazio'}.`, {
+                    playerId: this.playerId,
+                    professorKey: catalogKey,
+                    questionCount: catalog.length,
+                    round: data.round ?? 0
+                });
+                if (this.pendingQuestionPick && catalog.length > 0 && this.playerId === 'p1' && !this.isGameOver) {
+                    this.pendingQuestionPick = false;
+                    this.isAdvancingQuestion = false;
+                    this.pickNextQuestion();
+                }
+                if (data.currentQuestionId != null && this.currentQuestionData?.id !== data.currentQuestionId) {
+                    this.renderQuestion(data.currentQuestionId);
+                }
+                return catalog;
+            });
+        }
 
         // Se a partida foi reiniciada para a tela de seleção de professores (ex: Revanche / Trocar Professor)
         if (data.state === 'character_select') {
@@ -2088,7 +2121,12 @@ export class MainScene extends Phaser.Scene {
     renderQuestion(qId) {
         const q = (this.questionCatalog || []).find(q => q.id == qId);
         if (!q) {
-            console.error('Questão não encontrada para o ID:', qId);
+            logEvent('error', `[Sala ${this.roomId}] Questão não encontrada no catálogo.`, {
+                playerId: this.playerId,
+                questionId: qId,
+                catalogSize: (this.questionCatalog || []).length,
+                round: this.currentRound
+            });
             return;
         }
 
@@ -2280,7 +2318,16 @@ export class MainScene extends Phaser.Scene {
         const currentId = this.currentQuestionData ? this.currentQuestionData.id : null;
         const catalog = this.questionCatalog || [];
         if (catalog.length === 0) {
-            this.statusText?.setText('❌ Nenhum banco de questões foi publicado pelo GM.').setVisible(true);
+            if (this.questionCatalogPromise) {
+                this.pendingQuestionPick = true;
+                logEvent('warn', `[Sala ${this.roomId}] Primeira questão aguardando catálogo.`, {
+                    playerId: this.playerId,
+                    round: this.currentRound
+                });
+                this.statusText?.setText('Carregando banco de questões...').setVisible(true);
+            } else {
+                this.statusText?.setText('❌ Nenhum banco de questões foi publicado pelo GM.').setVisible(true);
+            }
             return;
         }
         const available = catalog.filter(q => q.id !== currentId);
