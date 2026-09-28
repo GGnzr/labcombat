@@ -10,6 +10,7 @@ import {
     GoogleAuthProvider,
     onAuthStateChanged,
     sendPasswordResetEmail,
+    signInAnonymously,
     signInWithPopup,
     signInWithEmailAndPassword,
     signOut,
@@ -31,6 +32,17 @@ export function getAuthenticatedUser() {
 export async function waitForAuthReady() {
     await auth.authStateReady();
     return auth.currentUser;
+}
+
+export async function ensureGuestAuth() {
+    const currentUser = await waitForAuthReady();
+    if (currentUser) return { success: true, user: currentUser };
+    try {
+        const credential = await signInAnonymously(auth);
+        return { success: true, user: credential.user };
+    } catch (error) {
+        return { success: false, message: getAuthErrorMessage(error), error };
+    }
 }
 
 function getAuthErrorMessage(error) {

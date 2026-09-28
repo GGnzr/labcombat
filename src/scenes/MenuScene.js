@@ -1,4 +1,4 @@
-import { waitForAuthReady } from '../auth.js';
+import { ensureGuestAuth } from '../auth.js';
 import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, onDisconnect } from "firebase/database";
@@ -367,9 +367,9 @@ export class MenuScene extends Phaser.Scene {
     }
 
     async createRoom() {
-        const authenticatedUser = await waitForAuthReady();
-        if (!authenticatedUser) {
-            this.statusText?.setText('❌ Faça login ou escolha o modo visitante antes de criar a sala.').setVisible(true);
+        const access = await ensureGuestAuth();
+        if (!access.success) {
+            this.statusText?.setText(`❌ ${access.message}`).setVisible(true);
             return;
         }
 
@@ -381,6 +381,7 @@ export class MenuScene extends Phaser.Scene {
 
         const roomId = this.generateRoomCode();
         const roomRef = ref(db, `rooms/${roomId}`);
+        const ownerUid = access.user.uid;
         
         let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
         if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
@@ -390,6 +391,7 @@ export class MenuScene extends Phaser.Scene {
 
         try {
             await set(roomRef, {
+                ownerUid,
                 p1: { 
                     nickname: this.playerNickname,
                     clientId: tabInstanceId,
@@ -429,7 +431,11 @@ export class MenuScene extends Phaser.Scene {
             });
         } catch(err) {
             console.error('Erro ao criar sala:', err);
-            logEvent('error', `[Erro Criar Sala] Falha ao gravar "${roomId}": ${err.message}`);
+            logEvent('error', `[Erro Criar Sala] Falha ao gravar "${roomId}": ${err.message}`, {
+                roomId,
+                ownerUid,
+                authProvider: access.user.isAnonymous ? 'anonymous' : 'account'
+            });
             this.statusText.setText('❌ Erro de conexão com o banco de dados.').setStyle({ fill: '#ef4444' }).setVisible(true);
         }
     }

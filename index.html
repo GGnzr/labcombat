@@ -428,7 +428,7 @@
     </div>
 
     <script type="module">
-        import { isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
+        import { ensureGuestAuth, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -1554,6 +1554,15 @@
             sessionStorage.setItem('labcombat_nickname', nick);
 
             try {
+                const access = await ensureGuestAuth();
+                if (!access.success) {
+                    joinErrorMsg.textContent = access.message;
+                    if (btnSubmitJoin) {
+                        btnSubmitJoin.disabled = false;
+                        btnSubmitJoin.textContent = '🚀 Entrar';
+                    }
+                    return;
+                }
                 let targetRoomId = code;
                 let roomRef = ref(db, `rooms/${targetRoomId}`);
                 let snapshot = await get(roomRef);
