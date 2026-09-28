@@ -3,6 +3,7 @@ import { db } from '../firebase.js';
 import { ref, get, set, onDisconnect } from "firebase/database";
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
+import { SoundManager } from '../audio/SoundManager.js';
 
 export class MenuScene extends Phaser.Scene {
     constructor() {
@@ -94,6 +95,9 @@ export class MenuScene extends Phaser.Scene {
             onClick: () => window.dispatchEvent(new CustomEvent('open-gm-modal'))
         });
 
+        // 9. Botão de Áudio Mudo / Som (🔊 / 🔇) no Canto Superior Direito
+        SoundManager.createMuteButton(this, width - 36, 36);
+
         // Ocultar Overlay do HTML sempre que a cena carregar
         const overlay = document.getElementById('join-overlay');
         if (overlay) overlay.style.display = 'none';
@@ -164,9 +168,15 @@ export class MenuScene extends Phaser.Scene {
         this.nicknameContainer.setSize(440, 40);
         this.nicknameContainer.setInteractive({ useHandCursor: true });
 
-        this.nicknameContainer.on('pointerover', () => renderBg(0x2d3544, 0xd97706));
+        this.nicknameContainer.on('pointerover', () => {
+            SoundManager.playHover();
+            renderBg(0x2d3544, 0xd97706);
+        });
         this.nicknameContainer.on('pointerout', () => renderBg(0x242a35, 0x475569));
-        this.nicknameContainer.on('pointerdown', openModal);
+        this.nicknameContainer.on('pointerdown', () => {
+            SoundManager.playClick();
+            openModal();
+        });
 
         // Ouvir mudanças de apelido vindas do modal
         this.handleNicknameChanged = (e) => {
@@ -219,6 +229,7 @@ export class MenuScene extends Phaser.Scene {
         card.setInteractive({ useHandCursor: true });
 
         card.on('pointerover', () => {
+            SoundManager.playHover();
             this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
             renderBg(0x2d3544, 0x60a5fa, 2);
         });
@@ -227,7 +238,10 @@ export class MenuScene extends Phaser.Scene {
             renderBg(0x242a35, 0x2563eb, 1.5);
         });
         card.on('pointerdown', (ptr, lx, ly, ev) => {
-            if (ly < 55) this.createRoom();
+            if (ly < 55) {
+                SoundManager.playClick();
+                this.createRoom();
+            }
         });
     }
 
@@ -272,6 +286,7 @@ export class MenuScene extends Phaser.Scene {
         card.setInteractive({ useHandCursor: true });
 
         card.on('pointerover', () => {
+            SoundManager.playHover();
             this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
             renderBg(0x2d3544, 0xfca5a5, 2);
         });
@@ -283,6 +298,7 @@ export class MenuScene extends Phaser.Scene {
             if (ly < 55) {
                 const overlay = document.getElementById('join-overlay');
                 if (overlay && overlay.style.display === 'flex') return;
+                SoundManager.playClick();
                 this.showJoinOverlay();
             }
         });

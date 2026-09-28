@@ -6,6 +6,7 @@ import { questions } from '../questions.js';
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
 import { getRandomArena } from '../arenas.js';
+import { SoundManager } from '../audio/SoundManager.js';
 
 export class CharacterSelectScene extends Phaser.Scene {
     constructor() {
@@ -61,6 +62,9 @@ export class CharacterSelectScene extends Phaser.Scene {
             fontSize: '12px',
             onClick: () => this.leaveToMenu()
         });
+
+        // Botão de Áudio Mudo / Som (🔊 / 🔇)
+        SoundManager.createMuteButton(this, 126, 28);
 
         // Título Central Arcade
         this.add.text(centerX, 20, 'SELECT YOUR FIGHTER', { 
@@ -392,6 +396,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             container.setInteractive({ useHandCursor: true });
 
             container.on('pointerover', () => {
+                SoundManager.playHover();
                 this.tweens.add({ targets: container, scale: 1.05, duration: 80, ease: 'Power1' });
             });
             container.on('pointerout', () => {
@@ -399,6 +404,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             });
 
             container.on('pointerdown', () => {
+                SoundManager.playClick();
                 if (this.isLockedIn) {
                     this.cancelSelection();
                 }
@@ -737,6 +743,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     confirmSelection() {
         if (this.isLockedIn) return;
         this.isLockedIn = true;
+        SoundManager.playClick();
 
         logEvent('game', `[Sala ${this.roomId}] ${this.nickname} (${this.playerId.toUpperCase()}) marcou PRONTO!`);
 
@@ -757,6 +764,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.isLockedIn = false;
         this.isCountingDown = false;
         this.countdownTargetTime = null;
+        SoundManager.playClick();
 
         logEvent('game', `[Sala ${this.roomId}] ${this.nickname} (${this.playerId.toUpperCase()}) cancelou prontidão.`);
 
@@ -859,6 +867,10 @@ export class CharacterSelectScene extends Phaser.Scene {
             const footY = 665;
 
             if (remaining > 0) {
+                if (this.lastCountdownRemaining !== remaining) {
+                    this.lastCountdownRemaining = remaining;
+                    SoundManager.playTick();
+                }
                 if (this.readyBadgeContainer) this.readyBadgeContainer.setVisible(false);
                 if (this.btnConfirm) this.btnConfirm.setVisible(false);
                 if (this.countdownBanner) {
@@ -871,6 +883,10 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.btnCancel.setVisible(true);
                 }
             } else {
+                if (this.lastCountdownRemaining !== 0) {
+                    this.lastCountdownRemaining = 0;
+                    SoundManager.playFight();
+                }
                 if (this.btnCancel) this.btnCancel.setVisible(false);
                 if (this.countdownBanner) {
                     this.countdownBanner.setPosition(centerX, footY);

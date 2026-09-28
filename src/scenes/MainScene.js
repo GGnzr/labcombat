@@ -5,6 +5,7 @@ import { questions } from '../questions.js';
 import { professors, getProfessorById } from '../professors.js';
 import { arenas, getArenaById, getRandomArena } from '../arenas.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
+import { SoundManager } from '../audio/SoundManager.js';
 
 export class MainScene extends Phaser.Scene {
     constructor() {
@@ -58,6 +59,10 @@ export class MainScene extends Phaser.Scene {
         this.isResolvingRound = false;
         this.isExecutingFinisher = false;
 
+        // Flags de áudio: garantem que FIGHT e K.O. toquem exatamente uma vez por partida
+        this.hasPlayedFightFanfare = false;
+        this.hasPlayedKOSound = false;
+
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
         this.QUESTION_TIME_LIMIT = devQuestionLimit;
         const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
@@ -107,6 +112,9 @@ export class MainScene extends Phaser.Scene {
             fontSize: '12px',
             onClick: () => this.leaveRoom()
         });
+
+        // Botão de Áudio Mudo / Som (🔊 / 🔇)
+        SoundManager.createMuteButton(this, 126, 28);
 
         // Título centralizado Arcade Gold
         this.add.text(centerX, 20, 'LABCOMBAT', { 
@@ -778,6 +786,15 @@ export class MainScene extends Phaser.Scene {
     async executeRematchDirectly() {
         if (!this.roomId) return;
         try {
+            // Reset de estado para nova partida
+            this.hasPlayedFightFanfare = false;
+            this.hasPlayedKOSound = false;
+            this.isGameOver = false;
+            this.hasPlayedUltimateFinisher = false;
+            this.currentQuestionData = null;
+            this.lastProcessedQuestionId = null;
+            this.lastProcessedRound = null;
+
             const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 3;
             const newArena = getRandomArena();
             this.setArena(newArena.id);
@@ -1140,10 +1157,16 @@ export class MainScene extends Phaser.Scene {
     }
 
     playAttack(fighter, direction) {
+        SoundManager.playPunch();
         this.tweens.add({ targets: fighter, x: fighter.originalX + (110 * direction), duration: 150, yoyo: true, ease: 'Power2' });
     }
 
-    playDamage(fighter) {
+    playDamage(fighter, isBlocked = false) {
+        if (isBlocked) {
+            SoundManager.playShield();
+        } else {
+            SoundManager.playPunch();
+        }
         this.tweens.add({ targets: fighter, x: fighter.originalX + 12, duration: 50, yoyo: true, repeat: 4 });
         this.tweens.add({ targets: fighter, alpha: 0.3, duration: 100, yoyo: true, repeat: 2 });
     }
@@ -1224,6 +1247,9 @@ export class MainScene extends Phaser.Scene {
         this.ultimateOverlay.setVisible(true).setAlpha(0);
         this.cameras.main.shake(700, 0.03);
         this.cameras.main.flash(450, 255, 255, 255);
+        SoundManager.playSpecial();
+        this.hasPlayedKOSound = true;
+        SoundManager.playKO();
 
         this.tweens.add({
             targets: this.ultimateOverlay,
@@ -1845,6 +1871,12 @@ export class MainScene extends Phaser.Scene {
         if (this.pausePanel) this.pausePanel.setVisible(false);
         this.isWaitingForOpponent = false;
 
+        // Tocar fanfarra de FIGHT! na primeira questão de cada partida
+        if (!this.hasPlayedFightFanfare) {
+            this.hasPlayedFightFanfare = true;
+            SoundManager.playFight();
+        }
+
         this.hasAnsweredLocal = false;
         this.currentQuestionData = q;
         this.questionText.setText(q.text);
@@ -1870,11 +1902,17 @@ export class MainScene extends Phaser.Scene {
         let isCorrect = false;
 
         if (isTimeout) {
+            SoundManager.playWrong();
             this.statusText.setText('TEMPO ESGOTADO!');
             this.statusText.setStyle({ fill: '#ef4444' });
             this.optionButtons.forEach(btn => btn.setStyle({ backgroundColor: '#374151' }));
         } else {
             isCorrect = (selectedIndex === this.currentQuestionData.correctIndex);
+            if (isCorrect) {
+                SoundManager.playCorrect();
+            } else {
+                SoundManager.playWrong();
+            }
             this.optionButtons[selectedIndex].setStyle({ backgroundColor: isCorrect ? '#16a34a' : '#dc2626' });
             if (!isCorrect) {
                 this.optionButtons[this.currentQuestionData.correctIndex].setStyle({ backgroundColor: '#16a34a' });
@@ -1934,6 +1972,10 @@ export class MainScene extends Phaser.Scene {
     }
 
     showGameOver(isWinner, winnerNick, isTie = false, roomData = null) {
+        if (!this.isGameOver && !this.hasPlayedKOSound) {
+            this.hasPlayedKOSound = true;
+            SoundManager.playKO();
+        }
         this.isGameOver = true;
         this.gameOverPanel.setVisible(true);
 
@@ -2063,7 +2105,15 @@ export class MainScene extends Phaser.Scene {
                 const remaining = Math.ceil((this.targetMatchStartTime - Date.now()) / 1000);
                 if (remaining > 0) {
                     this.pauseSub.setText(`${remaining}s`);
+                    if (this.lastStartRemaining !== remaining) {
+                        this.lastStartRemaining = remaining;
+                        SoundManager.playTick();
+                    }
                 } else {
+                    if (this.lastStartRemaining !== 0) {
+                        this.lastStartRemaining = 0;
+                        SoundManager.playFight();
+                    }
                     this.pauseSub.setText('⚔️ LUTEM!');
                     this.pausePanel.setVisible(false);
                     this.targetMatchStartTime = null;
@@ -2100,6 +2150,10 @@ export class MainScene extends Phaser.Scene {
                     this.timerText.setText(`⏱️ Tempo: ${remaining}s`);
                     if (remaining <= 5) {
                         this.timerText.setStyle({ fill: '#ef4444', backgroundColor: '#450a0a' });
+                        if (this.lastQuestionTick !== remaining) {
+                            this.lastQuestionTick = remaining;
+                            SoundManager.playTick();
+                        }
                     } else {
                         this.timerText.setStyle({ fill: '#38bdf8', backgroundColor: '#1e293b' });
                     }
