@@ -62,6 +62,12 @@ export class MainScene extends Phaser.Scene {
         // Flags de áudio: garantem que FIGHT e K.O. toquem exatamente uma vez por partida
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
+        this.hasPlayedUltimateFinisher = false;
+
+        // Controles de alerta/tick que também precisam ser zerados a cada partida
+        this.lastDisplayedAlert = null;
+        this.lastStartRemaining = null;
+        this.lastQuestionTick = null;
 
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
         this.QUESTION_TIME_LIMIT = devQuestionLimit;
@@ -752,6 +758,52 @@ export class MainScene extends Phaser.Scene {
         });
     }
 
+    /**
+     * Zera TODO o estado local de uma partida (flags, timers, textos e botões).
+     * Chamado na revanche (para quem clicou) e também quando o snapshot do Firebase
+     * indica que saímos do game over (para o oponente que não clicou).
+     *
+     * O ponto crítico é isAdvancingQuestion: se ele ficar true, o P1 nunca
+     * sorteia a primeira questão da nova partida (ver update()).
+     */
+    resetLocalMatchState() {
+        if (this.nextQuestionTimeout) {
+            clearTimeout(this.nextQuestionTimeout);
+            this.nextQuestionTimeout = null;
+        }
+        if (this.autoLeaveTimeout) {
+            clearTimeout(this.autoLeaveTimeout);
+            this.autoLeaveTimeout = null;
+        }
+
+        this.isGameOver = false;
+        this.isAdvancingQuestion = false;
+        this.isResolvingRound = false;
+        this.isExecutingFinisher = false;
+        this.hasAnsweredLocal = false;
+
+        this.hasPlayedFightFanfare = false;
+        this.hasPlayedKOSound = false;
+        this.hasPlayedUltimateFinisher = false;
+
+        this.lastDisplayedAlert = null;
+        this.lastStartRemaining = null;
+        this.lastQuestionTick = null;
+        this.targetMatchStartTime = null;
+        this.currentRound = 0;
+
+        // Limpa texto da questão, botões, badge de modificador e timer
+        // (também zera currentQuestionData, lastProcessedQuestionId e lastProcessedRound)
+        this.clearQuestion();
+
+        if (this.statusText) {
+            this.statusText.setText('Preparando nova partida...').setStyle({ fill: '#94a3b8' });
+        }
+        if (this.questionIdText) {
+            this.questionIdText.setText('QUESTÃO: --');
+        }
+    }
+
     async handleRematch() {
         if (!this.roomId) return;
         const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
@@ -824,14 +876,9 @@ export class MainScene extends Phaser.Scene {
     async executeRematchDirectly() {
         if (!this.roomId) return;
         try {
-            // Reset de estado para nova partida
-            this.hasPlayedFightFanfare = false;
-            this.hasPlayedKOSound = false;
-            this.isGameOver = false;
-            this.hasPlayedUltimateFinisher = false;
-            this.currentQuestionData = null;
-            this.lastProcessedQuestionId = null;
-            this.lastProcessedRound = null;
+            // Reset COMPLETO do estado local para nova partida
+            // (inclui isAdvancingQuestion, que travava o sorteio da 1ª questão)
+            this.resetLocalMatchState();
 
             const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 3;
             const newArena = getRandomArena();
@@ -848,6 +895,7 @@ export class MainScene extends Phaser.Scene {
                 'p1/answered': false,
                 'p1/answeredAt': null,
                 'p1/answerCorrect': null,
+                'p1/answeredChoice': null,
                 'p2/hp': 100,
                 'p2/charges': 0,
                 'p2/hasShield': false,
@@ -857,11 +905,17 @@ export class MainScene extends Phaser.Scene {
                 'p2/answered': false,
                 'p2/answeredAt': null,
                 'p2/answerCorrect': null,
+                'p2/answeredChoice': null,
                 round: 0,
                 roundModifier: 'normal',
                 roundResolved: false,
+                roundAlert: null,
+                ultimateWinner: null,
+                specialWinner: null,
+                attackWinner: null,
                 currentQuestionId: null,
                 questionStartTime: null,
+                questionStartedAt: null,
                 state: 'in_match',
                 matchStartTime: Date.now() + (devStartDelay * 1000)
             });
@@ -1905,7 +1959,9 @@ export class MainScene extends Phaser.Scene {
 
         // 2. Checagem de Fim de Jogo (HP <= 0)
         if (p1Hp === 100 && p2Hp === 100) {
-            this.isGameOver = false;
+            // Saímos de um game over (revanche aceita/iniciada): zera TODO o estado local.
+            // Isso também cobre o oponente que não clicou em "Jogar Novamente".
+            if (this.isGameOver) this.resetLocalMatchState();
             this.hasPlayedUltimateFinisher = false;
             if (this.gameOverPanel) this.gameOverPanel.setVisible(false);
             if (this.declinedBannerTimeout) clearTimeout(this.declinedBannerTimeout);
