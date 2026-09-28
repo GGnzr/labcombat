@@ -28,6 +28,11 @@ export function getAuthenticatedUser() {
     return auth.currentUser;
 }
 
+export async function waitForAuthReady() {
+    await auth.authStateReady();
+    return auth.currentUser;
+}
+
 function getAuthErrorMessage(error) {
     const messages = {
         'auth/email-already-in-use': 'Este e-mail já possui uma conta.',

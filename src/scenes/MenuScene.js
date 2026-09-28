@@ -1,3 +1,4 @@
+import { waitForAuthReady } from '../auth.js';
 import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, onDisconnect } from "firebase/database";
@@ -366,6 +367,12 @@ export class MenuScene extends Phaser.Scene {
     }
 
     async createRoom() {
+        const authenticatedUser = await waitForAuthReady();
+        if (!authenticatedUser) {
+            this.statusText?.setText('❌ Faça login ou escolha o modo visitante antes de criar a sala.').setVisible(true);
+            return;
+        }
+
         this.statusText.setText('⏳ Gerando sala no Firebase...').setStyle({ 
             fill: '#facc15',
             fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif',
