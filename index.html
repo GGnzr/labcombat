@@ -521,6 +521,7 @@
             }
             sessionStorage.setItem('labcombat_nickname', guestNickname);
             sessionStorage.setItem('labcombat_access_mode', 'guest');
+            window.dispatchEvent(new CustomEvent('nickname-changed', { detail: guestNickname }));
             accountRequired = false;
             closeAccountModal();
         });
@@ -551,6 +552,11 @@
                 return;
             }
             sessionStorage.setItem('labcombat_access_mode', 'account');
+            const accountNickname = result.profile?.nickname || result.user?.displayName || accountNicknameInput.value.trim();
+            if (accountNickname) {
+                sessionStorage.setItem('labcombat_nickname', accountNickname);
+                window.dispatchEvent(new CustomEvent('nickname-changed', { detail: accountNickname }));
+            }
             accountRequired = false;
             closeAccountModal();
         });

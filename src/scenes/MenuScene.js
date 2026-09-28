@@ -53,8 +53,13 @@ export class MenuScene extends Phaser.Scene {
         let savedPlayer = sessionStorage.getItem('labcombat_player_id');
         
         if (savedRoom && savedPlayer) {
-            this.registerPlayerSession(savedRoom, savedPlayer, sessionStorage.getItem('labcombat_nickname') || savedPlayer);
-            this.scene.start('CharacterSelectScene', { roomId: savedRoom, playerId: savedPlayer });
+            const savedNickname = sessionStorage.getItem('labcombat_nickname') || savedPlayer;
+            this.registerPlayerSession(savedRoom, savedPlayer, savedNickname);
+            this.scene.start('CharacterSelectScene', {
+                roomId: savedRoom,
+                playerId: savedPlayer,
+                nickname: savedNickname
+            });
             return;
         }
 
