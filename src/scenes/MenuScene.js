@@ -87,6 +87,16 @@ export class MenuScene extends Phaser.Scene {
             fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
+        createSmoothButton(this, width - 92, 36, 138, 30, '🔐 Conta / Visitante', {
+            radius: 15,
+            fillColor: 0x242a35,
+            hoverFillColor: 0x334155,
+            strokeColor: 0x38bdf8,
+            textColor: '#bae6fd',
+            fontSize: '11px',
+            onClick: () => window.dispatchEvent(new CustomEvent('open-account-modal'))
+        });
+
         // Barra de Definição de Apelido (Nickname)
         this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
         this.createNicknameBar(centerX, 190);

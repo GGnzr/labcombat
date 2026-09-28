@@ -27,6 +27,13 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
 - **Modo Solo para Testes:** Botão `⚡ Iniciar Solo` para testar as rodadas de perguntas diretamente sem precisar de um segundo jogador.
 
+### 🔐 Contas e Modo Visitante
+- **Cadastro opcional:** Jogadores podem criar uma conta com e-mail, senha e apelido para manter seu perfil e estatísticas.
+- **Login persistente:** O Firebase Authentication mantém a sessão da conta entre acessos.
+- **Modo visitante:** Não é necessário criar conta para criar ou entrar em partidas; basta escolher `Continuar como visitante`.
+
+Para ativar o cadastro no projeto Firebase, abra **Authentication → Sign-in method** e habilite o provedor **E-mail/senha**. O perfil do jogador é salvo em `users/{uid}` no Realtime Database.
+
 ### ⚔️ Batalha e Mecânicas de Combate
 - **Pontos de Vida (100 HP):** Cada jogador inicia o duelo com **100 HP**. O combate encerra quando o HP de um dos lutadores chega a 0 (K.O.).
 - **Sistema de Cargas e Ultimate (⚡ 0 a 3 Cargas):**

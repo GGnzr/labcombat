@@ -308,6 +308,34 @@
         </div>
     </div>
 
+    <!-- Modal de Conta do Jogador: cadastro opcional, com acesso visitante -->
+    <div id="account-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 26px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 370px; max-width: 92vw;">
+            <div style="font-size: 36px; margin-bottom: 4px;">🎓</div>
+            <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 21px; font-weight: bold;">Acesso do Jogador</h2>
+            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 14px 0;">Crie uma conta para manter seu perfil e jogar como visitante quando preferir.</p>
+
+            <div style="display: flex; gap: 6px; margin-bottom: 14px;">
+                <button id="account-tab-login" type="button" style="flex: 1; padding: 9px; background: #2563eb; color: #fff; border: 1px solid #60a5fa; border-radius: 7px; font-weight: bold; cursor: pointer;">Entrar</button>
+                <button id="account-tab-register" type="button" style="flex: 1; padding: 9px; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; border-radius: 7px; font-weight: bold; cursor: pointer;">Cadastrar</button>
+            </div>
+
+            <div id="account-nickname-row" style="display: none; margin-bottom: 9px;">
+                <input id="account-nickname-input" type="text" maxlength="14" placeholder="Apelido (2 a 14 caracteres)" style="font-size: 14px; font-weight: bold; width: 100%; padding: 10px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none;">
+            </div>
+            <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 14px; width: 100%; margin-bottom: 9px; padding: 10px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
+            <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 14px; width: 100%; margin-bottom: 9px; padding: 10px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
+            <div id="account-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 10px;"></div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <button id="account-submit-btn" type="button" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
+                <button id="account-logout-btn" type="button" style="display: none; padding: 10px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
+                <button id="account-guest-btn" type="button" style="padding: 10px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
+                <button id="account-close-btn" type="button" style="padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Overlay de Definir Apelido -->
     <div id="nickname-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 340px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
@@ -398,11 +426,100 @@
     </div>
 
     <script type="module">
-        import { isGM, loginGM, logoutGM } from '/src/auth.js';
+        import { isGM, loginGM, logoutGM, loginAccount, logoutAccount, observeAuthState, registerAccount } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
         import { getProfessorById } from '/src/professors.js';
+
+        const accountOverlay = document.getElementById('account-overlay');
+        const accountTabLogin = document.getElementById('account-tab-login');
+        const accountTabRegister = document.getElementById('account-tab-register');
+        const accountNicknameRow = document.getElementById('account-nickname-row');
+        const accountNicknameInput = document.getElementById('account-nickname-input');
+        const accountEmailInput = document.getElementById('account-email-input');
+        const accountPasswordInput = document.getElementById('account-password-input');
+        const accountErrorMsg = document.getElementById('account-error-msg');
+        const accountSubmitBtn = document.getElementById('account-submit-btn');
+        const accountLogoutBtn = document.getElementById('account-logout-btn');
+        const accountGuestBtn = document.getElementById('account-guest-btn');
+        const accountCloseBtn = document.getElementById('account-close-btn');
+        let accountMode = 'login';
+        let authenticatedUser = null;
+
+        function setAccountMode(mode) {
+            accountMode = mode;
+            const isRegistering = mode === 'register';
+            accountNicknameRow.style.display = isRegistering ? 'block' : 'none';
+            accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
+            accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
+            accountTabLogin.style.color = isRegistering ? '#cbd5e1' : '#fff';
+            accountTabRegister.style.background = isRegistering ? '#2563eb' : '#1e293b';
+            accountTabRegister.style.color = isRegistering ? '#fff' : '#cbd5e1';
+            accountErrorMsg.textContent = '';
+        }
+
+        function closeAccountModal() {
+            accountOverlay.style.display = 'none';
+            accountErrorMsg.textContent = '';
+        }
+
+        window.addEventListener('open-account-modal', () => {
+            accountOverlay.style.display = 'flex';
+            accountErrorMsg.textContent = authenticatedUser
+                ? `Conta ativa: ${authenticatedUser.email}`
+                : 'Sem conta? Você pode continuar como visitante.';
+            accountLogoutBtn.style.display = authenticatedUser ? 'block' : 'none';
+            accountSubmitBtn.style.display = authenticatedUser ? 'none' : 'block';
+            accountGuestBtn.style.display = authenticatedUser ? 'none' : 'block';
+            accountEmailInput.value = authenticatedUser?.email || '';
+            accountPasswordInput.value = '';
+            accountNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || '';
+            accountEmailInput.focus();
+        });
+
+        observeAuthState((user) => {
+            authenticatedUser = user;
+            window.dispatchEvent(new CustomEvent('account-state-changed', {
+                detail: user ? { uid: user.uid, email: user.email, nickname: user.displayName } : null
+            }));
+        });
+
+        accountTabLogin.addEventListener('click', () => setAccountMode('login'));
+        accountTabRegister.addEventListener('click', () => setAccountMode('register'));
+        accountCloseBtn.addEventListener('click', closeAccountModal);
+        accountGuestBtn.addEventListener('click', () => {
+            sessionStorage.setItem('labcombat_access_mode', 'guest');
+            closeAccountModal();
+        });
+        accountLogoutBtn.addEventListener('click', async () => {
+            accountLogoutBtn.disabled = true;
+            try {
+                await logoutAccount();
+                sessionStorage.setItem('labcombat_access_mode', 'guest');
+                closeAccountModal();
+            } catch (error) {
+                accountErrorMsg.textContent = error.message || 'Não foi possível sair da conta.';
+            } finally {
+                accountLogoutBtn.disabled = false;
+            }
+        });
+        accountSubmitBtn.addEventListener('click', async () => {
+            const email = accountEmailInput.value.trim();
+            const password = accountPasswordInput.value;
+            accountSubmitBtn.disabled = true;
+            accountErrorMsg.textContent = 'Conectando...';
+            const result = accountMode === 'register'
+                ? await registerAccount({ email, password, nickname: accountNicknameInput.value })
+                : await loginAccount({ email, password });
+            accountSubmitBtn.disabled = false;
+            if (!result.success) {
+                accountErrorMsg.textContent = result.message;
+                return;
+            }
+            sessionStorage.setItem('labcombat_access_mode', 'account');
+            closeAccountModal();
+        });
 
         // Elementos da Sidebar GM
         const startDelayInput = document.getElementById('dev-start-delay');
@@ -1247,7 +1364,7 @@
         }
 
         // Impede que cliques nos modais vazem para o canvas do Phaser por baixo
-        [joinOverlay, nicknameOverlay, gmLoginModal].forEach(overlayEl => {
+        [joinOverlay, nicknameOverlay, gmLoginModal, accountOverlay].forEach(overlayEl => {
             if (!overlayEl) return;
             ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend'].forEach(evt => {
                 overlayEl.addEventListener(evt, (e) => {

@@ -41,6 +41,7 @@ export class MainScene extends Phaser.Scene {
         this.hasAnsweredLocal = false;
         this.currentQuestionData = null;
         this.questionCatalog = [];
+        this.questionCatalogCache = new Map();
         this.questionCatalogPromise = null;
         this.questionCatalogKey = null;
         this.pendingQuestionPick = false;
@@ -1657,10 +1658,29 @@ export class MainScene extends Phaser.Scene {
         const catalogKey = [data.p1?.characterId, data.p2?.characterId].filter(Boolean).join('|');
         if (!this.questionCatalogPromise || this.questionCatalogKey !== catalogKey) {
             this.questionCatalogKey = catalogKey;
-            this.questionCatalogPromise = this.buildQuestionCatalog(data).then((catalog) => {
+            const cachedCatalog = this.questionCatalogCache.get(catalogKey);
+            const catalogPromise = cachedCatalog
+                ? Promise.resolve(cachedCatalog)
+                : this.buildQuestionCatalog(data);
+
+            this.questionCatalogPromise = catalogPromise.then((catalog) => {
                 if (this.questionCatalogKey !== catalogKey) return catalog;
 
-                this.questionCatalog = catalog;
+                if (catalog.length > 0) {
+                    this.questionCatalog = catalog;
+                    this.questionCatalogCache.set(catalogKey, catalog);
+                } else if (this.questionCatalog.length > 0) {
+                    logEvent('warn', `[Sala ${this.roomId}] Catálogo vazio ignorado; mantendo catálogo válido anterior.`, {
+                        playerId: this.playerId,
+                        professorKey: catalogKey,
+                        questionCount: this.questionCatalog.length,
+                        round: data.round ?? 0
+                    });
+                    return this.questionCatalog;
+                } else {
+                    this.questionCatalog = [];
+                }
+
                 logEvent(catalog.length > 0 ? 'game' : 'error', `[Sala ${this.roomId}] Catálogo de questões ${catalog.length > 0 ? 'pronto' : 'vazio'}.`, {
                     playerId: this.playerId,
                     professorKey: catalogKey,

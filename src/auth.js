@@ -3,12 +3,91 @@
  * LabCombat 1v1 Arena
  */
 
-import { db } from './firebase.js';
+import { auth, db } from './firebase.js';
 import { ref, get, set, child } from "firebase/database";
+import {
+    createUserWithEmailAndPassword,
+    onAuthStateChanged,
+    signInWithEmailAndPassword,
+    signOut,
+    updateProfile
+} from 'firebase/auth';
 
 // Senha/PIN mestre padrão para acesso Game Master (GM/Professor)
 const GM_DEFAULT_PIN = 'admin';
 const GM_ALT_PIN = 'gm2026';
+
+export function observeAuthState(callback) {
+    return onAuthStateChanged(auth, callback);
+}
+
+export function getAuthenticatedUser() {
+    return auth.currentUser;
+}
+
+function getAuthErrorMessage(error) {
+    const messages = {
+        'auth/email-already-in-use': 'Este e-mail já possui uma conta.',
+        'auth/invalid-email': 'Digite um e-mail válido.',
+        'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
+        'auth/network-request-failed': 'Não foi possível conectar ao servidor.',
+        'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns instantes.'
+    };
+    return messages[error?.code] || error?.message || 'Não foi possível concluir a autenticação.';
+}
+
+export async function registerAccount({ email, password, nickname }) {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const cleanNickname = (nickname || '').trim();
+    if (!cleanEmail || !password || !cleanNickname) {
+        return { success: false, message: 'E-mail, senha e apelido são obrigatórios.' };
+    }
+    if (cleanNickname.length < 2 || cleanNickname.length > 14) {
+        return { success: false, message: 'O apelido deve ter entre 2 e 14 caracteres.' };
+    }
+
+    try {
+        const credential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
+        await updateProfile(credential.user, { displayName: cleanNickname });
+        await set(ref(db, `users/${credential.user.uid}`), {
+            uid: credential.user.uid,
+            email: cleanEmail,
+            nickname: cleanNickname,
+            role: 'student',
+            registeredAt: Date.now(),
+            lastLoginAt: Date.now(),
+            score: 0,
+            matchesPlayed: 0,
+            matchesWon: 0
+        });
+        sessionStorage.setItem('labcombat_nickname', cleanNickname);
+        localStorage.setItem('labcombat_account_uid', credential.user.uid);
+        return { success: true, user: credential.user };
+    } catch (error) {
+        return { success: false, message: getAuthErrorMessage(error), error };
+    }
+}
+
+export async function loginAccount({ email, password }) {
+    try {
+        const credential = await signInWithEmailAndPassword(auth, email.trim().toLowerCase(), password);
+        const profileSnapshot = await get(ref(db, `users/${credential.user.uid}`));
+        const profile = profileSnapshot.exists() ? profileSnapshot.val() : {};
+        const nickname = profile.nickname || credential.user.displayName || 'Jogador 1';
+        await set(ref(db, `users/${credential.user.uid}/lastLoginAt`), Date.now());
+        sessionStorage.setItem('labcombat_nickname', nickname);
+        localStorage.setItem('labcombat_account_uid', credential.user.uid);
+        return { success: true, user: credential.user, profile };
+    } catch (error) {
+        return { success: false, message: getAuthErrorMessage(error), error };
+    }
+}
+
+export async function logoutAccount() {
+    await signOut(auth);
+    localStorage.removeItem('labcombat_account_uid');
+}
 
 /**
  * Retorna se a sessão atual possui privilégios de GM
