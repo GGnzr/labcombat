@@ -97,6 +97,12 @@ export class MenuScene extends Phaser.Scene {
             onClick: () => window.dispatchEvent(new CustomEvent('open-account-modal'))
         });
 
+        if (!sessionStorage.getItem('labcombat_access_mode')) {
+            this.time.delayedCall(0, () => {
+                window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { required: true } }));
+            });
+        }
+
         // Barra de Definição de Apelido (Nickname)
         this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
         this.createNicknameBar(centerX, 190);

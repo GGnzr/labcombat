@@ -446,6 +446,7 @@
         const accountCloseBtn = document.getElementById('account-close-btn');
         let accountMode = 'login';
         let authenticatedUser = null;
+        let accountRequired = false;
 
         function setAccountMode(mode) {
             accountMode = mode;
@@ -460,11 +461,13 @@
         }
 
         function closeAccountModal() {
+            if (accountRequired) return;
             accountOverlay.style.display = 'none';
             accountErrorMsg.textContent = '';
         }
 
-        window.addEventListener('open-account-modal', () => {
+        window.addEventListener('open-account-modal', (event) => {
+            accountRequired = Boolean(event.detail?.required);
             accountOverlay.style.display = 'flex';
             accountErrorMsg.textContent = authenticatedUser
                 ? `Conta ativa: ${authenticatedUser.email}`
@@ -472,6 +475,7 @@
             accountLogoutBtn.style.display = authenticatedUser ? 'block' : 'none';
             accountSubmitBtn.style.display = authenticatedUser ? 'none' : 'block';
             accountGuestBtn.style.display = authenticatedUser ? 'none' : 'block';
+            accountCloseBtn.style.display = accountRequired ? 'none' : 'block';
             accountEmailInput.value = authenticatedUser?.email || '';
             accountPasswordInput.value = '';
             accountNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || '';
@@ -480,6 +484,13 @@
 
         observeAuthState((user) => {
             authenticatedUser = user;
+            if (user) {
+                sessionStorage.setItem('labcombat_access_mode', 'account');
+                if (accountRequired) {
+                    accountRequired = false;
+                    closeAccountModal();
+                }
+            }
             window.dispatchEvent(new CustomEvent('account-state-changed', {
                 detail: user ? { uid: user.uid, email: user.email, nickname: user.displayName } : null
             }));
@@ -490,6 +501,7 @@
         accountCloseBtn.addEventListener('click', closeAccountModal);
         accountGuestBtn.addEventListener('click', () => {
             sessionStorage.setItem('labcombat_access_mode', 'guest');
+            accountRequired = false;
             closeAccountModal();
         });
         accountLogoutBtn.addEventListener('click', async () => {
@@ -497,6 +509,7 @@
             try {
                 await logoutAccount();
                 sessionStorage.setItem('labcombat_access_mode', 'guest');
+                accountRequired = false;
                 closeAccountModal();
             } catch (error) {
                 accountErrorMsg.textContent = error.message || 'Não foi possível sair da conta.';
@@ -518,6 +531,7 @@
                 return;
             }
             sessionStorage.setItem('labcombat_access_mode', 'account');
+            accountRequired = false;
             closeAccountModal();
         });
 
@@ -1372,6 +1386,8 @@
                     if (evt === 'click' && e.target === overlayEl) {
                         if (overlayEl === joinOverlay) {
                             closeJoinModal();
+                        } else if (overlayEl === accountOverlay && accountRequired) {
+                            return;
                         } else {
                             overlayEl.style.display = 'none';
                         }
