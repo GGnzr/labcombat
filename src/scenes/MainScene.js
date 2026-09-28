@@ -2118,9 +2118,33 @@ export class MainScene extends Phaser.Scene {
         }
     }
 
+    shuffleQuestionOptions(question, seedText) {
+        let seed = 0;
+        for (const character of seedText) {
+            seed = ((seed * 31) + character.charCodeAt(0)) >>> 0;
+        }
+
+        const optionEntries = question.options.map((optionText, optionIndex) => ({
+            optionText,
+            optionIndex
+        }));
+
+        for (let index = optionEntries.length - 1; index > 0; index -= 1) {
+            seed = (seed * 1664525 + 1013904223) >>> 0;
+            const randomIndex = Math.floor((seed / 4294967296) * (index + 1));
+            [optionEntries[index], optionEntries[randomIndex]] = [optionEntries[randomIndex], optionEntries[index]];
+        }
+
+        return {
+            ...question,
+            options: optionEntries.map(entry => entry.optionText),
+            correctIndex: optionEntries.findIndex(entry => entry.optionIndex === question.correctIndex)
+        };
+    }
+
     renderQuestion(qId) {
-        const q = (this.questionCatalog || []).find(q => q.id == qId);
-        if (!q) {
+        const question = (this.questionCatalog || []).find(catalogQuestion => catalogQuestion.id == qId);
+        if (!question) {
             logEvent('error', `[Sala ${this.roomId}] Questão não encontrada no catálogo.`, {
                 playerId: this.playerId,
                 questionId: qId,
@@ -2129,6 +2153,11 @@ export class MainScene extends Phaser.Scene {
             });
             return;
         }
+
+        const questionData = this.shuffleQuestionOptions(
+            question,
+            `${this.roomId}:${this.currentRound}:${question.id}`
+        );
 
         if (this.pausePanel) this.pausePanel.setVisible(false);
         this.isWaitingForOpponent = false;
@@ -2140,14 +2169,14 @@ export class MainScene extends Phaser.Scene {
         }
 
         this.hasAnsweredLocal = false;
-        this.currentQuestionData = q;
+        this.currentQuestionData = questionData;
         if (this.questionIdText) {
-            this.questionIdText.setText(`QUESTÃO: ${q.id}`);
+            this.questionIdText.setText(`QUESTÃO: ${questionData.id}`);
         }
-        this.questionText.setText(q.text);
+        this.questionText.setText(questionData.text);
 
         for (let i = 0; i < 4; i++) {
-            this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${q.options[i]}`);
+            this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${questionData.options[i]}`);
             this.optionButtons[i].setStyle({ backgroundColor: '#2d3544', fill: '#ffffff' }); 
             if (!this.isGameOver) {
                 this.optionButtons[i].setInteractive(); 
