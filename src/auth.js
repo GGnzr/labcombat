@@ -50,6 +50,7 @@ function getAuthErrorMessage(error) {
         'auth/email-already-in-use': 'Este e-mail já possui uma conta.',
         'auth/invalid-email': 'Digite um e-mail válido.',
         'auth/invalid-credential': 'E-mail ou senha incorretos.',
+        'auth/admin-restricted-operation': 'Acesso visitante desativado no Firebase. Ative o provedor Anônimo em Authentication > Sign-in method.',
         'auth/weak-password': 'A senha precisa ter pelo menos 6 caracteres.',
         'auth/network-request-failed': 'Não foi possível conectar ao servidor.',
         'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns instantes.'
