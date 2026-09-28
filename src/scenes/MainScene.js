@@ -1174,6 +1174,10 @@ export class MainScene extends Phaser.Scene {
             this.handleDevNextQuestion();
         };
 
+        this.onDevAttack = (event) => {
+            this.handleDevAttack(event.detail?.damage);
+        };
+
         this.onDevSetTimers = (e) => {
             const { matchStartDelay, questionTimeLimit } = e.detail || {};
             if (matchStartDelay) this.MATCH_START_DELAY = matchStartDelay;
@@ -1190,12 +1194,14 @@ export class MainScene extends Phaser.Scene {
         window.addEventListener('dev-reset', this.handleDevReset);
         window.addEventListener('dev-streak', this.onDevStreak);
         window.addEventListener('dev-next-question', this.onDevNextQuestion);
+        window.addEventListener('dev-attack', this.onDevAttack);
         window.addEventListener('dev-set-timers', this.onDevSetTimers);
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             window.removeEventListener('dev-reset', this.handleDevReset);
             window.removeEventListener('dev-streak', this.onDevStreak);
             window.removeEventListener('dev-next-question', this.onDevNextQuestion);
+            window.removeEventListener('dev-attack', this.onDevAttack);
             window.removeEventListener('dev-set-timers', this.onDevSetTimers);
             if (this.autoLeaveTimeout) {
                 clearTimeout(this.autoLeaveTimeout);
@@ -1238,6 +1244,27 @@ export class MainScene extends Phaser.Scene {
         }
         this.isAdvancingQuestion = false;
         this.pickNextQuestion();
+    }
+
+    handleDevAttack(damage = 20) {
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent) return;
+
+        const normalizedDamage = Math.max(1, Math.min(100, Number(damage) || 20));
+        const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
+        get(ref(db, `rooms/${this.roomId}`)).then((snapshot) => {
+            const roomData = snapshot.val();
+            const enemy = roomData?.[enemyId];
+            if (!enemy) return;
+
+            const nextHp = Math.max(0, (Number(enemy.hp) || 100) - normalizedDamage);
+            return update(ref(db, `rooms/${this.roomId}`), {
+                [`${enemyId}/hp`]: nextHp,
+                attackWinner: this.playerId,
+                roundAlert: `⚡ GOLPE DO GM: -${normalizedDamage} HP`
+            });
+        }).catch(error => {
+            console.error('Erro ao aplicar ataque do GM:', error);
+        });
     }
 
     async setupFirebase() {

@@ -238,6 +238,7 @@
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
                   <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #38bdf8;">🎯 Ações da Arena</div>
                   <button id="dev-skip-question" style="width: 100%; padding: 9px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⏭️ Pular para Próxima Questão</button>
+                  <button id="dev-attack-enemy" style="width: 100%; padding: 9px; background: #b91c1c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⚡ Atacar Inimigo (-20 HP)</button>
                   <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
               </div>
           </div>
@@ -988,7 +989,10 @@
                 clearAllRoomsBtn.disabled = true;
                 clearAllRoomsBtn.textContent = 'Excluindo...';
                 try {
-                    await remove(ref(db, 'rooms'));
+                    const snapshot = await get(ref(db, 'rooms'));
+                    const roomsData = snapshot.val() || {};
+                    const roomIds = Object.keys(roomsData).filter((roomId) => roomId !== '_test_ping' && roomId !== 'arena');
+                    await Promise.all(roomIds.map((roomId) => remove(ref(db, `rooms/${roomId}`))));
                     logEvent('warn', '⚠️ Todas as salas foram removidas do Firebase pelo GM.');
                     await fetchActiveRooms();
                 } catch (err) {
@@ -1137,6 +1141,13 @@
         if (btnSkipQuestion) {
             btnSkipQuestion.addEventListener('click', () => {
                 window.dispatchEvent(new CustomEvent('dev-next-question'));
+            });
+        }
+        const btnAttackEnemy = document.getElementById('dev-attack-enemy');
+        if (btnAttackEnemy) {
+            btnAttackEnemy.addEventListener('click', () => {
+                if (!gmActive) return;
+                window.dispatchEvent(new CustomEvent('dev-attack', { detail: { damage: 20 } }));
             });
         }
         const btnResetMatch = document.getElementById('dev-reset-btn');
