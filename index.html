@@ -452,6 +452,9 @@
             accountMode = mode;
             const isRegistering = mode === 'register';
             accountNicknameRow.style.display = isRegistering ? 'block' : 'none';
+            accountNicknameInput.placeholder = isRegistering
+                ? 'Apelido obrigatório (2 a 14 caracteres)'
+                : 'Apelido (2 a 14 caracteres)';
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
             accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
             accountTabLogin.style.color = isRegistering ? '#cbd5e1' : '#fff';
@@ -500,6 +503,23 @@
         accountTabRegister.addEventListener('click', () => setAccountMode('register'));
         accountCloseBtn.addEventListener('click', closeAccountModal);
         accountGuestBtn.addEventListener('click', () => {
+            if (accountNicknameRow.style.display !== 'block') {
+                accountNicknameRow.style.display = 'block';
+                accountNicknameInput.placeholder = 'Apelido obrigatório para visitante';
+                if (['Jogador 1', 'Jogador 2'].includes(accountNicknameInput.value.trim())) {
+                    accountNicknameInput.value = '';
+                }
+                accountErrorMsg.textContent = 'Defina seu apelido para continuar como visitante.';
+                accountNicknameInput.focus();
+                return;
+            }
+            const guestNickname = accountNicknameInput.value.trim();
+            if (guestNickname.length < 2 || guestNickname.length > 14) {
+                accountErrorMsg.textContent = 'O apelido do visitante deve ter entre 2 e 14 caracteres.';
+                accountNicknameInput.focus();
+                return;
+            }
+            sessionStorage.setItem('labcombat_nickname', guestNickname);
             sessionStorage.setItem('labcombat_access_mode', 'guest');
             accountRequired = false;
             closeAccountModal();

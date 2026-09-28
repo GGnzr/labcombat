@@ -97,7 +97,10 @@ export class MenuScene extends Phaser.Scene {
             onClick: () => window.dispatchEvent(new CustomEvent('open-account-modal'))
         });
 
-        if (!sessionStorage.getItem('labcombat_access_mode')) {
+        const accessMode = sessionStorage.getItem('labcombat_access_mode');
+        const savedNickname = sessionStorage.getItem('labcombat_nickname') || '';
+        const hasDefaultGuestNickname = accessMode === 'guest' && ['Jogador 1', 'Jogador 2'].includes(savedNickname);
+        if (!accessMode || hasDefaultGuestNickname) {
             this.time.delayedCall(0, () => {
                 window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { required: true } }));
             });
