@@ -4,10 +4,13 @@
  */
 
 import { auth, db } from './firebase.js';
-import { ref, get, set, child } from "firebase/database";
+import { ref, get, set, update, child } from "firebase/database";
 import {
     createUserWithEmailAndPassword,
+    GoogleAuthProvider,
     onAuthStateChanged,
+    sendPasswordResetEmail,
+    signInWithPopup,
     signInWithEmailAndPassword,
     signOut,
     updateProfile
@@ -79,6 +82,53 @@ export async function loginAccount({ email, password }) {
         sessionStorage.setItem('labcombat_nickname', nickname);
         localStorage.setItem('labcombat_account_uid', credential.user.uid);
         return { success: true, user: credential.user, profile };
+    } catch (error) {
+        return { success: false, message: getAuthErrorMessage(error), error };
+    }
+}
+
+export async function loginWithGoogle() {
+    try {
+        const provider = new GoogleAuthProvider();
+        provider.setCustomParameters({ prompt: 'select_account' });
+        const credential = await signInWithPopup(auth, provider);
+        const userRef = ref(db, `users/${credential.user.uid}`);
+        const profileSnapshot = await get(userRef);
+        const existingProfile = profileSnapshot.exists() ? profileSnapshot.val() : null;
+        const fallbackNickname = (credential.user.displayName || credential.user.email?.split('@')[0] || 'Visitante')
+            .trim()
+            .slice(0, 14);
+        const nickname = existingProfile?.nickname || fallbackNickname;
+
+        if (existingProfile) {
+            await update(userRef, { lastLoginAt: Date.now() });
+        } else {
+            await set(userRef, {
+                uid: credential.user.uid,
+                email: credential.user.email || '',
+                nickname,
+                role: 'student',
+                registeredAt: Date.now(),
+                lastLoginAt: Date.now(),
+                score: 0,
+                matchesPlayed: 0,
+                matchesWon: 0,
+                authProvider: 'google'
+            });
+        }
+
+        sessionStorage.setItem('labcombat_nickname', nickname);
+        localStorage.setItem('labcombat_account_uid', credential.user.uid);
+        return { success: true, user: credential.user, profile: { ...(existingProfile || {}), nickname } };
+    } catch (error) {
+        return { success: false, message: getAuthErrorMessage(error), error };
+    }
+}
+
+export async function requestPasswordReset(email) {
+    try {
+        await sendPasswordResetEmail(auth, email.trim().toLowerCase());
+        return { success: true };
     } catch (error) {
         return { success: false, message: getAuthErrorMessage(error), error };
     }

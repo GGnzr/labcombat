@@ -329,6 +329,8 @@
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <button id="account-submit-btn" type="button" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
+                <button id="account-reset-btn" type="button" style="padding: 7px; background: transparent; color: #7dd3fc; border: none; font-size: 12px; font-weight: bold; cursor: pointer;">Esqueci minha senha</button>
+                <button id="account-google-btn" type="button" style="padding: 10px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔵 Entrar com Google</button>
                 <button id="account-logout-btn" type="button" style="display: none; padding: 10px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
                 <button id="account-guest-btn" type="button" style="padding: 10px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
                 <button id="account-close-btn" type="button" style="padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
@@ -426,7 +428,7 @@
     </div>
 
     <script type="module">
-        import { isGM, loginGM, logoutGM, loginAccount, logoutAccount, observeAuthState, registerAccount } from '/src/auth.js';
+        import { isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -441,6 +443,8 @@
         const accountPasswordInput = document.getElementById('account-password-input');
         const accountErrorMsg = document.getElementById('account-error-msg');
         const accountSubmitBtn = document.getElementById('account-submit-btn');
+        const accountResetBtn = document.getElementById('account-reset-btn');
+        const accountGoogleBtn = document.getElementById('account-google-btn');
         const accountLogoutBtn = document.getElementById('account-logout-btn');
         const accountGuestBtn = document.getElementById('account-guest-btn');
         const accountCloseBtn = document.getElementById('account-close-btn');
@@ -456,6 +460,7 @@
                 ? 'Apelido obrigatório (2 a 14 caracteres)'
                 : 'Apelido (2 a 14 caracteres)';
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
+            accountResetBtn.style.display = isRegistering ? 'none' : 'block';
             accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
             accountTabLogin.style.color = isRegistering ? '#cbd5e1' : '#fff';
             accountTabRegister.style.background = isRegistering ? '#2563eb' : '#1e293b';
@@ -477,6 +482,8 @@
                 : 'Sem conta? Você pode continuar como visitante.';
             accountLogoutBtn.style.display = authenticatedUser ? 'block' : 'none';
             accountSubmitBtn.style.display = authenticatedUser ? 'none' : 'block';
+            accountResetBtn.style.display = authenticatedUser ? 'none' : accountMode === 'register' ? 'none' : 'block';
+            accountGoogleBtn.style.display = authenticatedUser ? 'none' : 'block';
             accountGuestBtn.style.display = authenticatedUser ? 'none' : 'block';
             accountCloseBtn.style.display = accountRequired ? 'none' : 'block';
             accountEmailInput.value = authenticatedUser?.email || '';
@@ -557,6 +564,37 @@
                 sessionStorage.setItem('labcombat_nickname', accountNickname);
                 window.dispatchEvent(new CustomEvent('nickname-changed', { detail: accountNickname }));
             }
+            accountRequired = false;
+            closeAccountModal();
+        });
+        accountResetBtn.addEventListener('click', async () => {
+            const email = accountEmailInput.value.trim();
+            if (!email) {
+                accountErrorMsg.textContent = 'Digite seu e-mail para receber o link de recuperação.';
+                accountEmailInput.focus();
+                return;
+            }
+            accountResetBtn.disabled = true;
+            accountErrorMsg.textContent = 'Enviando link de recuperação...';
+            const result = await requestPasswordReset(email);
+            accountResetBtn.disabled = false;
+            accountErrorMsg.textContent = result.success
+                ? 'Link enviado. Verifique sua caixa de entrada e a pasta de spam.'
+                : result.message;
+        });
+        accountGoogleBtn.addEventListener('click', async () => {
+            accountGoogleBtn.disabled = true;
+            accountErrorMsg.textContent = 'Abrindo login do Google...';
+            const result = await loginWithGoogle();
+            accountGoogleBtn.disabled = false;
+            if (!result.success) {
+                accountErrorMsg.textContent = result.message;
+                return;
+            }
+            const accountNickname = result.profile?.nickname || result.user?.displayName || result.user?.email?.split('@')[0] || 'Visitante';
+            sessionStorage.setItem('labcombat_access_mode', 'account');
+            sessionStorage.setItem('labcombat_nickname', accountNickname.slice(0, 14));
+            window.dispatchEvent(new CustomEvent('nickname-changed', { detail: accountNickname.slice(0, 14) }));
             accountRequired = false;
             closeAccountModal();
         });
