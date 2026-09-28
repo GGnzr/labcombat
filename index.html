@@ -428,7 +428,7 @@
     </div>
 
     <script type="module">
-        import { ensureGuestAuth, isAdminAccount, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
+        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -651,10 +651,23 @@
         // Estado do Modo GM e Sidebar
         let gmActive = false;
         let sidebarOpen = gmActive;
+        let lastAdminLogUid = null;
 
         async function refreshAdminAccess() {
             try {
+                const authenticatedUser = await getAuthenticatedUser();
                 gmActive = await isAdminAccount();
+                if (authenticatedUser && authenticatedUser.uid !== lastAdminLogUid) {
+                    logEvent(gmActive ? 'admin' : 'warn', gmActive
+                        ? `[Admin] Login autorizado: ${authenticatedUser.email || authenticatedUser.uid}.`
+                        : `[Admin] Login sem permissão de administrador: ${authenticatedUser.email || authenticatedUser.uid}.`, {
+                        uid: authenticatedUser.uid,
+                        email: authenticatedUser.email || null,
+                        provider: authenticatedUser.providerData?.[0]?.providerId || 'unknown',
+                        authorized: gmActive
+                    });
+                    lastAdminLogUid = authenticatedUser.uid;
+                }
             } catch (error) {
                 gmActive = false;
                 logEvent('warn', `[Admin] Não foi possível verificar a conta administradora: ${error.message}`);
@@ -757,6 +770,10 @@
                 case 'game':
                     tagSpan.style.color = '#c084fc';
                     tagSpan.textContent = '[JOGO]';
+                    break;
+                case 'admin':
+                    tagSpan.style.color = '#f59e0b';
+                    tagSpan.textContent = '[ADMIN]';
                     break;
                 default:
                     tagSpan.style.color = '#38bdf8';
@@ -976,6 +993,13 @@
 
         if (btnGmLogout) {
             btnGmLogout.addEventListener('click', () => {
+                const authenticatedUser = getAuthenticatedUser();
+                if (authenticatedUser) {
+                    logEvent('admin', `[Admin] Logout: ${authenticatedUser.email || authenticatedUser.uid}.`, {
+                        uid: authenticatedUser.uid,
+                        email: authenticatedUser.email || null
+                    });
+                }
                 logoutGM();
                 gmActive = false;
                 sidebarOpen = false;
