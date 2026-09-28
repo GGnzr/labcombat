@@ -330,7 +330,7 @@
             <div style="display: flex; flex-direction: column; gap: 8px;">
                 <button id="account-submit-btn" type="button" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
                 <button id="account-reset-btn" type="button" style="padding: 7px; background: transparent; color: #7dd3fc; border: none; font-size: 12px; font-weight: bold; cursor: pointer;">Esqueci minha senha</button>
-                <button id="account-google-btn" type="button" style="padding: 10px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔵 Entrar com Google</button>
+                <button id="account-google-btn" type="button" style="padding: 10px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;"><span style="display: inline-block; margin-right: 6px; color: #4285f4; font-family: Arial, sans-serif; font-size: 17px; font-weight: 800; line-height: 1; vertical-align: -2px;">G</span> Entrar com Google</button>
                 <button id="account-logout-btn" type="button" style="display: none; padding: 10px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
                 <button id="account-guest-btn" type="button" style="padding: 10px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
                 <button id="account-close-btn" type="button" style="padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
@@ -428,7 +428,7 @@
     </div>
 
     <script type="module">
-        import { ensureGuestAuth, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
+        import { ensureGuestAuth, isAdminAccount, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -509,7 +509,7 @@
         accountTabLogin.addEventListener('click', () => setAccountMode('login'));
         accountTabRegister.addEventListener('click', () => setAccountMode('register'));
         accountCloseBtn.addEventListener('click', closeAccountModal);
-        accountGuestBtn.addEventListener('click', () => {
+        accountGuestBtn.addEventListener('click', async () => {
             if (accountNicknameRow.style.display !== 'block') {
                 accountNicknameRow.style.display = 'block';
                 accountNicknameInput.placeholder = 'Apelido obrigatório para visitante';
@@ -526,10 +526,19 @@
                 accountNicknameInput.focus();
                 return;
             }
+            accountGuestBtn.disabled = true;
+            accountErrorMsg.textContent = 'Preparando acesso de visitante...';
+            const access = await ensureGuestAuth();
+            if (!access.success) {
+                accountGuestBtn.disabled = false;
+                accountErrorMsg.textContent = `Não foi possível ativar o visitante: ${access.message}`;
+                return;
+            }
             sessionStorage.setItem('labcombat_nickname', guestNickname);
             sessionStorage.setItem('labcombat_access_mode', 'guest');
             window.dispatchEvent(new CustomEvent('nickname-changed', { detail: guestNickname }));
             accountRequired = false;
+            accountGuestBtn.disabled = false;
             closeAccountModal();
         });
         accountLogoutBtn.addEventListener('click', async () => {
@@ -640,8 +649,22 @@
         const btnGmLoginCancel = document.getElementById('btn-gm-login-cancel');
 
         // Estado do Modo GM e Sidebar
-        let gmActive = isGM();
+        let gmActive = false;
         let sidebarOpen = gmActive;
+
+        async function refreshAdminAccess() {
+            try {
+                gmActive = await isAdminAccount();
+            } catch (error) {
+                gmActive = false;
+                logEvent('warn', `[Admin] Não foi possível verificar a conta administradora: ${error.message}`);
+            }
+            sidebarOpen = gmActive;
+            updateLayoutClasses();
+        }
+
+        refreshAdminAccess();
+        observeAuthState(() => refreshAdminAccess());
 
         // Gerenciamento de Troca de Abas
         function switchTab(target) {
@@ -961,11 +984,14 @@
 
         // Modal de Login do GM
         function openGMLoginModal() {
-            if (gmLoginModal && gmPinInput) {
+            if (gmActive) {
+                sidebarOpen = true;
+                updateLayoutClasses();
+                return;
+            }
+            if (gmLoginModal) {
                 gmLoginModal.style.display = 'flex';
-                gmPinInput.value = '';
-                if (gmLoginError) gmLoginError.textContent = '';
-                gmPinInput.focus();
+                if (gmLoginError) gmLoginError.textContent = 'Acesse com a conta Google definida como administradora.';
             }
         }
 
@@ -977,16 +1003,7 @@
         }
 
         function handleGMLoginSubmit() {
-            const pin = gmPinInput.value;
-            if (loginGM(pin)) {
-                gmActive = true;
-                sidebarOpen = true;
-                closeGMLoginModal();
-                updateLayoutClasses();
-            } else {
-                if (gmLoginError) gmLoginError.textContent = 'PIN inválido. Tente novamente.';
-                gmPinInput.select();
-            }
+            if (gmLoginError) gmLoginError.textContent = 'O acesso por PIN foi substituído. Faça login com a conta administradora.';
         }
 
         if (btnGmLoginSubmit) btnGmLoginSubmit.addEventListener('click', handleGMLoginSubmit);
@@ -1080,7 +1097,7 @@
 
         if (gmUploadQuestions) {
             gmUploadQuestions.addEventListener('click', async () => {
-                if (!isGM()) return;
+                if (!gmActive) return;
                 const file = gmQuestionFile?.files?.[0];
                 const professorId = gmQuestionProfessor?.value;
                 if (!file || !professorId) {
@@ -1121,7 +1138,7 @@
 
         if (gmDownloadQuestions) {
             gmDownloadQuestions.addEventListener('click', async () => {
-                if (!isGM()) return;
+                if (!gmActive) return;
                 const professorId = gmQuestionProfessor?.value;
                 if (!professorId) return;
 
@@ -1154,7 +1171,7 @@
 
         if (gmPublishBaseQuestions) {
             gmPublishBaseQuestions.addEventListener('click', async () => {
-                if (!isGM()) return;
+                if (!gmActive) return;
                 const professorIds = ['so', 'eng_soft', 'poo', 'web', 'bd', 'redes'];
                 gmPublishBaseQuestions.disabled = true;
                 gmPublishBaseQuestions.textContent = 'Publicando bancos-base...';

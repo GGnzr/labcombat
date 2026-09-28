@@ -29,6 +29,13 @@ export function getAuthenticatedUser() {
     return auth.currentUser;
 }
 
+export async function isAdminAccount() {
+    const user = await waitForAuthReady();
+    if (!user || user.isAnonymous) return false;
+    const snapshot = await get(ref(db, `adminUsers/${user.uid}`));
+    return snapshot.val() === true;
+}
+
 export async function waitForAuthReady() {
     await auth.authStateReady();
     return auth.currentUser;
