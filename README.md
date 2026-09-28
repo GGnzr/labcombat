@@ -43,14 +43,6 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
   - ⚡ **Overclock:** Concede **+1 Carga extra** ao acertar primeiro.
 - **Temporizador Dinâmico:** Tempo por questão calibrado e sincronizado em tempo real com o painel do desenvolvedor.
 
-### 🛠️ Painel do Game Master / Dev (Modo Administrador)
-- **Acesso Seguro via PIN:** Abertura da sidebar de administração protegida por autenticação (atalho **F2**, **Ctrl + Shift + D** ou parâmetro `?gm=1` na URL; PIN padrão: `admin` ou `gm2026`).
-- **Ajustes de Tempo:** Calibração em tempo real do tempo de início de rodada e limite por questão.
-- **Monitor de Salas:** Painel em tempo real para visualizar salas criadas, jogadores conectados e botões para limpeza de salas vazias.
-- **Terminal de Logs:** Histórico detalhado de eventos (salas, conexões, partidas, avisos e erros) com filtro por cores e botão de cópia.
-
----
-
 ## 🎮 Disciplinas / Personagens
 
 Cada lutador representa uma disciplina fundamental da área de tecnologia:
