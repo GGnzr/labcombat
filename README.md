@@ -55,14 +55,14 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 
 Cada lutador representa uma disciplina fundamental da área de tecnologia:
 
-| Disciplina | Tópicos & Especialidades | Golpe Especial (Ultimate) |
+| Disciplina | Tópicos & Especialidades |
 | :--- | :--- | :--- |
-| **Sistemas Operacionais** | Threads, Processos & Kernel | KERNEL PANIC (TELA AZUL) |
-| **Engenharia de Software** | Scrum, Requisitos & Clean Code | DEPLOY EM PRODUÇÃO NA SEXTA |
-| **Programação Orientada a Objetos** | Classes, Polimorfismo & Herança | NULL POINTER EXCEPTION |
-| **Web & Mobile** | Frontend, Fullstack & APIs | 404 NOT FOUND (CORS ERROR) |
-| **Banco de Dados** | SQL, Índices & Normalização | DROP DATABASE --FORCE |
-| **Redes de Computadores** | TCP/IP, Roteamento & Ping | DDoS OVERLOAD (PING DA MORTE) |
+| **Sistemas Operacionais** | Threads, Processos & Kernel |
+| **Engenharia de Software** | Scrum, Requisitos & Clean Code |
+| **Programação Orientada a Objetos** | Classes, Polimorfismo & Herança |
+| **Web & Mobile** | Frontend, Fullstack & APIs |
+| **Banco de Dados** | SQL, Índices & Normalização |
+| **Redes de Computadores** | TCP/IP, Roteamento & Ping |
 
 ---
 
