@@ -3,7 +3,11 @@
  * Registra eventos em tempo real para o painel do GM / Professor
  */
 
+import { ref, push, set } from 'firebase/database';
+import { db } from './firebase.js';
+
 const MAX_LOGS = 120;
+const PERSISTED_LOG_TYPES = new Set(['admin', 'error', 'warn']);
 const logsHistory = [];
 
 function normalizeLogData(value) {
@@ -15,6 +19,25 @@ function normalizeLogData(value) {
         };
     }
     return value;
+}
+
+function persistLog(logItem) {
+    if (!PERSISTED_LOG_TYPES.has(logItem.type)) return;
+
+    const persistedData = {
+        type: logItem.type,
+        message: String(logItem.message || '').slice(0, 500),
+        data: normalizeLogData(logItem.data),
+        timestamp: logItem.timestamp,
+        createdAt: Date.now()
+    };
+
+    try {
+        const logRef = push(ref(db, 'logs'));
+        set(logRef, persistedData).catch(() => {});
+    } catch {
+        // O diagnóstico local não deve falhar caso o Firebase esteja indisponível.
+    }
 }
 
 /**
@@ -46,6 +69,8 @@ export function logEvent(type, message, data = null) {
     } else {
         console.log(prefix, message, logItem.data || '');
     }
+
+    persistLog(logItem);
 
     if (typeof window !== 'undefined') {
         window.dispatchEvent(new CustomEvent('labcombat-log', { detail: logItem }));

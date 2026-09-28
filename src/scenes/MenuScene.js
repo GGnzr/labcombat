@@ -93,7 +93,7 @@ export class MenuScene extends Phaser.Scene {
             fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        createSmoothButton(this, width - 92, 36, 138, 30, '🔐 Conta / Visitante', {
+        createSmoothButton(this, width - 130, 36, 120, 30, '🔐 Conta / Visitante', {
             radius: 15,
             fillColor: 0x242a35,
             hoverFillColor: 0x334155,

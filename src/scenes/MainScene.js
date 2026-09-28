@@ -47,6 +47,7 @@ export class MainScene extends Phaser.Scene {
         this.pendingQuestionPick = false;
         this.optionButtons = [];
         this.isLeaving = false;
+        this.isTransitioningToCharacterSelect = false;
         this.localQuestionStartTime = null;
         this.targetMatchStartTime = null;
         this.lastProcessedQuestionId = null;
@@ -1701,6 +1702,8 @@ export class MainScene extends Phaser.Scene {
 
         // Se a partida foi reiniciada para a tela de seleção de professores (ex: Revanche / Trocar Professor)
         if (data.state === 'character_select') {
+            if (this.isTransitioningToCharacterSelect) return;
+            this.isTransitioningToCharacterSelect = true;
             if (this.autoLeaveTimeout) {
                 clearTimeout(this.autoLeaveTimeout);
                 this.autoLeaveTimeout = null;
