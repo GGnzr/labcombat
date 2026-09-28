@@ -661,6 +661,7 @@
             }
             sidebarOpen = gmActive;
             updateLayoutClasses();
+            window.dispatchEvent(new CustomEvent('admin-access-changed', { detail: gmActive }));
         }
 
         refreshAdminAccess();
@@ -987,11 +988,6 @@
             if (gmActive) {
                 sidebarOpen = true;
                 updateLayoutClasses();
-                return;
-            }
-            if (gmLoginModal) {
-                gmLoginModal.style.display = 'flex';
-                if (gmLoginError) gmLoginError.textContent = 'Acesse com a conta Google definida como administradora.';
             }
         }
 

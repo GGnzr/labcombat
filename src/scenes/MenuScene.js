@@ -1,4 +1,4 @@
-import { ensureGuestAuth } from '../auth.js';
+import { ensureGuestAuth, isAdminAccount } from '../auth.js';
 import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, onDisconnect } from "firebase/database";
@@ -144,7 +144,7 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // 8. Botão discreto de Acesso Professor / GM (Suave)
-        createSmoothButton(this, width - 90, 680, 110, 28, '🛡️ Modo GM', {
+        this.adminAccessButton = createSmoothButton(this, width - 90, 680, 110, 28, '🛡️ Modo GM', {
             radius: 14,
             fillColor: 0x242a35,
             hoverFillColor: 0x323a48,
@@ -152,7 +152,13 @@ export class MenuScene extends Phaser.Scene {
             textColor: '#cbd5e1',
             fontSize: '11px',
             onClick: () => window.dispatchEvent(new CustomEvent('open-gm-modal'))
-        });
+        }).setVisible(false);
+
+        this.refreshAdminAccessButton();
+        this.handleAdminAccessChanged = (event) => {
+            this.adminAccessButton?.setVisible(event.detail === true);
+        };
+        window.addEventListener('admin-access-changed', this.handleAdminAccessChanged);
 
         // 9. Botão de Áudio Mudo / Som (🔊 / 🔇) no Canto Superior Direito
         SoundManager.createMuteButton(this, width - 36, 36);
@@ -175,6 +181,7 @@ export class MenuScene extends Phaser.Scene {
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             window.removeEventListener('submit-room-code', this.handleSubmitRoomCode);
             window.removeEventListener('dev-reset', this.handleDevReset);
+            window.removeEventListener('admin-access-changed', this.handleAdminAccessChanged);
             if (this.handleNicknameChanged) {
                 window.removeEventListener('nickname-changed', this.handleNicknameChanged);
             }
@@ -182,6 +189,15 @@ export class MenuScene extends Phaser.Scene {
                 window.removeEventListener('dev-set-timers', this.handleDevTimersChanged);
             }
         });
+    }
+
+    async refreshAdminAccessButton() {
+        try {
+            const isAdmin = await isAdminAccount();
+            this.adminAccessButton?.setVisible(isAdmin);
+        } catch {
+            this.adminAccessButton?.setVisible(false);
+        }
     }
 
     createNicknameBar(x, y) {
