@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, update, remove, onValue } from "firebase/database";
 import { professors, getProfessorById } from '../professors.js';
-import { questions } from '../questions.js';
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
 import { getRandomArena } from '../arenas.js';
+import { loadQuestionBanks } from '../questionBank.js';
 import { SoundManager } from '../audio/SoundManager.js';
 
 export class CharacterSelectScene extends Phaser.Scene {
@@ -16,7 +16,7 @@ export class CharacterSelectScene extends Phaser.Scene {
     init(data) {
         this.roomId = data.roomId;
         this.playerId = data.playerId;
-        this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || localStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
+        this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
         this.selectedProfessorId = data.previousCharacterId || (this.playerId === 'p1' ? 'so' : 'web');
         this.oppProfessorId = this.playerId === 'p1' ? 'web' : 'so';
         this.isLockedIn = false;
@@ -38,6 +38,8 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     create() {
+        SoundManager.startMenuBGM();
+
         // 1. Fundo do Campus IF Veranópolis com enquadramento focado no pátio dos lutadores
         const width = this.scale.width;
         const centerX = width / 2;
@@ -780,13 +782,24 @@ export class CharacterSelectScene extends Phaser.Scene {
         update(roomRef, { countdownStartTime: null }).catch(e => console.error(e));
     }
 
-    forceStartMatch() {
+    async getQuestionPool() {
+        const professorIds = [this.selectedProfessorId, this.oppProfessorId].filter(Boolean);
+        return loadQuestionBanks(professorIds);
+    }
+
+    async forceStartMatch() {
         if (this.hasStarted || this.isStartingMatch) return;
         this.isStartingMatch = true;
 
         logEvent('game', `[Sala ${this.roomId}] Forçando início de partida solo.`);
 
-        const randomQ = questions[Math.floor(Math.random() * questions.length)];
+        const questionPool = await this.getQuestionPool();
+        if (questionPool.length === 0) {
+            this.isStartingMatch = false;
+            this.statusText?.setText('❌ O GM ainda não publicou questões para estes professores.').setVisible(true);
+            return;
+        }
+        const randomQ = questionPool[Math.floor(Math.random() * questionPool.length)];
         const roomRef = ref(db, `rooms/${this.roomId}`);
         
         let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
@@ -858,7 +871,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.scene.start('MenuScene');
     }
 
-    update() {
+    async update() {
         if (this.hasStarted) return;
 
         if (this.isCountingDown && this.countdownTargetTime) {
@@ -897,7 +910,13 @@ export class CharacterSelectScene extends Phaser.Scene {
                 }
                 if (this.playerId === 'p1' && !this.isStartingMatch) {
                     this.isStartingMatch = true;
-                    const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                    const questionPool = await this.getQuestionPool();
+                    if (questionPool.length === 0) {
+                        this.isStartingMatch = false;
+                        this.statusText?.setText('❌ O GM ainda não publicou questões para estes professores.').setVisible(true);
+                        return;
+                    }
+                    const randomQ = questionPool[Math.floor(Math.random() * questionPool.length)];
                     const randomArena = getRandomArena();
                     const roomRef = ref(db, `rooms/${this.roomId}`);
 
@@ -925,11 +944,6 @@ export class CharacterSelectScene extends Phaser.Scene {
                     }).catch(e => {
                         console.error(e);
                         this.startGame(randomArena.id);
-                    });
-                } else if (this.playerId === 'p2' && !this.isStartingMatch) {
-                    this.isStartingMatch = true;
-                    this.time.delayedCall(800, () => {
-                        if (!this.hasStarted) this.startGame();
                     });
                 }
             }

@@ -1,0 +1,20 @@
+[
+  {
+    "id": "bd-3",
+    "text": "O que o comando SQL 'DROP TABLE' faz no banco de dados?",
+    "options": ["Apaga apenas os dados da tabela", "Exclui a tabela e todos os seus dados estruturais", "Cria uma cópia de backup da tabela", "Remove todos os bancos do servidor"],
+    "correctIndex": 1
+  },
+  {
+    "id": "bd-9",
+    "text": "Qual é a complexidade de tempo média de busca em uma Tabela Hash (Hash Table)?",
+    "options": ["O(n²)", "O(log n)", "O(1)", "O(n)"],
+    "correctIndex": 2
+  },
+  {
+    "id": "bd-17",
+    "text": "Em banco de dados relacionais, o que é uma Chave Estrangeira (Foreign Key)?",
+    "options": ["Um identificador gerado fora do país", "Um campo que aponta para a Chave Primária de outra tabela", "Uma senha criptografada de acesso", "Uma tabela sem índices"],
+    "correctIndex": 1
+  }
+]

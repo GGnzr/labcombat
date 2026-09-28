@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { ref, set, onValue, get, update, remove } from 'firebase/database';
 import { db } from '../firebase.js';
-import { questions } from '../questions.js';
+import { loadQuestionBanks } from '../questionBank.js';
 import { professors, getProfessorById } from '../professors.js';
 import { arenas, getArenaById, getRandomArena } from '../arenas.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
@@ -30,7 +30,7 @@ export class MainScene extends Phaser.Scene {
     init(data) {
         this.roomId = data.roomId;
         this.playerId = data.playerId;
-        this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || localStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
+        this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
         this.arenaId = data?.arenaId || getRandomArena().id;
         this.currentArenaId = this.arenaId;
         this.isWaitingForOpponent = true;
@@ -75,6 +75,10 @@ export class MainScene extends Phaser.Scene {
     }
 
     create() {
+        this.createFighterAnimations();
+
+        SoundManager.startBattleBGM();
+
         // 0. Base de cor sólida cobrindo todo o canvas 1024x576
         const width = this.scale.width;
         const centerX = width / 2;
@@ -114,7 +118,7 @@ export class MainScene extends Phaser.Scene {
         });
 
         // Botão de Áudio Mudo / Som (🔊 / 🔇)
-        SoundManager.createMuteButton(this, 126, 28);
+        SoundManager.createMuteButton(this, 126, 28, { panelSide: 'right' });
 
         // Título centralizado Arcade Gold
         this.add.text(centerX, 20, 'LABCOMBAT', { 
@@ -254,9 +258,13 @@ export class MainScene extends Phaser.Scene {
         this.p2Thermometer = this.add.graphics();
 
         // 4. Personagens e Bases de Combate (Ficam firmes no piso da arena superior)
+        // Mantém o mesmo espaçamento responsivo usado na seleção de personagens.
+        const fighterOffsetX = Math.min(235, Math.max(180, width * 0.18));
+        const fighterY = this.getFighterY();
+
         // P1 Fighter
-        const fighter1X = Math.max(280, centerX - 320);
-        this.fighterP1 = this.add.container(fighter1X, 340);
+        const fighter1X = centerX - fighterOffsetX;
+        this.fighterP1 = this.add.container(fighter1X, fighterY);
         const p1Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
         const p1PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0x2563eb, 0.9);
         const p1PadGlow = this.add.ellipse(0, 68, 105, 20, 0x2563eb, 0.25);
@@ -271,8 +279,8 @@ export class MainScene extends Phaser.Scene {
         this.fighterP1.originalX = fighter1X;
 
         // P2 Fighter
-        const fighter2X = Math.min(width - 280, centerX + 320);
-        this.fighterP2 = this.add.container(fighter2X, 340);
+        const fighter2X = centerX + fighterOffsetX;
+        this.fighterP2 = this.add.container(fighter2X, fighterY);
         const p2Shadow = this.add.ellipse(0, 68, 130, 28, 0x000000, 0.5);
         const p2PadRing = this.add.ellipse(0, 68, 120, 24).setStrokeStyle(2, 0xdc2626, 0.9);
         const p2PadGlow = this.add.ellipse(0, 68, 105, 20, 0xdc2626, 0.25);
@@ -321,9 +329,14 @@ export class MainScene extends Phaser.Scene {
         }).setOrigin(0.5);
         timerContainer.add(this.timerText);
 
-        this.arenaIndicatorText = this.add.text(width - 45, 454, `🏟️ ${currentArena.name.toUpperCase()}`, {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+        this.arenaIndicatorText = this.add.text(width - 24, 28, `🏟️ ${currentArena.name.toUpperCase()}`, {
+            fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2,
+            backgroundColor: '#1e293b', padding: { left: 8, right: 8, top: 5, bottom: 5 }
         }).setOrigin(1, 0.5);
+
+        this.questionIdText = this.add.text(35, 480, 'QUESTÃO: --', {
+            fontSize: '10px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0, 0.5);
 
         // Badge Modificador de Questão (Topo da Pergunta - Suave e Arredondado)
         this.roundModifierBadge = createSmoothBanner(this, centerX, 480, '', {
@@ -712,6 +725,31 @@ export class MainScene extends Phaser.Scene {
 
         // 8. Iniciar conexão e sincronização com o Firebase (após todos os painéis criados!)
         this.setupFirebase();
+    }
+
+    async buildQuestionCatalog(data) {
+        const professorIds = [data?.p1?.characterId, data?.p2?.characterId].filter(Boolean);
+        return loadQuestionBanks(professorIds);
+    }
+
+    createFighterAnimations() {
+        professors.forEach((prof) => {
+            const prefix = `${prof.atlasKey}_`;
+            const createAnimation = (key, frames, frameRate, repeat = 0) => {
+                const animationKey = `${prefix}${key}`;
+                if (!this.anims.exists(animationKey)) {
+                    this.anims.create({
+                        key: animationKey,
+                        frames: frames.map(frame => ({ key: prof.atlasKey, frame })),
+                        frameRate,
+                        repeat
+                    });
+                }
+            };
+
+            createAnimation('walk', ['walk1', 'walk2', 'walk3', 'walk4'], 8, -1);
+            createAnimation('attack', ['attack1', 'attack4'], 8);
+        });
     }
 
     async handleRematch() {
@@ -1157,11 +1195,55 @@ export class MainScene extends Phaser.Scene {
     }
 
     playAttack(fighter, direction) {
-        SoundManager.playPunch();
-        this.tweens.add({ targets: fighter, x: fighter.originalX + (110 * direction), duration: 150, yoyo: true, ease: 'Power2' });
+        const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        const startX = fighter.originalX;
+        const targetX = fighter === this.fighterP1
+            ? this.fighterP2.originalX - 125
+            : this.fighterP1.originalX + 125;
+
+        this.tweens.killTweensOf(fighter);
+        if (sprite) {
+            const atlasKey = sprite.texture.key;
+            sprite.play(`${atlasKey}_walk`);
+        }
+
+        this.tweens.add({
+            targets: fighter,
+            x: targetX,
+            duration: 320,
+            ease: 'Power1',
+            onComplete: () => {
+                if (sprite) {
+                    const atlasKey = sprite.texture.key;
+                    sprite.play(`${atlasKey}_attack`);
+                    sprite.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => {
+                        this.setFighterIdle(sprite, atlasKey);
+                    });
+                }
+                SoundManager.playPunch();
+
+                this.tweens.add({
+                    targets: fighter,
+                    x: startX,
+                    delay: 220,
+                    duration: 280,
+                    ease: 'Power1',
+                    onComplete: () => {
+                        this.setFighterIdle(sprite);
+                    }
+                });
+            }
+        });
     }
 
     playDamage(fighter, isBlocked = false) {
+        const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        if (sprite) {
+            sprite.setTexture(sprite.texture.key, isBlocked ? 'defense' : 'hit');
+            this.time.delayedCall(isBlocked ? 320 : 220, () => {
+                this.setFighterIdle(sprite);
+            });
+        }
         if (isBlocked) {
             SoundManager.playShield();
         } else {
@@ -1169,6 +1251,84 @@ export class MainScene extends Phaser.Scene {
         }
         this.tweens.add({ targets: fighter, x: fighter.originalX + 12, duration: 50, yoyo: true, repeat: 4 });
         this.tweens.add({ targets: fighter, alpha: 0.3, duration: 100, yoyo: true, repeat: 2 });
+    }
+
+    setFighterIdle(sprite, atlasKey = sprite?.texture?.key) {
+        if (!sprite?.active || !atlasKey) return;
+        sprite.stop();
+        sprite.setTexture(atlasKey, 'idle');
+    }
+
+    playSpecial(fighter, playSound = true) {
+        const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        if (!sprite) return;
+        const startX = fighter.originalX;
+        const targetX = fighter === this.fighterP1
+            ? this.fighterP2.originalX - 125
+            : this.fighterP1.originalX + 125;
+        const atlasKey = sprite.texture.key;
+
+        this.tweens.killTweensOf(fighter);
+        sprite.play(`${atlasKey}_walk`);
+        this.tweens.add({
+            targets: fighter,
+            x: targetX,
+            duration: 320,
+            ease: 'Power1',
+            onComplete: () => {
+                sprite.setTexture(atlasKey, 'attack2');
+                if (playSound) SoundManager.playSpecial();
+                this.time.delayedCall(650, () => {
+                    this.setFighterIdle(sprite, atlasKey);
+                });
+                this.tweens.add({
+                    targets: fighter,
+                    x: startX,
+                    delay: 240,
+                    duration: 280,
+                    ease: 'Power1'
+                });
+            }
+        });
+    }
+
+    playFinisherAttack(fighter, direction) {
+        const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        const startX = fighter.originalX;
+        const targetX = fighter === this.fighterP1
+            ? this.fighterP2.originalX - 125
+            : this.fighterP1.originalX + 125;
+
+        this.tweens.killTweensOf(fighter);
+        sprite?.play(`${sprite.texture.key}_walk`);
+        this.tweens.add({
+            targets: fighter,
+            x: targetX,
+            duration: 320,
+            ease: 'Power1',
+            onComplete: () => {
+                if (sprite) {
+                    const atlasKey = sprite.texture.key;
+                    sprite.setTexture(atlasKey, 'attack2');
+                    this.time.delayedCall(650, () => {
+                        this.setFighterIdle(sprite, atlasKey);
+                    });
+                }
+                SoundManager.playSpecial();
+                this.tweens.add({
+                    targets: fighter,
+                    x: startX,
+                    delay: 240,
+                    duration: 280,
+                    ease: 'Power1'
+                });
+            }
+        });
+    }
+
+    getFighterY() {
+        // Os pes dos lutadores ficam alinhados ao limite inferior do palco.
+        return 360;
     }
 
     setArena(arenaId) {
@@ -1181,6 +1341,9 @@ export class MainScene extends Phaser.Scene {
             this.arenaBg.setTexture(arena.key);
             this.arenaBg.setDisplaySize(this.scale.width, 720);
         }
+        const fighterY = this.getFighterY();
+        this.fighterP1?.setY(fighterY);
+        this.fighterP2?.setY(fighterY);
         if (this.arenaIndicatorText) {
             this.arenaIndicatorText.setText(`🏟️ ${arena.name.toUpperCase()}`);
         }
@@ -1229,47 +1392,19 @@ export class MainScene extends Phaser.Scene {
         });
     }
 
-    triggerUltimateFinisher(winnerProf, loserProf, callback) {
+    triggerUltimateFinisher(winnerProf, loserProf, winnerKey, callback) {
         if (this.isExecutingFinisher) return;
         this.isExecutingFinisher = true;
 
-        if (winnerProf) {
-            if (true) {
-                this.ultPortrait.setTexture(winnerProf.atlasKey, 'idle');
-            } else {
-                this.ultPortrait.setTexture(winnerProf.atlasKey, 'idle');
-            }
-            this.ultMoveName.setText(winnerProf.ultimateName ? winnerProf.ultimateName.toUpperCase() : 'GOLPE FATAL');
-            this.ultQuote.setText(winnerProf.ultimateQuote ? `"${winnerProf.ultimateQuote}"` : '"Duelo encerrado com perfeição."');
-            this.ultHeader.setText(`⚡ ULTIMATE FINISHER • ${winnerProf.shortName.toUpperCase()} ⚡`);
-        }
-
-        this.ultimateOverlay.setVisible(true).setAlpha(0);
+        const winnerFighter = winnerKey === 'p1' ? this.fighterP1 : this.fighterP2;
+        this.playFinisherAttack(winnerFighter, winnerKey === 'p1' ? 1 : -1);
         this.cameras.main.shake(700, 0.03);
         this.cameras.main.flash(450, 255, 255, 255);
-        SoundManager.playSpecial();
         this.hasPlayedKOSound = true;
         SoundManager.playKO();
-
-        this.tweens.add({
-            targets: this.ultimateOverlay,
-            alpha: 1,
-            duration: 250,
-            ease: 'Power2',
-            onComplete: () => {
-                this.time.delayedCall(2600, () => {
-                    this.tweens.add({
-                        targets: this.ultimateOverlay,
-                        alpha: 0,
-                        duration: 400,
-                        onComplete: () => {
-                            this.ultimateOverlay.setVisible(false);
-                            this.isExecutingFinisher = false;
-                            if (typeof callback === 'function') callback();
-                        }
-                    });
-                });
-            }
+        this.time.delayedCall(1100, () => {
+            this.isExecutingFinisher = false;
+            if (typeof callback === 'function') callback();
         });
     }
 
@@ -1300,6 +1435,8 @@ export class MainScene extends Phaser.Scene {
 
         let alertMessage = '';
         let ultimateWinner = null;
+        let specialWinner = null;
+        let attackWinner = null;
 
         // CASO 1: AMBOS OS JOGADORES ERRARAM
         if (!p1Correct && !p2Correct) {
@@ -1390,14 +1527,17 @@ export class MainScene extends Phaser.Scene {
                     if (loserHp <= 33) {
                         loserHp = 0;
                         ultimateWinner = winnerKey;
+                        specialWinner = winnerKey;
                         alertMessage = `💥 ULTIMATE FINISHER! K.O. DE ${winnerNick}!`;
                     } else {
                         loserHp = Math.max(0, loserHp - 28);
                         winnerCharges = 0;
+                        specialWinner = winnerKey;
                         alertMessage = `⚡ SUPER GOLPE DE ${winnerNick}! (-28 HP)`;
                     }
                 }
             } else {
+                attackWinner = winnerKey;
                 winnerCharges = Math.min(3, winnerCharges + 1 + extraCharge);
                 if (loserShield) {
                     loserShield = false;
@@ -1432,7 +1572,9 @@ export class MainScene extends Phaser.Scene {
             'p2/hasTryCatch': p2TryCatch,
             roundResolved: true,
             roundAlert: alertMessage,
-            ultimateWinner: ultimateWinner
+            ultimateWinner: ultimateWinner,
+            specialWinner: specialWinner,
+            attackWinner: attackWinner
         };
 
         update(ref(db, `rooms/${this.roomId}`), updates).finally(() => {
@@ -1443,6 +1585,12 @@ export class MainScene extends Phaser.Scene {
     updateState(data) {
         if (!data) return;
         this.latestData = data;
+        this.buildQuestionCatalog(data).then((catalog) => {
+            this.questionCatalog = catalog;
+            if (data.currentQuestionId != null && this.currentQuestionData?.id !== data.currentQuestionId) {
+                this.renderQuestion(data.currentQuestionId);
+            }
+        });
 
         // Se a partida foi reiniciada para a tela de seleção de professores (ex: Revanche / Trocar Professor)
         if (data.state === 'character_select') {
@@ -1499,7 +1647,9 @@ export class MainScene extends Phaser.Scene {
             const p1Prof = getProfessorById(data.p1.characterId || 'so');
             const p1Nick = data.p1.nickname || 'Jogador 1';
             if (this.fighterP1Sprite) {
-                this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
+                if (!this.fighterP1Sprite.anims.isPlaying) {
+                    this.fighterP1Sprite.setTexture(p1Prof.atlasKey, 'idle');
+                }
                 this.fighterP1Sprite.setScale(p1Prof.scale || 0.65);
             }
             
@@ -1589,7 +1739,9 @@ export class MainScene extends Phaser.Scene {
             const p2Prof = getProfessorById(data.p2.characterId || 'web');
             const p2Nick = data.p2.nickname || 'Jogador 2';
             if (this.fighterP2Sprite) {
-                this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
+                if (!this.fighterP2Sprite.anims.isPlaying) {
+                    this.fighterP2Sprite.setTexture(p2Prof.atlasKey, 'idle');
+                }
                 this.fighterP2Sprite.setScale(p2Prof.scale || 0.65);
                 this.fighterP2Sprite.setFlipX(true);
             }
@@ -1715,22 +1867,38 @@ export class MainScene extends Phaser.Scene {
         if (this.previousData) {
             const prevP1Hp = this.previousData.p1?.hp != null ? this.previousData.p1.hp : 100;
             const prevP2Hp = this.previousData.p2?.hp != null ? this.previousData.p2.hp : 100;
-            const prevP1Charges = this.previousData.p1?.charges || 0;
-            const prevP2Charges = this.previousData.p2?.charges || 0;
+            const prevP1Shield = !!this.previousData.p1?.hasShield;
+            const prevP2Shield = !!this.previousData.p2?.hasShield;
+            const p1Blocked = prevP1Shield && !data.p1?.hasShield && p1Hp === prevP1Hp;
+            const p2Blocked = prevP2Shield && !data.p2?.hasShield && p2Hp === prevP2Hp;
 
             if (p1Hp < prevP1Hp) {
-                this.playDamage(this.fighterP1);
+                this.playDamage(this.fighterP1, prevP1Shield);
                 this.cameras.main.shake(120, 0.008);
+            } else if (p1Blocked) {
+                this.playDamage(this.fighterP1, true);
             }
             if (p2Hp < prevP2Hp) {
-                this.playDamage(this.fighterP2);
+                this.playDamage(this.fighterP2, prevP2Shield);
                 this.cameras.main.shake(120, 0.008);
+            } else if (p2Blocked) {
+                this.playDamage(this.fighterP2, true);
             }
-            if (p1Charges > prevP1Charges) {
-                this.playAttack(this.fighterP1, 1);
+            const attackChanged = data.attackWinner && (
+                data.attackWinner !== this.previousData.attackWinner || data.round !== this.previousData.round
+            );
+            if (attackChanged) {
+                this.playAttack(data.attackWinner === 'p1' ? this.fighterP1 : this.fighterP2);
             }
-            if (p2Charges > prevP2Charges) {
-                this.playAttack(this.fighterP2, -1);
+
+            const specialChanged = data.specialWinner && !data.ultimateWinner && (
+                data.specialWinner !== this.previousData.specialWinner || data.round !== this.previousData.round
+            );
+            if (specialChanged) {
+                this.playSpecial(
+                    data.specialWinner === 'p1' ? this.fighterP1 : this.fighterP2,
+                    !data.ultimateWinner
+                );
             }
         }
         this.previousData = data;
@@ -1755,7 +1923,7 @@ export class MainScene extends Phaser.Scene {
                 const loseKey = winKey === 'p1' ? 'p2' : 'p1';
                 const winProf = getProfessorById(data[winKey]?.characterId || (winKey === 'p1' ? 'so' : 'web'));
                 const loseProf = getProfessorById(data[loseKey]?.characterId || (loseKey === 'p1' ? 'so' : 'web'));
-                this.triggerUltimateFinisher(winProf, loseProf, () => {
+                this.triggerUltimateFinisher(winProf, loseProf, winKey, () => {
                     this.handleGameOver(p1Hp, p2Hp, data);
                     this.updatePostMatchRequestUI(data.postMatchRequest, data);
                 });
@@ -1862,7 +2030,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     renderQuestion(qId) {
-        const q = questions.find(q => q.id == qId);
+        const q = (this.questionCatalog || []).find(q => q.id == qId);
         if (!q) {
             console.error('Questão não encontrada para o ID:', qId);
             return;
@@ -1879,6 +2047,9 @@ export class MainScene extends Phaser.Scene {
 
         this.hasAnsweredLocal = false;
         this.currentQuestionData = q;
+        if (this.questionIdText) {
+            this.questionIdText.setText(`QUESTÃO: ${q.id}`);
+        }
         this.questionText.setText(q.text);
 
         for (let i = 0; i < 4; i++) {
@@ -2051,8 +2222,13 @@ export class MainScene extends Phaser.Scene {
         if (this.isGameOver) return;
 
         const currentId = this.currentQuestionData ? this.currentQuestionData.id : null;
-        const available = questions.filter(q => q.id !== currentId);
-        const pool = available.length > 0 ? available : questions;
+        const catalog = this.questionCatalog || [];
+        if (catalog.length === 0) {
+            this.statusText?.setText('❌ Nenhum banco de questões foi publicado pelo GM.').setVisible(true);
+            return;
+        }
+        const available = catalog.filter(q => q.id !== currentId);
+        const pool = available.length > 0 ? available : catalog;
         const randomQ = pool[Math.floor(Math.random() * pool.length)];
 
         // Sorteio de Modificador da Rodada (~30% de chance de modificador especial, ~70% normal)
@@ -2074,6 +2250,8 @@ export class MainScene extends Phaser.Scene {
             roundResolved: false,
             roundAlert: null,
             ultimateWinner: null,
+            specialWinner: null,
+            attackWinner: null,
             'p1/answered': false,
             'p1/answeredAt': null,
             'p1/answerCorrect': null,

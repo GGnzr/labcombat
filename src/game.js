@@ -3,6 +3,7 @@ import { BootScene } from './scenes/BootScene.js';
 import { MenuScene } from './scenes/MenuScene.js';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene.js';
 import { MainScene } from './scenes/MainScene.js';
+import { AnimationTestScene } from './scenes/AnimationTestScene.js';
 
 export function getGameSize() {
     const height = 720;
@@ -66,7 +67,7 @@ const config = {
             debug: false
         }
     },
-    scene: [BootScene, MenuScene, CharacterSelectScene, MainScene],
+    scene: [BootScene, MenuScene, CharacterSelectScene, MainScene, AnimationTestScene],
     callbacks: {
         postBoot: (game) => {
             // Evita que o jogo pause ou congele o loop ao clicar no painel Dev ou mudar de aba

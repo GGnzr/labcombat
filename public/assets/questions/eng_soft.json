@@ -1,0 +1,20 @@
+[
+  {
+    "id": "eng-5",
+    "text": "No Scrum, qual cerimônia tem como foco refletir sobre o sprint anterior e buscar melhorias contínuas?",
+    "options": ["Sprint Planning", "Daily Scrum", "Sprint Review", "Sprint Retrospective"],
+    "correctIndex": 3
+  },
+  {
+    "id": "eng-7",
+    "text": "Qual comando Git é usado para criar e alternar imediatamente para uma nova branch?",
+    "options": ["git branch -m nova-branch", "git checkout -b nova-branch", "git merge nova-branch", "git commit -b nova-branch"],
+    "correctIndex": 1
+  },
+  {
+    "id": "eng-13",
+    "text": "Qual comando do Git desfaz alterações locais não salvas em um arquivo na working tree?",
+    "options": ["git push --force", "git restore <arquivo>", "git init", "git status"],
+    "correctIndex": 1
+  }
+]

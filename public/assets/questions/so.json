@@ -1,0 +1,20 @@
+[
+  {
+    "id": "so-1",
+    "text": "Qual é o comportamento padrão de um ponteiro nulo (Null Pointer) ao ser acessado na memória?",
+    "options": ["Ele retorna 0", "Causa um erro ou crash no programa", "Ele aloca memória automaticamente", "Ele aponta para a raiz"],
+    "correctIndex": 1
+  },
+  {
+    "id": "so-6",
+    "text": "Qual estrutura de dados utiliza a regra FIFO (First-In, First-Out)?",
+    "options": ["Fila (Queue)", "Pilha (Stack)", "Árvore Binária", "Grafo"],
+    "correctIndex": 0
+  },
+  {
+    "id": "so-15",
+    "text": "Qual algoritmo de ordenação divide o array recursivamente ao meio antes de intercalar os dados?",
+    "options": ["Bubble Sort", "Merge Sort", "Insertion Sort", "Selection Sort"],
+    "correctIndex": 1
+  }
+]

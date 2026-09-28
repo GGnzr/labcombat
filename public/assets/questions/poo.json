@@ -1,0 +1,20 @@
+[
+  {
+    "id": "poo-2",
+    "text": "Em Estruturas de Dados, qual a principal característica de uma Pilha (Stack)?",
+    "options": ["Primeiro a entrar é o primeiro a sair (FIFO)", "Acesso puramente aleatório", "Último a entrar é o primeiro a sair (LIFO)", "Ordenação alfabética automática"],
+    "correctIndex": 2
+  },
+  {
+    "id": "poo-12",
+    "text": "Em Programação Orientada a Objetos, o que é Polimorfismo?",
+    "options": ["Capacidade de um método se comportar de formas diferentes para diferentes classes", "Esconder os atributos privados de uma classe", "Herança direta de múltiplos pais", "Compilação de código em múltiplos binários"],
+    "correctIndex": 0
+  },
+  {
+    "id": "poo-18",
+    "text": "No desenvolvimento assíncrono em JavaScript, qual palavra-chave aguarda a resolução de uma Promise?",
+    "options": ["wait", "yield", "await", "defer"],
+    "correctIndex": 2
+  }
+]

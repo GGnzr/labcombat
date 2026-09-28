@@ -1,0 +1,20 @@
+[
+  {
+    "id": "redes-4",
+    "text": "Qual protocolo da internet é responsável por traduzir nomes de domínio em endereços IP?",
+    "options": ["HTTP", "FTP", "DNS", "TCP"],
+    "correctIndex": 2
+  },
+  {
+    "id": "redes-14",
+    "text": "Qual é a principal função do CSS numa página web?",
+    "options": ["Estruturar o conteúdo e dados", "Executar lógica assíncrona no backend", "Estilizar e definir o layout visual", "Gerenciar o banco de dados local"],
+    "correctIndex": 2
+  },
+  {
+    "id": "redes-16",
+    "text": "Qual protocolo garante a entrega ordenada e confiável de pacotes na camada de transporte?",
+    "options": ["UDP", "TCP", "ICMP", "ARP"],
+    "correctIndex": 1
+  }
+]

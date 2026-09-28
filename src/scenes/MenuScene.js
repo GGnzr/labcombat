@@ -5,9 +5,40 @@ import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
 import { SoundManager } from '../audio/SoundManager.js';
 
+const tabInstanceKey = 'labcombat_tab_instance_id';
+const newTabInstanceId = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
+let tabInstanceId = sessionStorage.getItem(tabInstanceKey) || newTabInstanceId();
+sessionStorage.setItem(tabInstanceKey, tabInstanceId);
+
+if (typeof BroadcastChannel !== 'undefined') {
+    const tabChannel = new BroadcastChannel('labcombat-tab-presence');
+    tabChannel.onmessage = ({ data }) => {
+        if (data?.type === 'probe' && data.id === tabInstanceId) {
+            tabChannel.postMessage({ type: 'presence', id: tabInstanceId });
+        } else if (data?.type === 'presence' && data.id === tabInstanceId) {
+            tabInstanceId = newTabInstanceId();
+            sessionStorage.setItem(tabInstanceKey, tabInstanceId);
+        }
+    };
+    tabChannel.postMessage({ type: 'probe', id: tabInstanceId });
+}
+
 export class MenuScene extends Phaser.Scene {
     constructor() {
         super('MenuScene');
+    }
+
+    registerPlayerSession(roomId, playerId, nickname) {
+        const sessionRef = ref(db, `rooms/${roomId}/sessions/${tabInstanceId}`);
+        set(sessionRef, {
+            clientId: tabInstanceId,
+            playerId,
+            nickname,
+            connectedAt: Date.now(),
+            status: 'connected'
+        }).then(() => {
+            onDisconnect(sessionRef).remove().catch(() => {});
+        }).catch(() => {});
     }
 
     preload() {
@@ -15,11 +46,14 @@ export class MenuScene extends Phaser.Scene {
     }
 
     create() {
+        SoundManager.startMenuBGM();
+
         // Auto-reconnect se já houver uma sessão salva
         let savedRoom = sessionStorage.getItem('labcombat_room_id');
         let savedPlayer = sessionStorage.getItem('labcombat_player_id');
         
         if (savedRoom && savedPlayer) {
+            this.registerPlayerSession(savedRoom, savedPlayer, sessionStorage.getItem('labcombat_nickname') || savedPlayer);
             this.scene.start('CharacterSelectScene', { roomId: savedRoom, playerId: savedPlayer });
             return;
         }
@@ -54,7 +88,7 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Barra de Definição de Apelido (Nickname)
-        this.playerNickname = localStorage.getItem('labcombat_nickname') || 'Jogador 1';
+        this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
         this.createNicknameBar(centerX, 190);
 
         // 3. Card 1: Criar Sala (Host / P1)
@@ -351,6 +385,7 @@ export class MenuScene extends Phaser.Scene {
             await set(roomRef, {
                 p1: { 
                     nickname: this.playerNickname,
+                    clientId: tabInstanceId,
                     hp: 100,
                     charges: 0,
                     hasShield: false,
@@ -377,6 +412,7 @@ export class MenuScene extends Phaser.Scene {
             sessionStorage.setItem('labcombat_room_id', roomId);
             sessionStorage.setItem('labcombat_player_id', 'p1');
             sessionStorage.setItem('labcombat_nickname', this.playerNickname);
+            this.registerPlayerSession(roomId, 'p1', this.playerNickname);
 
             // Inicia o jogo na CharacterSelectScene como Jogador 1 com o apelido definido
             this.scene.start('CharacterSelectScene', { 
@@ -473,12 +509,22 @@ export class MenuScene extends Phaser.Scene {
                 const sessionRoomId = sessionStorage.getItem('labcombat_room_id');
                 
                 
-                const lowerNick = nickname.trim().toLowerCase();
-                const isDefaultNick = (lowerNick === 'jogador 1' || lowerNick === 'jogador 2');
-                const isP1 = (sessionRoomId === targetRoomId && sessionPlayerId === 'p1') || 
-                             (!isDefaultNick && data.p1 && data.p1.nickname && data.p1.nickname.trim().toLowerCase() === lowerNick);
-                const isP2 = (sessionRoomId === targetRoomId && sessionPlayerId === 'p2') || 
-                             (!isDefaultNick && data.p2 && data.p2.nickname && data.p2.nickname.trim().toLowerCase() === lowerNick);
+                const normalizeNickname = (value) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+                const lowerNick = normalizeNickname(nickname);
+                const isP1 = sessionRoomId === targetRoomId && sessionPlayerId === 'p1' && data.p1?.clientId === tabInstanceId;
+                const isP2 = sessionRoomId === targetRoomId && sessionPlayerId === 'p2' && data.p2?.clientId === tabInstanceId;
+                const duplicateNickname = [data.p1, data.p2].some((player) => {
+                    return player?.nickname && normalizeNickname(player.nickname) === lowerNick;
+                });
+
+                if (duplicateNickname) {
+                    const msg = 'Este nickname já está sendo usado nesta sala. Escolha outro.';
+                    logEvent('warn', `[Nickname duplicado] Entrada recusada na sala "${targetRoomId}" para "${nickname}".`);
+                    this.statusText.setText(`❌ ${msg}`).setStyle({ fill: '#ef4444' }).setVisible(true);
+                    if (errorMsg) errorMsg.textContent = `⚠️ ${msg}`;
+                    resetButton();
+                    return;
+                }
                 
                 // 1. Reconexão do Jogador 2
                 if (isP2) {
@@ -486,6 +532,7 @@ export class MenuScene extends Phaser.Scene {
                     sessionStorage.setItem('labcombat_room_id', targetRoomId);
                     sessionStorage.setItem('labcombat_player_id', 'p2');
                     sessionStorage.setItem('labcombat_nickname', nickname);
+                    this.registerPlayerSession(targetRoomId, 'p2', nickname);
                     if (overlay) overlay.style.display = 'none';
                     resetButton();
                     this.scene.start('CharacterSelectScene', { roomId: targetRoomId, playerId: 'p2', nickname });
@@ -496,6 +543,7 @@ export class MenuScene extends Phaser.Scene {
                     sessionStorage.setItem('labcombat_room_id', targetRoomId);
                     sessionStorage.setItem('labcombat_player_id', 'p1');
                     sessionStorage.setItem('labcombat_nickname', nickname);
+                    this.registerPlayerSession(targetRoomId, 'p1', nickname);
                     if (overlay) overlay.style.display = 'none';
                     resetButton();
                     this.scene.start('CharacterSelectScene', { roomId: targetRoomId, playerId: 'p1', nickname });
@@ -513,6 +561,7 @@ export class MenuScene extends Phaser.Scene {
                     const p1Ref = ref(db, `rooms/${targetRoomId}/p1`);
                     await set(p1Ref, { 
                         nickname: nickname,
+                        clientId: tabInstanceId,
                         hp: 100,
                         charges: 0,
                         hasShield: false,
@@ -528,6 +577,7 @@ export class MenuScene extends Phaser.Scene {
                     sessionStorage.setItem('labcombat_room_id', targetRoomId);
                     sessionStorage.setItem('labcombat_player_id', 'p1');
                     sessionStorage.setItem('labcombat_nickname', nickname);
+                    this.registerPlayerSession(targetRoomId, 'p1', nickname);
                     if (overlay) overlay.style.display = 'none';
                     resetButton();
                     this.scene.start('CharacterSelectScene', { roomId: targetRoomId, playerId: 'p1', nickname });
@@ -537,6 +587,7 @@ export class MenuScene extends Phaser.Scene {
                     const p2Ref = ref(db, `rooms/${targetRoomId}/p2`);
                     await set(p2Ref, { 
                         nickname: nickname,
+                        clientId: tabInstanceId,
                         hp: 100,
                         charges: 0,
                         hasShield: false,
@@ -552,6 +603,7 @@ export class MenuScene extends Phaser.Scene {
                     sessionStorage.setItem('labcombat_room_id', targetRoomId);
                     sessionStorage.setItem('labcombat_player_id', 'p2');
                     sessionStorage.setItem('labcombat_nickname', nickname);
+                    this.registerPlayerSession(targetRoomId, 'p2', nickname);
                     if (overlay) overlay.style.display = 'none';
                     resetButton();
                     this.scene.start('CharacterSelectScene', { roomId: targetRoomId, playerId: 'p2', nickname });

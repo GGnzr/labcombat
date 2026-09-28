@@ -1,0 +1,20 @@
+[
+  {
+    "id": "web-8",
+    "text": "No JavaScript moderno, qual a principal diferença do 'const' em relação ao 'let'?",
+    "options": ["Não permite reatribuição de valor à variável", "Tem escopo global obrigatório", "É mais lento na execução", "Só aceita tipos numéricos"],
+    "correctIndex": 0
+  },
+  {
+    "id": "web-10",
+    "text": "Qual código de status HTTP indica que o recurso solicitado não foi encontrado no servidor?",
+    "options": ["200 OK", "401 Unauthorized", "500 Internal Error", "404 Not Found"],
+    "correctIndex": 3
+  },
+  {
+    "id": "web-11",
+    "text": "O que significa a sigla API no desenvolvimento de software?",
+    "options": ["Application Programming Interface", "Automated Program Instruction", "Applied Process Integration", "Advanced Protocol Identifier"],
+    "correctIndex": 0
+  }
+]

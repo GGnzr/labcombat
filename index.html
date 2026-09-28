@@ -182,6 +182,26 @@
                       <span style="font-size: 11px; color: #34d399; font-weight: bold; background: #064e3b; padding: 2px 8px; border-radius: 4px;">16:9 HD (1280x720)</span>
                   </div>
                   <button id="btn-fullscreen-toggle" style="width: 100%; background: #0f172a; border: 1px solid #475569; color: #38bdf8; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold;">⛶ Tela Cheia</button>
+                  <button id="dev-animation-test-btn" style="width: 100%; background: #0f172a; border: 1px solid #a855f7; color: #d8b4fe; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold; margin-top: 8px;">🎞️ Testar Animações</button>
+              </div>
+
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">📚 Bancos de Questões</div>
+                  <select id="gm-question-professor" style="width: 100%; background: #020617; color: #cbd5e1; border: 1px solid #475569; border-radius: 6px; padding: 7px; margin-bottom: 8px;">
+                      <option value="so">Sistemas Operacionais</option>
+                      <option value="eng_soft">Engenharia de Software</option>
+                      <option value="poo">Programação Orientada a Objetos</option>
+                      <option value="web">Web &amp; Mobile</option>
+                      <option value="bd">Banco de Dados</option>
+                      <option value="redes">Redes de Computadores</option>
+                  </select>
+                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                  <div style="display: flex; gap: 6px;">
+                      <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬆️ Publicar</button>
+                      <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬇️ Baixar JSON</button>
+                  </div>
+                  <button id="gm-publish-base-questions" style="width: 100%; padding: 8px; background: #047857; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px;">📦 Publicar Bancos-base</button>
+                  <div id="gm-question-status" style="min-height: 18px; margin-top: 6px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
               </div>
 
               <!-- Ajuste de Tempos -->
@@ -401,6 +421,12 @@
         const tabContentLogs = document.getElementById('tab-content-logs');
         const gmRoomsCount = document.getElementById('gm-rooms-count');
         const gmLogsCount = document.getElementById('gm-logs-count');
+        const gmQuestionProfessor = document.getElementById('gm-question-professor');
+        const gmQuestionFile = document.getElementById('gm-question-file');
+        const gmUploadQuestions = document.getElementById('gm-upload-questions');
+        const gmDownloadQuestions = document.getElementById('gm-download-questions');
+        const gmPublishBaseQuestions = document.getElementById('gm-publish-base-questions');
+        const gmQuestionStatus = document.getElementById('gm-question-status');
 
         // Elementos do Monitor de Salas e Terminal de Logs
         const roomsListEl = document.getElementById('dev-active-rooms-list');
@@ -857,6 +883,118 @@
             });
         }
 
+        if (gmUploadQuestions) {
+            gmUploadQuestions.addEventListener('click', async () => {
+                if (!isGM()) return;
+                const file = gmQuestionFile?.files?.[0];
+                const professorId = gmQuestionProfessor?.value;
+                if (!file || !professorId) {
+                    if (gmQuestionStatus) gmQuestionStatus.textContent = 'Selecione o professor e um arquivo JSON.';
+                    return;
+                }
+
+                try {
+                    const parsed = JSON.parse(await file.text());
+                    const isValid = Array.isArray(parsed) && parsed.length > 0 && parsed.every((question) => {
+                        return question && question.id != null && typeof question.text === 'string'
+                            && Array.isArray(question.options) && question.options.length >= 2
+                            && Number.isInteger(question.correctIndex)
+                            && question.correctIndex >= 0 && question.correctIndex < question.options.length;
+                    });
+                    if (!isValid) {
+                        throw new Error('Formato inválido. Use id, text, options e correctIndex.');
+                    }
+
+                    gmUploadQuestions.disabled = true;
+                    gmUploadQuestions.textContent = 'Publicando...';
+                    await set(ref(db, `questionBanks/${professorId}`), parsed);
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = `✓ ${parsed.length} questões publicadas.`;
+                        gmQuestionStatus.style.color = '#34d399';
+                    }
+                } catch (error) {
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = `❌ ${error.message}`;
+                        gmQuestionStatus.style.color = '#f87171';
+                    }
+                } finally {
+                    gmUploadQuestions.disabled = false;
+                    gmUploadQuestions.textContent = '⬆️ Publicar Banco JSON';
+                }
+            });
+        }
+
+        if (gmDownloadQuestions) {
+            gmDownloadQuestions.addEventListener('click', async () => {
+                if (!isGM()) return;
+                const professorId = gmQuestionProfessor?.value;
+                if (!professorId) return;
+
+                try {
+                    const snapshot = await get(ref(db, `questionBanks/${professorId}`));
+                    if (!snapshot.exists()) {
+                        throw new Error('Nenhum banco publicado para este professor.');
+                    }
+                    const bank = snapshot.val();
+                    const entries = Array.isArray(bank) ? bank : Object.values(bank || {});
+                    const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = `questions-${professorId}.json`;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = '✓ Banco baixado.';
+                        gmQuestionStatus.style.color = '#34d399';
+                    }
+                } catch (error) {
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = `❌ ${error.message}`;
+                        gmQuestionStatus.style.color = '#f87171';
+                    }
+                }
+            });
+        }
+
+        if (gmPublishBaseQuestions) {
+            gmPublishBaseQuestions.addEventListener('click', async () => {
+                if (!isGM()) return;
+                const professorIds = ['so', 'eng_soft', 'poo', 'web', 'bd', 'redes'];
+                gmPublishBaseQuestions.disabled = true;
+                gmPublishBaseQuestions.textContent = 'Publicando bancos-base...';
+                try {
+                    await Promise.all(professorIds.map(async (professorId) => {
+                        const response = await fetch(`/assets/questions/${professorId}.json`);
+                        if (!response.ok) throw new Error(`Arquivo ausente: ${professorId}.json`);
+                        const bank = await response.json();
+                        await set(ref(db, `questionBanks/${professorId}`), bank);
+                    }));
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = '✓ Bancos-base publicados para os 6 professores.';
+                        gmQuestionStatus.style.color = '#34d399';
+                    }
+                } catch (error) {
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = `❌ ${error.message}`;
+                        gmQuestionStatus.style.color = '#f87171';
+                    }
+                } finally {
+                    gmPublishBaseQuestions.disabled = false;
+                    gmPublishBaseQuestions.textContent = '📦 Publicar Bancos-base';
+                }
+            });
+        }
+
+        const btnAnimationTest = document.getElementById('dev-animation-test-btn');
+        if (btnAnimationTest) {
+            btnAnimationTest.addEventListener('click', () => {
+                sidebarOpen = false;
+                updateLayoutClasses();
+                if (window.game) window.game.scene.start('AnimationTestScene');
+            });
+        }
+
         // Listener para dispensar aviso de rotação em mobile
         const orientationPrompt = document.getElementById('orientation-prompt');
         const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
@@ -901,7 +1039,7 @@
         window.addEventListener('open-nickname-modal', () => {
             if (nicknameOverlay && nicknameInput) {
                 nicknameOverlay.style.display = 'flex';
-                nicknameInput.value = localStorage.getItem('labcombat_nickname') || 'Jogador 1';
+                nicknameInput.value = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
                 if (nicknameErrorMsg) nicknameErrorMsg.textContent = '';
                 nicknameInput.focus();
                 nicknameInput.select();
@@ -914,7 +1052,7 @@
                 if (nicknameErrorMsg) nicknameErrorMsg.textContent = 'Digite um apelido válido.';
                 return;
             }
-            localStorage.setItem('labcombat_nickname', val);
+            sessionStorage.setItem('labcombat_nickname', val);
             nicknameOverlay.style.display = 'none';
             window.dispatchEvent(new CustomEvent('nickname-changed', { detail: val }));
         }
@@ -1184,7 +1322,7 @@
                 }
                 joinOverlay.style.display = 'flex';
                 if (joinNicknameInput) {
-                    joinNicknameInput.value = localStorage.getItem('labcombat_nickname') || 'Jogador 2';
+                    joinNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || 'Jogador 2';
                 }
                 if (roomInput) {
                     roomInput.value = '';
@@ -1216,7 +1354,7 @@
                 btnSubmitJoin.disabled = true;
                 btnSubmitJoin.textContent = '⏳ Conectando...';
             }
-            localStorage.setItem('labcombat_nickname', nick);
+            sessionStorage.setItem('labcombat_nickname', nick);
 
             try {
                 let targetRoomId = code;
@@ -1255,9 +1393,25 @@
                 const rData = snapshot.val();
                 const sessionPlayerId = sessionStorage.getItem('labcombat_player_id');
                 const sessionRoomId = sessionStorage.getItem('labcombat_room_id');
+                const tabInstanceId = sessionStorage.getItem('labcombat_tab_instance_id');
+                const normalizeNickname = (value) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase();
+                const normalizedNick = normalizeNickname(nick);
 
-                const isP1 = (rData.p1 && rData.p1.nickname && rData.p1.nickname.trim().toLowerCase() === nick.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p1');
-                const isP2 = (rData.p2 && rData.p2.nickname && rData.p2.nickname.trim().toLowerCase() === nick.trim().toLowerCase()) || (sessionRoomId === targetRoomId && sessionPlayerId === 'p2');
+                const isP1 = sessionRoomId === targetRoomId && sessionPlayerId === 'p1' && rData.p1?.clientId === tabInstanceId;
+                const isP2 = sessionRoomId === targetRoomId && sessionPlayerId === 'p2' && rData.p2?.clientId === tabInstanceId;
+                const duplicateNickname = [rData.p1, rData.p2].some((player) => {
+                    return player?.nickname && normalizeNickname(player.nickname) === normalizedNick;
+                });
+
+                if (duplicateNickname) {
+                    joinErrorMsg.textContent = '⚠️ Este nickname já está sendo usado nesta sala. Escolha outro.';
+                    logEvent('warn', `[Nickname duplicado] Entrada recusada na sala "${targetRoomId}" para "${nick}".`);
+                    if (btnSubmitJoin) {
+                        btnSubmitJoin.disabled = false;
+                        btnSubmitJoin.textContent = '🚀 Entrar';
+                    }
+                    return;
+                }
 
                 // 1. Se a partida já começou e o jogador não é reconexão
                 if (rData.round && rData.round >= 1 && !isP1 && !isP2) {
@@ -1319,6 +1473,7 @@
                 // 5. Novo Jogador 2 entrando em vaga livre
                 const p2Data = {
                     nickname: nick,
+                    clientId: tabInstanceId,
                     hp: 100,
                     charges: 0,
                     hasShield: false,
