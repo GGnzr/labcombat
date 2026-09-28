@@ -56,7 +56,7 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 Cada lutador representa uma disciplina fundamental da área de tecnologia:
 
 | Disciplina | Tópicos & Especialidades |
-| :--- | :--- | :--- |
+| :--- | :--- |
 | **Sistemas Operacionais** | Threads, Processos & Kernel |
 | **Engenharia de Software** | Scrum, Requisitos & Clean Code |
 | **Programação Orientada a Objetos** | Classes, Polimorfismo & Herança |
