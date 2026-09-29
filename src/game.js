@@ -7,8 +7,10 @@ import { AnimationTestScene } from './scenes/AnimationTestScene.js';
 
 export function getGameSize() {
     const height = 720;
-    let w = (typeof window !== 'undefined') ? window.innerWidth : 1280;
-    let h = (typeof window !== 'undefined') ? window.innerHeight : 720;
+    // No mobile, visualViewport reflete a área realmente visível (sem a barra do navegador)
+    const viewport = (typeof window !== 'undefined' && window.visualViewport) ? window.visualViewport : null;
+    let w = viewport ? viewport.width : ((typeof window !== 'undefined') ? window.innerWidth : 1280);
+    let h = viewport ? viewport.height : ((typeof window !== 'undefined') ? window.innerHeight : 720);
 
     if (typeof document !== 'undefined') {
         const app = document.getElementById('app');
@@ -83,9 +85,22 @@ const config = {
                     }
                     game.scale.refresh();
                 }
+                // Garante que o container #app ocupe exatamente a área visível no mobile,
+                // evitando que a parte de baixo do canvas fique escondida sob a barra do navegador
+                const app = document.getElementById('app');
+                const viewport = window.visualViewport;
+                if (app && viewport) {
+                    app.style.height = `${viewport.height}px`;
+                    app.style.width = `${viewport.width}px`;
+                }
             };
             updateSize();
             window.addEventListener('resize', updateSize);
+            window.addEventListener('orientationchange', () => setTimeout(updateSize, 150));
+            if (window.visualViewport) {
+                window.visualViewport.addEventListener('resize', updateSize);
+                window.visualViewport.addEventListener('scroll', updateSize);
+            }
         }
     }
 };
