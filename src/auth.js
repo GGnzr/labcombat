@@ -17,10 +17,6 @@ import {
     updateProfile
 } from 'firebase/auth';
 
-// Senha/PIN mestre padrão para acesso Game Master (GM/Professor)
-const GM_DEFAULT_PIN = 'admin';
-const GM_ALT_PIN = 'gm2026';
-
 export function observeAuthState(callback) {
     return onAuthStateChanged(auth, callback);
 }
@@ -162,43 +158,6 @@ export async function requestPasswordReset(email) {
 export async function logoutAccount() {
     await signOut(auth);
     localStorage.removeItem('labcombat_account_uid');
-}
-
-/**
- * Retorna se a sessão atual possui privilégios de GM
- * @returns {boolean}
- */
-export function isGM() {
-    const role = localStorage.getItem('labcombat_role');
-    const urlParams = new URLSearchParams(window.location.search);
-    if (urlParams.get('gm') === '1' || urlParams.get('dev') === 'true') {
-        localStorage.setItem('labcombat_role', 'gm');
-        return true;
-    }
-    return role === 'gm';
-}
-
-/**
- * Tenta autenticar o Game Master via PIN
- * @param {string} pin 
- * @returns {boolean}
- */
-export function loginGM(pin) {
-    const trimmed = (pin || '').trim();
-    if (trimmed === GM_DEFAULT_PIN || trimmed === GM_ALT_PIN) {
-        localStorage.setItem('labcombat_role', 'gm');
-        window.dispatchEvent(new CustomEvent('labcombat-role-changed', { detail: { role: 'gm' } }));
-        return true;
-    }
-    return false;
-}
-
-/**
- * Desconecta do modo GM e retorna para o modo Jogador/Aluno padrão
- */
-export function logoutGM() {
-    localStorage.removeItem('labcombat_role');
-    window.dispatchEvent(new CustomEvent('labcombat-role-changed', { detail: { role: 'student' } }));
 }
 
 /**

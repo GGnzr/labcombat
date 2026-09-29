@@ -281,34 +281,6 @@
     <!-- Botão Flutuante Discreto para Reabrir a Barra Lateral (Apenas quando GM logado e barra recolhida) -->
     <button id="gm-reopen-pill" title="Reabrir Painel do Game Master">🛠️ Painel GM</button>
 
-    <!-- Modal de Autenticação do Game Master / Professor -->
-    <div id="gm-login-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.3); width: 340px; max-width: 90vw;">
-            <div style="font-size: 38px; margin-bottom: 6px;">🛡️</div>
-            <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 20px; font-weight: bold;">Acesso Professor / GM</h2>
-            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 16px 0;">Digite o PIN de Game Master para gerenciar a partida:</p>
-            
-            <div style="margin-bottom: 14px;">
-                <input id="gm-pin-input" type="password" maxlength="16" placeholder="PIN do GM" 
-                       style="font-size: 20px; letter-spacing: 4px; font-weight: bold; width: 200px; padding: 10px; text-align: center; background: #020617; border: 2px solid #38bdf8; border-radius: 8px; color: #facc15; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
-            </div>
-
-            <div id="gm-login-error" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 12px;"></div>
-
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button id="btn-gm-login-submit" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; transition: filter 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.4);">
-                    🔓 Acessar Modo GM
-                </button>
-                <button id="btn-gm-login-cancel" style="padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">
-                    ✕ Cancelar
-                </button>
-            </div>
-            <div style="margin-top: 14px; font-size: 11px; color: #64748b;">
-                Atalho: Pressione <kbd style="background: #1e293b; padding: 2px 5px; border-radius: 4px; color: #94a3b8; border: 1px solid #475569;">F2</kbd> para abrir esta tela.
-            </div>
-        </div>
-    </div>
-
     <!-- Modal de Conta do Jogador: cadastro opcional, com acesso visitante -->
     <div id="account-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 26px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 370px; max-width: 92vw;">
@@ -429,7 +401,7 @@
     </div>
 
     <script type="module">
-        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isGM, loginGM, logoutGM, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
+        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -641,13 +613,6 @@
         const logsTerminalEl = document.getElementById('dev-logs-terminal');
         const copyLogsBtn = document.getElementById('dev-copy-logs-btn');
         const clearLogsBtn = document.getElementById('dev-clear-logs-btn');
-
-        // Elementos do Modal de Login GM
-        const gmLoginModal = document.getElementById('gm-login-modal');
-        const gmPinInput = document.getElementById('gm-pin-input');
-        const gmLoginError = document.getElementById('gm-login-error');
-        const btnGmLoginSubmit = document.getElementById('btn-gm-login-submit');
-        const btnGmLoginCancel = document.getElementById('btn-gm-login-cancel');
 
         // Estado do Modo GM e Sidebar
         let gmActive = false;
@@ -1034,7 +999,6 @@
                         email: authenticatedUser.email || null
                     });
                 }
-                logoutGM();
                 gmActive = false;
                 sidebarOpen = false;
                 updateLayoutClasses();
@@ -1048,26 +1012,6 @@
                 sidebarOpen = true;
                 updateLayoutClasses();
             }
-        }
-
-        function closeGMLoginModal() {
-            if (gmLoginModal) {
-                gmLoginModal.style.display = 'none';
-                if (gmLoginError) gmLoginError.textContent = '';
-            }
-        }
-
-        function handleGMLoginSubmit() {
-            if (gmLoginError) gmLoginError.textContent = 'O acesso por PIN foi substituído. Faça login com a conta administradora.';
-        }
-
-        if (btnGmLoginSubmit) btnGmLoginSubmit.addEventListener('click', handleGMLoginSubmit);
-        if (btnGmLoginCancel) btnGmLoginCancel.addEventListener('click', closeGMLoginModal);
-        if (gmPinInput) {
-            gmPinInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') handleGMLoginSubmit();
-                if (e.key === 'Escape') closeGMLoginModal();
-            });
         }
 
         // Atalhos de Teclado (F2 ou Ctrl+Shift+D)
@@ -1521,7 +1465,7 @@
         }
 
         // Impede que cliques nos modais vazem para o canvas do Phaser por baixo
-        [joinOverlay, nicknameOverlay, gmLoginModal, accountOverlay].forEach(overlayEl => {
+        [joinOverlay, nicknameOverlay, accountOverlay].forEach(overlayEl => {
             if (!overlayEl) return;
             ['pointerdown', 'mousedown', 'mouseup', 'click', 'touchstart', 'touchend'].forEach(evt => {
                 overlayEl.addEventListener(evt, (e) => {

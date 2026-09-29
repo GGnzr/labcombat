@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { ref, set, onValue, get, update, remove } from 'firebase/database';
+import { ref, set, onValue, onDisconnect, get, update, remove, serverTimestamp } from 'firebase/database';
 import { db } from '../firebase.js';
 import { loadQuestionBanks } from '../questionBank.js';
 import { professors, getProfessorById } from '../professors.js';
@@ -56,6 +56,17 @@ export class MainScene extends Phaser.Scene {
         this.isAdvancingQuestion = false;
         this.currentRound = 0;
         this.roomUnsubscribe = null;
+
+        // Controle de W.O. (vitória por abandono do oponente)
+        this.matchStartedEver = false;
+        this.woTimeout = null;
+        this.woInterval = null;
+        this.isWalkoverWin = false;
+
+        // Diferença entre o relógio local e o relógio do servidor Firebase (.info/serverTimeOffset).
+        // Usada para sincronizar cronômetros entre os dois jogadores.
+        this.serverTimeOffset = 0;
+        this.serverOffsetUnsubscribe = null;
 
         // Propriedades do Novo Sistema de Combate
         this.p1CurrentHp = 100;
@@ -787,6 +798,9 @@ export class MainScene extends Phaser.Scene {
             this.autoLeaveTimeout = null;
         }
 
+        this.cancelWalkoverCountdown();
+        this.matchStartedEver = false;
+        this.isWalkoverWin = false;
         this.isGameOver = false;
         this.isAdvancingQuestion = false;
         this.isResolvingRound = false;
@@ -817,6 +831,9 @@ export class MainScene extends Phaser.Scene {
 
     async handleRematch() {
         if (!this.roomId) return;
+        if (this.isWalkoverWin) {
+            return this.enterWaitForChallenger();
+        }
         const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
         if (!hasP2) {
             // Modo solo: reinicia imediatamente sem pedir confirmação
@@ -935,7 +952,7 @@ export class MainScene extends Phaser.Scene {
                 questionStartTime: null,
                 questionStartedAt: null,
                 state: 'in_match',
-                matchStartTime: Date.now() + (devStartDelay * 1000)
+                matchStartTime: this.nowMs() + (devStartDelay * 1000)
             });
         } catch (err) {
             console.error('Erro na revanche:', err);
@@ -978,6 +995,32 @@ export class MainScene extends Phaser.Scene {
 
     updatePostMatchRequestUI(req, data) {
         if (!this.gameOverPanel || !this.gameOverPanel.visible) return;
+
+        // Vitória por W.O.: sem oponente, não há revanche/troca a coordenar.
+        // Mantém apenas [Aguardar Novo Desafiante] e [Sair e Fechar a Sala].
+        if (this.isWalkoverWin) {
+            if (this.waitingBox) this.waitingBox.setVisible(false);
+            if (this.waitingText) this.waitingText.setVisible(false);
+            if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
+            if (this.promptBox) this.promptBox.setVisible(false);
+            if (this.promptTitle) this.promptTitle.setVisible(false);
+            if (this.promptSub) this.promptSub.setVisible(false);
+            if (this.btnAcceptRequest) this.btnAcceptRequest.setVisible(false);
+            if (this.btnPromptChangeProf) this.btnPromptChangeProf.setVisible(false);
+            if (this.btnDeclineRequest) this.btnDeclineRequest.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.btnRematch) {
+                this.btnRematch.setText('⏳ Aguardar Novo Desafiante');
+                this.btnRematch.setVisible(true);
+            }
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
+                this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
+                this.btnMainMenu.setVisible(true);
+            }
+            return;
+        }
 
         // Caso 1: Nenhuma solicitação ativa
         if (!req) {
@@ -1215,9 +1258,21 @@ export class MainScene extends Phaser.Scene {
                 clearTimeout(this.nextQuestionTimeout);
                 this.nextQuestionTimeout = null;
             }
+            if (this.woTimeout) {
+                clearTimeout(this.woTimeout);
+                this.woTimeout = null;
+            }
+            if (this.woInterval) {
+                clearInterval(this.woInterval);
+                this.woInterval = null;
+            }
             if (typeof this.roomUnsubscribe === 'function') {
                 this.roomUnsubscribe();
                 this.roomUnsubscribe = null;
+            }
+            if (typeof this.serverOffsetUnsubscribe === 'function') {
+                this.serverOffsetUnsubscribe();
+                this.serverOffsetUnsubscribe = null;
             }
         });
     }
@@ -1269,7 +1324,20 @@ export class MainScene extends Phaser.Scene {
 
     async setupFirebase() {
         const roomRef = ref(db, `rooms/${this.roomId}`);
-        
+
+        // Garante que, se esta aba cair (fechar/crash), o nó do jogador some do Firebase,
+        // permitindo que o oponente detecte o abandono e vença por W.O.
+        try {
+            await onDisconnect(ref(db, `rooms/${this.roomId}/${this.playerId}`)).remove();
+        } catch (e) {
+            console.error('Erro ao registrar onDisconnect do jogador:', e);
+        }
+
+        // Acompanha o offset do relógio do servidor para sincronizar os cronômetros da partida
+        this.serverOffsetUnsubscribe = onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
+            this.serverTimeOffset = snap.val() || 0;
+        });
+
         if (this.playerId === 'p1') {
             this.statusText.setText('Você é o Jogador 1. Aguardando P2...');
         } else {
@@ -1291,6 +1359,128 @@ export class MainScene extends Phaser.Scene {
                 this.scene.start('MenuScene');
             }
         });
+    }
+
+    // Retorna o "agora" alinhado ao relógio do servidor Firebase,
+    // reduzindo distorções por relógios locais dessincronizados.
+    nowMs() {
+        return Date.now() + (this.serverTimeOffset || 0);
+    }
+
+    // --- Vitória por W.O. (oponente abandonou a partida em andamento) ---
+
+    startWalkoverCountdown() {
+        if (this.woTimeout || this.isGameOver) return;
+
+        const GRACE_SECONDS = 15;
+        let remaining = GRACE_SECONDS;
+
+        this.timerText.setText('Tempo: PAUSADO');
+        if (this.pauseTitle) this.pauseTitle.setText('⚠️ OPONENTE DESCONECTOU!');
+        if (this.pausePanel) this.pausePanel.setVisible(true);
+        const updatePauseSub = () => {
+            if (this.pauseSub) {
+                this.pauseSub.setText(`Vitória por W.O. em ${remaining}s se o oponente não retornar...`);
+            }
+        };
+        updatePauseSub();
+
+        this.woInterval = setInterval(() => {
+            remaining -= 1;
+            updatePauseSub();
+        }, 1000);
+
+        this.woTimeout = setTimeout(() => {
+            this.woTimeout = null;
+            this.handleOpponentDisconnect();
+        }, GRACE_SECONDS * 1000);
+    }
+
+    cancelWalkoverCountdown() {
+        if (this.woTimeout) {
+            clearTimeout(this.woTimeout);
+            this.woTimeout = null;
+        }
+        if (this.woInterval) {
+            clearInterval(this.woInterval);
+            this.woInterval = null;
+        }
+    }
+
+    handleOpponentDisconnect() {
+        if (this.isGameOver || this.isLeaving) return;
+        this.cancelWalkoverCountdown();
+
+        // Para temporizadores de rodada e limpa a questão em aberto
+        if (this.nextQuestionTimeout) {
+            clearTimeout(this.nextQuestionTimeout);
+            this.nextQuestionTimeout = null;
+        }
+        this.isAdvancingQuestion = false;
+        this.clearQuestion();
+        if (this.pausePanel) this.pausePanel.setVisible(false);
+
+        const oppNick = (this.latestData?.[this.playerId === 'p1' ? 'p2' : 'p1']?.nickname || this.previousData?.[this.playerId === 'p1' ? 'p2' : 'p1']?.nickname || 'O oponente').toUpperCase();
+
+        logEvent('warn', `[Sala ${this.roomId}] O oponente abandonou o duelo. Vitória por W.O.`, {
+            playerId: this.playerId,
+            opponentNickname: oppNick
+        });
+
+        // Reutiliza o painel de fim de jogo com mensagem de W.O.
+        this.isWalkoverWin = true;
+        this.showGameOver(true, this.nickname, false, this.latestData);
+        if (this.goIconText) this.goIconText.setText('🏳️');
+        if (this.goTitleText) this.goTitleText.setText('VITÓRIA POR W.O.!').setStyle({ fill: '#38bdf8' });
+        if (this.goSubText) this.goSubText.setText(`${oppNick} abandonou o duelo. A vitória é sua!\nA sala continua aberta para um novo desafiante.`).setStyle({ fill: '#e2e8f0' });
+        this.timerText.setText('Vitória por W.O.');
+
+        // A sala NÃO é finalizada: oferece aguardar novo desafiante
+        if (this.btnRematch) this.btnRematch.setText('⏳ Aguardar Novo Desafiante');
+        if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+        if (this.btnMainMenu) {
+            this.btnMainMenu.setPosition(125, 118);
+            this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
+        }
+    }
+
+    async enterWaitForChallenger() {
+        if (!this.roomId) return;
+        try {
+            // Reseta a sala para a fila de seleção de personagem, limpando o estado da partida
+            // encerrada por W.O. O listener de updateState() detecta state='character_select'
+            // e leva o vencedor de volta à seleção; o novo desafiante entra normalmente pelo lobby.
+            await update(ref(db, `rooms/${this.roomId}`), {
+                state: 'character_select',
+                postMatchRequest: null,
+                matchStartTime: null,
+                countdownStartTime: null,
+                currentQuestionId: null,
+                questionStartTime: null,
+                questionStartedAt: null,
+                round: 0,
+                roundModifier: 'normal',
+                roundResolved: false,
+                roundAlert: null,
+                ultimateWinner: null,
+                specialWinner: null,
+                attackWinner: null,
+                [`${this.playerId}/hp`]: 100,
+                [`${this.playerId}/charges`]: 0,
+                [`${this.playerId}/hasShield`]: false,
+                [`${this.playerId}/hasTryCatch`]: false,
+                [`${this.playerId}/lives`]: 3,
+                [`${this.playerId}/streak`]: 0,
+                [`${this.playerId}/answered`]: false,
+                [`${this.playerId}/answeredAt`]: null,
+                [`${this.playerId}/answerCorrect`]: null,
+                [`${this.playerId}/answeredChoice`]: null,
+                [`${this.playerId}/ready`]: false
+            });
+            logEvent('room', `[Sala ${this.roomId}] W.O. confirmado. Aguardando novo desafiante.`);
+        } catch (err) {
+            console.error('Erro ao reabrir a sala após W.O.:', err);
+        }
     }
 
     playAttack(fighter, direction) {
@@ -2082,15 +2272,24 @@ export class MainScene extends Phaser.Scene {
             this.isWaitingForOpponent = true;
             this.clearQuestion();
             this.statusText.setText('Aguardando conexão do oponente...');
-            this.timerText.setText('Tempo: PAUSADO');
-            if (this.pauseTitle) this.pauseTitle.setText('AGUARDANDO OPONENTE...');
-            if (this.pauseSub) this.pauseSub.setText(`Código da Sala: ${this.roomId}`);
-            if (this.pausePanel) this.pausePanel.setVisible(true);
+
+            if (this.matchStartedEver && !this.isGameOver) {
+                // O oponente caiu NO MEIO da partida: inicia a contagem de graça para W.O.
+                this.startWalkoverCountdown();
+            } else {
+                this.timerText.setText('Tempo: PAUSADO');
+                if (this.pauseTitle) this.pauseTitle.setText('AGUARDANDO OPONENTE...');
+                if (this.pauseSub) this.pauseSub.setText(`Código da Sala: ${this.roomId}`);
+                if (this.pausePanel) this.pausePanel.setVisible(true);
+            }
             this.targetMatchStartTime = null;
             return;
         }
 
+        // Oponente (re)conectou: cancela qualquer contagem de W.O. pendente
+        this.cancelWalkoverCountdown();
         this.isWaitingForOpponent = false;
+        this.matchStartedEver = true;
 
         // Se já há questão ativa, esconde imediatamente o painel de contagem inicial
         if (data.currentQuestionId != null) {
@@ -2105,7 +2304,7 @@ export class MainScene extends Phaser.Scene {
             if (data.matchStartTime) {
                 this.targetMatchStartTime = data.matchStartTime;
             } else if (this.playerId === 'p1') {
-                const startAt = Date.now() + (this.MATCH_START_DELAY * 1000);
+                const startAt = this.nowMs() + (this.MATCH_START_DELAY * 1000);
                 this.targetMatchStartTime = startAt;
                 update(ref(db, `rooms/${this.roomId}`), {
                     matchStartTime: startAt
@@ -2129,7 +2328,7 @@ export class MainScene extends Phaser.Scene {
                 this.nextQuestionTimeout = null;
             }
 
-            this.localQuestionStartTime = data.questionStartedAt || Date.now();
+            this.localQuestionStartTime = data.questionStartedAt || this.nowMs();
             this.renderQuestion(data.currentQuestionId);
         }
 
@@ -2267,7 +2466,9 @@ export class MainScene extends Phaser.Scene {
         const playerRef = ref(db, `rooms/${this.roomId}/${this.playerId}`);
         update(playerRef, {
             answered: true,
-            answeredAt: Date.now(),
+            // Timestamp do SERVIDOR: garante que o duelo de velocidade seja justo,
+            // independente do relógio local de cada jogador.
+            answeredAt: serverTimestamp(),
             answerCorrect: isCorrect,
             answeredChoice: selectedIndex != null ? selectedIndex : -1
         }).catch(err => console.error('Erro ao enviar resposta:', err));
@@ -2280,18 +2481,17 @@ export class MainScene extends Phaser.Scene {
             const data = snap.val();
             if (!data || this.isGameOver) return;
             const updates = {};
-            const now = Date.now();
-            
+
             if (data.p1 && !data.p1.answered) {
                 updates['p1/answered'] = true;
-                updates['p1/answeredAt'] = now;
+                updates['p1/answeredAt'] = serverTimestamp();
                 updates['p1/answerCorrect'] = false;
                 updates['p1/answeredChoice'] = -1;
             }
 
             if (data.p2 && !data.p2.answered) {
                 updates['p2/answered'] = true;
-                updates['p2/answeredAt'] = now;
+                updates['p2/answeredAt'] = serverTimestamp();
                 updates['p2/answerCorrect'] = false;
                 updates['p2/answeredChoice'] = -1;
             }
@@ -2428,7 +2628,7 @@ export class MainScene extends Phaser.Scene {
         update(roomRef, {
             round: nextRound,
             currentQuestionId: randomQ.id,
-            questionStartedAt: Date.now(),
+            questionStartedAt: serverTimestamp(),
             roundModifier: selectedModifier,
             roundResolved: false,
             roundAlert: null,
@@ -2463,7 +2663,7 @@ export class MainScene extends Phaser.Scene {
             if (this.currentQuestionData != null) {
                 this.pausePanel.setVisible(false);
             } else if (this.targetMatchStartTime) {
-                const remaining = Math.ceil((this.targetMatchStartTime - Date.now()) / 1000);
+                const remaining = Math.ceil((this.targetMatchStartTime - this.nowMs()) / 1000);
                 if (remaining > 0) {
                     this.pauseSub.setText(`${remaining}s`);
                     if (this.lastStartRemaining !== remaining) {
@@ -2503,7 +2703,7 @@ export class MainScene extends Phaser.Scene {
 
         // Controle do tempo da questão
         if (this.localQuestionStartTime) {
-            const elapsed = Math.floor((Date.now() - this.localQuestionStartTime) / 1000);
+            const elapsed = Math.floor((this.nowMs() - this.localQuestionStartTime) / 1000);
             const remaining = this.QUESTION_TIME_LIMIT - elapsed;
             
             if (!this.hasAnsweredLocal) {

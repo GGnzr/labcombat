@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { db } from '../firebase.js';
-import { ref, get, set, update, remove, onValue } from "firebase/database";
+import { ref, get, set, update, remove, onValue, serverTimestamp } from "firebase/database";
 import { professors, getProfessorById } from '../professors.js';
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
@@ -26,6 +26,14 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.countdownTargetTime = null;
         this.isCountingDown = false;
         this.isOpponentConnected = false;
+        this.serverTimeOffset = 0;
+        this.serverOffsetUnsubscribe = null;
+    }
+
+    // "Agora" alinhado ao relógio do servidor Firebase,
+    // para a contagem regressiva ser sincronizada entre os dois jogadores.
+    nowMs() {
+        return Date.now() + (this.serverTimeOffset || 0);
     }
 
     preload() {
@@ -658,9 +666,18 @@ export class CharacterSelectScene extends Phaser.Scene {
         // Envia a escolha inicial
         this.syncSelectionToFirebase();
 
+        // Offset do relógio do servidor para sincronizar a contagem de início da partida
+        this.serverOffsetUnsubscribe = onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
+            this.serverTimeOffset = snap.val() || 0;
+        });
+
         this.roomListener = onValue(roomRef, (snap) => {
             const data = snap.val();
             if (!data || data.state === 'closed') {
+                if (typeof this.serverOffsetUnsubscribe === 'function') {
+                    this.serverOffsetUnsubscribe();
+                    this.serverOffsetUnsubscribe = null;
+                }
                 if (typeof this.roomListener === 'function') {
                     this.roomListener();
                     this.roomListener = null;
@@ -704,7 +721,7 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.isCountingDown = true;
                 } else if (isHost) {
                     const countdownDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 5;
-                    const targetTime = Date.now() + (countdownDelay * 1000);
+                    const targetTime = this.nowMs() + (countdownDelay * 1000);
                     this.countdownTargetTime = targetTime;
                     this.isCountingDown = true;
                     update(roomRef, { countdownStartTime: targetTime }).catch(e => console.error(e));
@@ -822,7 +839,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             matchStartDelay: devStartDelay,
             questionTimeLimit: devQuestionLimit,
             currentQuestionId: randomQ.id,
-            questionStartedAt: Date.now(),
+            questionStartedAt: serverTimestamp(),
             countdownStartTime: null,
             matchStartTime: null
         }).then(() => {
@@ -839,6 +856,10 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         logEvent('game', `[Sala ${this.roomId}] Batalha iniciada! Carregando arena...`);
 
+        if (typeof this.serverOffsetUnsubscribe === 'function') {
+            this.serverOffsetUnsubscribe();
+            this.serverOffsetUnsubscribe = null;
+        }
         if (typeof this.roomListener === 'function') {
             this.roomListener();
             this.roomListener = null;
@@ -853,6 +874,10 @@ export class CharacterSelectScene extends Phaser.Scene {
     }
 
     leaveToMenu() {
+        if (typeof this.serverOffsetUnsubscribe === 'function') {
+            this.serverOffsetUnsubscribe();
+            this.serverOffsetUnsubscribe = null;
+        }
         if (typeof this.roomListener === 'function') {
             this.roomListener();
             this.roomListener = null;
@@ -876,7 +901,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         if (this.hasStarted) return;
 
         if (this.isCountingDown && this.countdownTargetTime) {
-            const remaining = Math.ceil((this.countdownTargetTime - Date.now()) / 1000);
+            const remaining = Math.ceil((this.countdownTargetTime - this.nowMs()) / 1000);
             const centerX = this.scale.width / 2;
             const footY = 665;
 
