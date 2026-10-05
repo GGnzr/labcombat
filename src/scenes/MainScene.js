@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { ref, set, onValue, onDisconnect, get, update, remove, serverTimestamp } from 'firebase/database';
 import { db } from '../firebase.js';
 import { loadQuestionBanks } from '../questionBank.js';
+import { recordMatchResult } from '../ranking.js';
 import { professors, getProfessorById } from '../professors.js';
 import { arenas, getArenaById, getRandomArena } from '../arenas.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
@@ -16,6 +17,13 @@ export class MainScene extends Phaser.Scene {
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
         this.QUESTION_TIME_LIMIT = devQuestionLimit;
         this.MATCH_START_DELAY = devStartDelay;
+        // Defaults para velocidade das animações — persistidos pelo painel GM
+        // (localStorage) e alteráveis em tempo real pelo evento dev-anim-speeds
+        this.DEV_ANIM_WALK_FPS = parseInt(localStorage.getItem('dev_anim_walk_fps'), 10) || 8;
+        this.DEV_ANIM_ATTACK_FPS = parseInt(localStorage.getItem('dev_anim_attack_fps'), 10) || 8;
+        this.DEV_ANIM_ULT_FPS = parseInt(localStorage.getItem('dev_anim_ult_fps'), 10) || 7;
+        // Especial tem FPS próprio (mesmos frames ult1→3 do ultimate, animação separada)
+        this.DEV_ANIM_SPECIAL_FPS = parseInt(localStorage.getItem('dev_anim_special_fps'), 10) || 7;
     }
 
     preload() {
@@ -31,6 +39,10 @@ export class MainScene extends Phaser.Scene {
     init(data) {
         this.roomId = data.roomId;
         this.playerId = data.playerId;
+        // Modo espectador (GM "Assistir sala"): entra na MainScene sem ser
+        // jogador — playerId 'spectator' falha todos os gates 'p1'/'p2' e cada
+        // ponto de escrita abaixo tem guarda explícita de isSpectator.
+        this.isSpectator = data.playerId === 'spectator';
         this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
         this.arenaId = data?.arenaId || getRandomArena().id;
         this.currentArenaId = this.arenaId;
@@ -77,6 +89,12 @@ export class MainScene extends Phaser.Scene {
         this.isResolvingRound = false;
         this.isExecutingFinisher = false;
 
+        // Ranking (perfil): erros próprios da partida (p/ "perfect match") e
+        // trava para gravar o resultado 1x por partida
+        this.myWrongAnswers = 0;
+        this.lastCountedErrorRound = null;
+        this.rankingRecorded = false;
+
         // Flags de áudio: garantem que FIGHT e K.O. toquem exatamente uma vez por partida
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
@@ -102,6 +120,9 @@ export class MainScene extends Phaser.Scene {
         this.createFighterAnimations();
 
         SoundManager.startBattleBGM();
+
+        // Marca <body> para a barra rápida de GM flutuante aparecer só em batalha
+        document.body.classList.add('in-battle');
 
         // 0. Base de cor sólida cobrindo todo o canvas 1024x576
         const width = this.scale.width;
@@ -282,8 +303,9 @@ export class MainScene extends Phaser.Scene {
         this.p2Thermometer = this.add.graphics();
 
         // 4. Personagens e Bases de Combate (Ficam firmes no piso da arena superior)
-        // Mantém o mesmo espaçamento responsivo usado na seleção de personagens.
-        const fighterOffsetX = Math.min(235, Math.max(180, width * 0.18));
+        // Espaçamento responsivo: distantes o bastante para o arremesso à
+        // distância do especial/ultimate fazer sentido visual.
+        const fighterOffsetX = Math.min(340, Math.max(230, width * 0.26));
         const fighterY = this.getFighterY();
 
         // P1 Fighter
@@ -775,9 +797,36 @@ export class MainScene extends Phaser.Scene {
                 }
             };
 
-            createAnimation('walk', ['walk1', 'walk2', 'walk3', 'walk4'], 8, -1);
-            createAnimation('attack', ['attack1', 'attack4'], 8);
+            createAnimation('walk', ['walk1', 'walk2', 'walk3', 'walk4'], this.DEV_ANIM_WALK_FPS, -1);
+            createAnimation('attack', ['attack1', 'attack4'], this.DEV_ANIM_ATTACK_FPS);
+
+            // Ultimate: folhas geradas pelo Sprite Studio (remover) e mescladas
+            // no atlas por tools/merge_ultimates.py — frames ult1..ult3 (o
+            // projetil/impacto são sprites soltos, não animação).
+            // Só registra se o atlas tiver os 3 frames (senão o finisher usa
+            // o fallback com 'attack2').
+            const tex = this.textures.get(prof.atlasKey);
+            if (tex && ['ult1', 'ult2', 'ult3'].every((f) => tex.has(f))) {
+                createAnimation('ult', ['ult1', 'ult2', 'ult3'], this.DEV_ANIM_ULT_FPS);
+                // Especial: mesmos frames do ultimate, mas com FPS próprio
+                createAnimation('special', ['ult1', 'ult2', 'ult3'], this.DEV_ANIM_SPECIAL_FPS);
+            }
         });
+    }
+
+    recreateFighterAnimations() {
+        // Remove animações existentes
+        professors.forEach((prof) => {
+            const prefix = `${prof.atlasKey}_`;
+            ['walk', 'attack', 'ult', 'special'].forEach((name) => {
+                const key = `${prefix}${name}`;
+                if (this.anims.exists(key)) {
+                    this.anims.remove(key);
+                }
+            });
+        });
+        // Recria com novos FPS
+        this.createFighterAnimations();
     }
 
     /**
@@ -806,6 +855,9 @@ export class MainScene extends Phaser.Scene {
         this.isResolvingRound = false;
         this.isExecutingFinisher = false;
         this.hasAnsweredLocal = false;
+        this.myWrongAnswers = 0;
+        this.lastCountedErrorRound = null;
+        this.rankingRecorded = false;
 
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
@@ -995,6 +1047,14 @@ export class MainScene extends Phaser.Scene {
 
     updatePostMatchRequestUI(req, data) {
         if (!this.gameOverPanel || !this.gameOverPanel.visible) return;
+        // Espectador: só observa o fim da partida, nunca vê pedidos/botões de revanche
+        if (this.isSpectator) {
+            if (this.btnRematch) this.btnRematch.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.promptBox) this.promptBox.setVisible(false);
+            if (this.waitingBox) this.waitingBox.setVisible(false);
+            return;
+        }
 
         // Vitória por W.O.: sem oponente, não há revanche/troca a coordenar.
         // Mantém apenas [Aguardar Novo Desafiante] e [Sair e Fechar a Sala].
@@ -1175,11 +1235,11 @@ export class MainScene extends Phaser.Scene {
             clearTimeout(this.nextQuestionTimeout);
             this.nextQuestionTimeout = null;
         }
-        if (this.roomId) {
+        if (this.roomId && !this.isSpectator) {
             try {
                 if (this.playerId === 'p1') {
                     await remove(ref(db, `rooms/${this.roomId}`));
-                } else {
+                } else if (this.playerId === 'p2') {
                     await remove(ref(db, `rooms/${this.roomId}/p2`));
                 }
             } catch (err) {
@@ -1221,6 +1281,14 @@ export class MainScene extends Phaser.Scene {
             this.handleDevAttack(event.detail?.damage);
         };
 
+        this.onDevSpecial = () => {
+            this.handleDevSpecial();
+        };
+
+        this.onDevUltimate = () => {
+            this.handleDevUltimate();
+        };
+
         this.onDevSetTimers = (e) => {
             const { matchStartDelay, questionTimeLimit } = e.detail || {};
             if (matchStartDelay) this.MATCH_START_DELAY = matchStartDelay;
@@ -1234,18 +1302,34 @@ export class MainScene extends Phaser.Scene {
             }
         };
 
+        this.onDevAnimSpeeds = (e) => {
+            const { walk, attack, special, ult } = e.detail || {};
+            if (walk) this.DEV_ANIM_WALK_FPS = walk;
+            if (attack) this.DEV_ANIM_ATTACK_FPS = attack;
+            if (special) this.DEV_ANIM_SPECIAL_FPS = special;
+            if (ult) this.DEV_ANIM_ULT_FPS = ult;
+            this.recreateFighterAnimations();
+        };
+
         window.addEventListener('dev-reset', this.handleDevReset);
         window.addEventListener('dev-streak', this.onDevStreak);
         window.addEventListener('dev-next-question', this.onDevNextQuestion);
         window.addEventListener('dev-attack', this.onDevAttack);
+        window.addEventListener('dev-special', this.onDevSpecial);
+        window.addEventListener('dev-ultimate', this.onDevUltimate);
         window.addEventListener('dev-set-timers', this.onDevSetTimers);
+        window.addEventListener('dev-anim-speeds', this.onDevAnimSpeeds);
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
+            document.body.classList.remove('in-battle');
             window.removeEventListener('dev-reset', this.handleDevReset);
             window.removeEventListener('dev-streak', this.onDevStreak);
             window.removeEventListener('dev-next-question', this.onDevNextQuestion);
             window.removeEventListener('dev-attack', this.onDevAttack);
+            window.removeEventListener('dev-special', this.onDevSpecial);
+            window.removeEventListener('dev-ultimate', this.onDevUltimate);
             window.removeEventListener('dev-set-timers', this.onDevSetTimers);
+            window.removeEventListener('dev-anim-speeds', this.onDevAnimSpeeds);
             if (this.autoLeaveTimeout) {
                 clearTimeout(this.autoLeaveTimeout);
                 this.autoLeaveTimeout = null;
@@ -1278,7 +1362,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     handleDevStreak(delta) {
-        if (!this.roomId || !this.playerId || this.isGameOver) return;
+        if (!this.roomId || !this.playerId || this.isGameOver || this.isSpectator) return;
         const playerRef = ref(db, `rooms/${this.roomId}/${this.playerId}`);
         get(playerRef).then((snap) => {
             const data = snap.val();
@@ -1292,7 +1376,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     handleDevNextQuestion() {
-        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent) return;
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
         if (this.nextQuestionTimeout) {
             clearTimeout(this.nextQuestionTimeout);
             this.nextQuestionTimeout = null;
@@ -1302,23 +1386,81 @@ export class MainScene extends Phaser.Scene {
     }
 
     handleDevAttack(damage = 20) {
-        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent) return;
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
 
         const normalizedDamage = Math.max(1, Math.min(100, Number(damage) || 20));
         const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
-        get(ref(db, `rooms/${this.roomId}`)).then((snapshot) => {
+        const roomRef = ref(db, `rooms/${this.roomId}`);
+        get(roomRef).then((snapshot) => {
             const roomData = snapshot.val();
             const enemy = roomData?.[enemyId];
             if (!enemy) return;
 
             const nextHp = Math.max(0, (Number(enemy.hp) || 100) - normalizedDamage);
-            return update(ref(db, `rooms/${this.roomId}`), {
-                [`${enemyId}/hp`]: nextHp,
-                attackWinner: this.playerId,
-                roundAlert: `⚡ GOLPE DO GM: -${normalizedDamage} HP`
+            // Escreve null primeiro para garantir que o diff detecte a mudança no próximo clique
+            return update(roomRef, { attackWinner: null }).then(() => {
+                return update(roomRef, {
+                    [`${enemyId}/hp`]: nextHp,
+                    attackWinner: this.playerId,
+                    roundAlert: `⚡ GOLPE DO GM: -${normalizedDamage} HP`
+                });
             });
         }).catch(error => {
             console.error('Erro ao aplicar ataque do GM:', error);
+        });
+    }
+
+    // Botão do painel GM ("💥 Disparar Especial"): replica o resultado de um
+    // SUPER da resolveRound — quem disparou zera as cargas, recebe o
+    // especialWriter (animação via diff no listener da sala) e o oponente
+    // perde 28 HP. Útil para testar a animação em sala ao vivo.
+    handleDevSpecial() {
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
+
+        const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
+        const dano = 28; // mesmo dano do super no resolveRound
+        const roomRef = ref(db, `rooms/${this.roomId}`);
+        get(roomRef).then((snapshot) => {
+            const roomData = snapshot.val();
+            const enemy = roomData?.[enemyId];
+            if (!enemy) return;
+
+            const nextHp = Math.max(0, (Number(enemy.hp) || 100) - dano);
+            // Escreve null primeiro para garantir que o diff detecte a mudança no próximo clique
+            return update(roomRef, { specialWinner: null }).then(() => {
+                return update(roomRef, {
+                    [`${enemyId}/hp`]: nextHp,
+                    [`${this.playerId}/charges`]: 0,
+                    specialWinner: this.playerId,
+                    roundAlert: '💥 ESPECIAL DO GM! -28 HP'
+                });
+            });
+        }).catch(error => {
+            console.error('Erro ao disparar especial do GM:', error);
+        });
+    }
+
+    // Botão do painel GM ("🔥 Disparar ULTIMATE"): replica o desfecho de K.O. da
+    // resolveRound — HP do inimigo vai a 0, ultimateWinner aponta quem disparou
+    // e o listener da sala roda o finisher (anim ult) + game over nos 2 clientes.
+    handleDevUltimate() {
+        if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
+
+        const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
+        get(ref(db, `rooms/${this.roomId}`)).then((snapshot) => {
+            const roomData = snapshot.val();
+            const me = roomData?.[this.playerId];
+            if (!roomData?.[enemyId]) return;
+
+            const nick = (me?.nickname || 'GM').toUpperCase();
+            return update(ref(db, `rooms/${this.roomId}`), {
+                [`${enemyId}/hp`]: 0,
+                ultimateWinner: this.playerId,
+                specialWinner: this.playerId,
+                roundAlert: `💥 ULTIMATE FINISHER DO GM! K.O. DE ${nick}!`
+            });
+        }).catch(error => {
+            console.error('Erro ao disparar ultimate do GM:', error);
         });
     }
 
@@ -1327,10 +1469,14 @@ export class MainScene extends Phaser.Scene {
 
         // Garante que, se esta aba cair (fechar/crash), o nó do jogador some do Firebase,
         // permitindo que o oponente detecte o abandono e vença por W.O.
-        try {
-            await onDisconnect(ref(db, `rooms/${this.roomId}/${this.playerId}`)).remove();
-        } catch (e) {
-            console.error('Erro ao registrar onDisconnect do jogador:', e);
+        // Espectador não registra onDisconnect (não é jogador e não pode
+        // disparar W.O. em ninguém)
+        if (!this.isSpectator) {
+            try {
+                await onDisconnect(ref(db, `rooms/${this.roomId}/${this.playerId}`)).remove();
+            } catch (e) {
+                console.error('Erro ao registrar onDisconnect do jogador:', e);
+            }
         }
 
         // Acompanha o offset do relógio do servidor para sincronizar os cronômetros da partida
@@ -1338,7 +1484,9 @@ export class MainScene extends Phaser.Scene {
             this.serverTimeOffset = snap.val() || 0;
         });
 
-        if (this.playerId === 'p1') {
+        if (this.isSpectator) {
+            this.statusText.setText('👀 MODO ESPECTADOR (somente leitura)');
+        } else if (this.playerId === 'p1') {
             this.statusText.setText('Você é o Jogador 1. Aguardando P2...');
         } else {
             this.statusText.setText('Você é o Jogador 2.');
@@ -1551,13 +1699,31 @@ export class MainScene extends Phaser.Scene {
     playSpecial(fighter, playSound = true) {
         const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
         if (!sprite) return;
+        const atlasKey = sprite.texture.key;
+
+        this.tweens.killTweensOf(fighter);
+
+        // Com a folha de ultimate: o golpe é À DISTÂNCIA — o personagem NÃO
+        // avança. Prepara (ult1..3) e o projétil só sai quando o ult3 (frame do
+        // arremesso) entra em cena (~300 ms a 7 fps).
+        if (this.anims.exists(`${atlasKey}_special`)) {
+            sprite.play(`${atlasKey}_special`);
+            if (playSound) SoundManager.playSpecial();
+            this.time.delayedCall(300, () => {
+                this.lancarEfeitoUltimate(fighter, atlasKey, 0.6);
+            });
+            this.time.delayedCall(650, () => {
+                this.setFighterIdle(sprite, atlasKey);
+            });
+            return;
+        }
+
+        // Legado ('attack2'): golpe corpo a corpo — avança, golpeia e volta.
         const startX = fighter.originalX;
         const targetX = fighter === this.fighterP1
             ? this.fighterP2.originalX - 125
             : this.fighterP1.originalX + 125;
-        const atlasKey = sprite.texture.key;
 
-        this.tweens.killTweensOf(fighter);
         sprite.play(`${atlasKey}_walk`);
         this.tweens.add({
             targets: fighter,
@@ -1583,12 +1749,30 @@ export class MainScene extends Phaser.Scene {
 
     playFinisherAttack(fighter, direction) {
         const sprite = fighter === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        const atlasKey = sprite?.texture?.key;
+
+        this.tweens.killTweensOf(fighter);
+
+        // Finisher à distância (folhas ult): sem avanço — prepara (ult1..3) e
+        // o projétil sai só quando o ult3 (arremesso) aparece em cena (~300 ms).
+        if (sprite && atlasKey && this.anims.exists(`${atlasKey}_ult`)) {
+            sprite.play(`${atlasKey}_ult`);
+            this.time.delayedCall(300, () => {
+                this.lancarEfeitoUltimate(fighter, atlasKey);
+            });
+            SoundManager.playSpecial();
+            this.time.delayedCall(650, () => {
+                this.setFighterIdle(sprite, atlasKey);
+            });
+            return;
+        }
+
+        // Legado ('attack2'): avança, golpeia e volta.
         const startX = fighter.originalX;
         const targetX = fighter === this.fighterP1
             ? this.fighterP2.originalX - 125
             : this.fighterP1.originalX + 125;
 
-        this.tweens.killTweensOf(fighter);
         sprite?.play(`${sprite.texture.key}_walk`);
         this.tweens.add({
             targets: fighter,
@@ -1597,10 +1781,10 @@ export class MainScene extends Phaser.Scene {
             ease: 'Power1',
             onComplete: () => {
                 if (sprite) {
-                    const atlasKey = sprite.texture.key;
-                    sprite.setTexture(atlasKey, 'attack2');
+                    const key2 = sprite.texture.key;
+                    sprite.setTexture(key2, 'attack2');
                     this.time.delayedCall(650, () => {
-                        this.setFighterIdle(sprite, atlasKey);
+                        this.setFighterIdle(sprite, key2);
                     });
                 }
                 SoundManager.playSpecial();
@@ -1613,6 +1797,85 @@ export class MainScene extends Phaser.Scene {
                 });
             }
         });
+    }
+
+    /**
+     * Efeitos do ultimate/especial: projétil voando até o oponente + explosão
+     * de impacto. Chamado no instante do arremesso (quando o ult3 entra em
+     * cena, ~300 ms após o play). Os frames ('projetil'/'impacto') são
+     * opcionais por atlas — sem eles, o golpe usa só a animação ult1..3.
+     * escalaEfeito < 1 encolhe os efeitos (especial 0.6; ultimate/finisher 1).
+     * Puramente visual: a resolução da rodada acontece no Firebase como antes.
+     */
+    lancarEfeitoUltimate(fighterVencedor, atlasKey, escalaEfeito = 1) {
+        const tex = this.textures.get(atlasKey);
+        const temProjetil = tex?.has('projetil');
+        const temImpacto = tex?.has('impacto');
+        if (!temProjetil && !temImpacto) return;
+
+        const sprite = fighterVencedor === this.fighterP1 ? this.fighterP1Sprite : this.fighterP2Sprite;
+        if (!sprite?.active) return;
+        const isP1 = fighterVencedor === this.fighterP1;
+        const alvo = isP1 ? this.fighterP2 : this.fighterP1;
+        const alvoSprite = isP1 ? this.fighterP2Sprite : this.fighterP1Sprite;
+
+        const dir = isP1 ? 1 : -1;
+        const escala = (sprite.scaleX || 0.65) * escalaEfeito;
+
+        // Posição base do vencedor (pés no chão, origin 0.5, 1.0)
+        const baseX = fighterVencedor.x;
+        const baseY = fighterVencedor.y;
+
+        // Alvo: centro do oponente (aprox. peito)
+        const alvoBaseX = alvo.x;
+        const alvoBaseY = alvo.y + 68 - ((alvoSprite?.displayHeight || 200) * 0.55);
+        const xAlvo = alvoBaseX - 30 * dir;
+        const yAlvo = alvoBaseY;
+
+        const mostrarImpacto = () => {
+            if (!temImpacto) return;
+            const imp = this.add.sprite(xAlvo, yAlvo, atlasKey, 'impacto')
+                .setOrigin(0.5, 0.5)
+                .setScale(escala * 0.55)
+                .setFlipX(!!sprite.flipX)
+                .setDepth(7);
+            this.tweens.add({
+                targets: imp,
+                scale: escala,
+                duration: 200,
+                ease: 'Back.easeOut'
+            });
+            this.time.delayedCall(750, () => imp.destroy());
+        };
+
+        if (temProjetil) {
+            // Projetil nasce na mão do personagem (altura ~55% do corpo, à frente)
+            // Usa offsets proporcionais ao tamanho do sprite para funcionar em todas as escalas
+            const charW = sprite.displayWidth || 100;
+            const charH = sprite.displayHeight || 200;
+            const projStartX = baseX + (charW * 0.35 * dir);
+            const projStartY = baseY - (charH * 0.55);
+
+            const proj = this.add.sprite(projStartX, projStartY, atlasKey, 'projetil')
+                .setOrigin(0.5, 0.5)
+                .setScale(escala)
+                .setFlipX(!!sprite.flipX)
+                .setDepth(6);
+
+            this.tweens.add({
+                targets: proj,
+                x: xAlvo,
+                y: yAlvo,
+                duration: 340,
+                ease: 'Quad.easeIn',
+                onComplete: () => {
+                    proj.destroy();
+                    mostrarImpacto();
+                }
+            });
+        } else {
+            mostrarImpacto();
+        }
     }
 
     getFighterY() {
@@ -1691,7 +1954,10 @@ export class MainScene extends Phaser.Scene {
         this.cameras.main.flash(450, 255, 255, 255);
         this.hasPlayedKOSound = true;
         SoundManager.playKO();
-        this.time.delayedCall(1100, () => {
+        // Com animação de ultimate no atlas, a sequência (preparação + projétil
+        // + impacto) é mais longa: atrasa o desfecho para não cobrir a animação.
+        const delayFim = this.anims.exists(`${winnerProf.atlasKey}_ult`) ? 2000 : 1100;
+        this.time.delayedCall(delayFim, () => {
             this.isExecutingFinisher = false;
             if (typeof callback === 'function') callback();
         });
@@ -2273,7 +2539,7 @@ export class MainScene extends Phaser.Scene {
             this.clearQuestion();
             this.statusText.setText('Aguardando conexão do oponente...');
 
-            if (this.matchStartedEver && !this.isGameOver) {
+            if (this.matchStartedEver && !this.isGameOver && !this.isSpectator) {
                 // O oponente caiu NO MEIO da partida: inicia a contagem de graça para W.O.
                 this.startWalkoverCountdown();
             } else {
@@ -2334,6 +2600,16 @@ export class MainScene extends Phaser.Scene {
 
         // 5. Se ambos responderam: resolução da rodada e avanço sincronizado
         if (data.p1 && data.p2 && data.p1.answered && data.p2.answered && !this.isGameOver) {
+            // Contagem local de erros do jogador (para o "perfect match" do
+            // ranking). Dedup por rodada: vale também o timeout forçado pelo P1
+            // (que grava answerCorrect=false para quem não respondeu).
+            if (!this.isSpectator && data.round !== this.lastCountedErrorRound) {
+                const mine = this.playerId === 'p1' ? data.p1 : this.playerId === 'p2' ? data.p2 : null;
+                if (mine && mine.answerCorrect === false) {
+                    this.lastCountedErrorRound = data.round;
+                    this.myWrongAnswers = (this.myWrongAnswers || 0) + 1;
+                }
+            }
             this.localQuestionStartTime = null;
 
             if (this.playerId === 'p1' && !data.roundResolved && !this.isResolvingRound) {
@@ -2428,7 +2704,7 @@ export class MainScene extends Phaser.Scene {
         for (let i = 0; i < 4; i++) {
             this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${questionData.options[i]}`);
             this.optionButtons[i].setStyle({ backgroundColor: '#2d3544', fill: '#ffffff' }); 
-            if (!this.isGameOver) {
+            if (!this.isGameOver && !this.isSpectator) {
                 this.optionButtons[i].setInteractive(); 
             }
         }
@@ -2438,7 +2714,7 @@ export class MainScene extends Phaser.Scene {
     }
 
     handleAnswer(selectedIndex = null, isTimeout = false) {
-        if (!this.roomId || !this.playerId || !this.currentQuestionData || this.hasAnsweredLocal || this.isGameOver || this.isWaitingForOpponent) return;
+        if (!this.roomId || !this.playerId || this.isSpectator || !this.currentQuestionData || this.hasAnsweredLocal || this.isGameOver || this.isWaitingForOpponent) return;
 
         this.hasAnsweredLocal = true;
         this.optionButtons.forEach(btn => btn.disableInteractive());
@@ -2516,7 +2792,29 @@ export class MainScene extends Phaser.Scene {
         }
     }
 
+    // Ranking: grava o resultado da partida do jogador LOGADO (1x por partida,
+    // nunca para espectador). Bônus de +5 RP: K.O. via ultimate ou "perfect
+    // match" (vencer sem errar nada). W.O. conta como vitória simples.
+    recordMyRanking(isWinner, isTie, roomData) {
+        if (this.isSpectator || this.rankingRecorded) return;
+        this.rankingRecorded = true;
+        const uid = localStorage.getItem('labcombat_account_uid');
+        if (!uid) return; // visitante: sem pontuação
+        const won = !!isWinner && !isTie;
+        const me = roomData?.[this.playerId] || {};
+        recordMatchResult({
+            uid,
+            nickname: this.nickname,
+            characterId: me.characterId || null,
+            won,
+            tie: !!isTie,
+            bonus: won && !this.isWalkoverWin
+                && (roomData?.ultimateWinner === this.playerId || (this.myWrongAnswers || 0) === 0)
+        }).catch(err => logEvent('warn', `[Ranking] Falha ao registrar resultado: ${err.message}`));
+    }
+
     showGameOver(isWinner, winnerNick, isTie = false, roomData = null) {
+        this.recordMyRanking(isWinner, isTie, roomData);
         if (!this.isGameOver && !this.hasPlayedKOSound) {
             this.hasPlayedKOSound = true;
             SoundManager.playKO();
@@ -2531,7 +2829,14 @@ export class MainScene extends Phaser.Scene {
         const p2Prof = getProfessorById(p2.characterId || 'web');
 
         // Configuração visual conforme Vitória, Derrota ou Empate
-        if (isTie) {
+        if (this.isSpectator) {
+            // Espectador: tela neutra, sem botões de revanche/troca
+            this.goCardGlow.setFillStyle(0x38bdf8, 0.25);
+            this.goCardBg.setStrokeStyle(2, 0x38bdf8);
+            this.goIconText.setText('👀');
+            this.goTitleText.setText('FIM DE PARTIDA').setStyle({ fill: '#38bdf8' });
+            this.goSubText.setText(isTie ? 'Empate duplo!' : `Vencedor: ${winnerNick}`).setStyle({ fill: '#e2e8f0' });
+        } else if (isTie) {
             this.goCardGlow.setFillStyle(0xfacc15, 0.25);
             this.goCardBg.setStrokeStyle(2, 0xfacc15);
             this.goIconText.setText('🤝');
@@ -2572,6 +2877,10 @@ export class MainScene extends Phaser.Scene {
 
         this.btnRematch.setText('⚔️ Jogar Novamente (Revanche)');
         this.btnChangeProf.setText('🔄 Trocar Personagem');
+        if (this.isSpectator) {
+            this.btnRematch.setVisible(false);
+            this.btnChangeProf.setVisible(false);
+        }
 
         if (this.goFooterHint) {
             this.goFooterHint.setText(`Código da Sala: ${this.roomId} • Duelo Finalizado`);

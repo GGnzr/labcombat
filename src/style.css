@@ -48,27 +48,159 @@ html, body {
   box-shadow: none;
 }
 
-/* Quando o Modo GM está ativo e a Sidebar aberta, reserva 380px na lateral */
-body.gm-active.dev-sidebar-open #app {
-  width: calc(100vw - 380px);
-  max-width: calc(100vw - 380px);
-}
-
-/* Sidebar dedicada do GM (380px - espaçoso e legível) */
+/* Painel GM = tela de gerenciamento full-screen (overlay). O jogo NÃO encolhe:
+   fica rodando ao fundo, com a barra rápida de GM disponível em batalha. */
 #dev-sidebar {
   display: none;
-  width: 380px;
-  min-width: 380px;
-  height: 100vh;
-  background: rgba(15, 23, 42, 0.98);
-  backdrop-filter: blur(14px);
-  border-left: 2px solid #38bdf8;
-  box-shadow: -6px 0 30px rgba(0, 0, 0, 0.8);
-  z-index: 1000;
-  overflow-y: hidden;
-  padding: 14px;
+  position: fixed;
+  inset: 0;
+  z-index: 1500;
+  background: rgba(2, 6, 23, 0.97);
+  backdrop-filter: blur(10px);
+  padding: 18px;
   color: #f1f5f9;
   flex-direction: column;
+  align-items: center;
+  overflow-y: hidden;
+}
+
+/* Conteúdo do painel centralizado com largura máxima confortável */
+#dev-sidebar > * {
+  width: 100%;
+  max-width: 1280px;
+}
+
+body.gm-active.dev-sidebar-open #dev-sidebar {
+  display: flex !important;
+}
+
+/* Canvas do jogo NÃO recebe cliques enquanto QUALQUER overlay estiver aberto
+   (painel GM, conta/perfil, apelido, entrar em sala, ranking) — evita o
+   "clique fantasma" que acionava botões do jogo embaixo do overlay. */
+body.modal-open #app canvas {
+  pointer-events: none !important;
+}
+
+/* Barra rápida de GM em batalha (visível só com GM ativo, em MainScene e com
+   o painel fechado) */
+#gm-quickbar {
+  display: none;
+  position: fixed;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 900;
+  flex-direction: column;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.92);
+  border: 1.5px solid #38bdf8;
+  border-radius: 14px;
+  padding: 10px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+#gm-quickbar .gm-qb-title {
+  font-size: 11px;
+  font-weight: bold;
+  color: #38bdf8;
+  text-align: center;
+  letter-spacing: 2px;
+  border-bottom: 1px solid #1e293b;
+  padding-bottom: 6px;
+}
+#gm-quickbar button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 138px;
+  padding: 9px 12px;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: bold;
+  color: #fff;
+  transition: transform 0.1s ease, filter 0.1s ease;
+  text-align: left;
+}
+#gm-quickbar button span { font-size: 16px; }
+#gm-quickbar button:hover { transform: scale(1.05); filter: brightness(1.25); }
+
+body.gm-active.in-battle:not(.dev-sidebar-open) #gm-quickbar {
+  display: flex !important;
+}
+
+/* ===== Aba de Questões (CRUD) ===== */
+.qm-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #0b1120;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.qm-row:hover { border-color: #38bdf8; }
+.qm-row .qm-id {
+  flex: 0 0 auto;
+  background: #1e293b;
+  color: #38bdf8;
+  font-size: 11px;
+  font-weight: bold;
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+.qm-row .qm-text {
+  flex: 1;
+  font-size: 12.5px;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+.qm-row .qm-meta {
+  flex: 0 0 auto;
+  font-size: 10.5px;
+  color: #64748b;
+  white-space: nowrap;
+}
+.qm-row button {
+  flex: 0 0 auto;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 5px 9px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.qm-row .qm-edit { background: #1d4ed8; color: #fff; }
+.qm-row .qm-del { background: #7f1d1d; color: #fca5a5; }
+.qm-opt-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.qm-opt-row input[type="text"] {
+  flex: 1;
+  background: #020617;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 7px 9px;
+  font-size: 12.5px;
+}
+.qm-opt-row .qm-opt-del {
+  background: #450a0a;
+  color: #fca5a5;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+.qm-input {
+  width: 100%;
+  background: #020617;
+  color: #e2e8f0;
+  border: 1px solid #334155;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
 }
 
 body.gm-active.dev-sidebar-open #dev-sidebar {

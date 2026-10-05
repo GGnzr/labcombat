@@ -151,7 +151,7 @@
     <div id="game-root">
       <div id="app"></div>
 
-      <!-- Sidebar Dedicada de GM / Dev Tools (Lateral 380px, Espaçosa com Abas) -->
+      <!-- Tela Full-Screen de Gerenciamento GM (overlay; o jogo continua ao fundo) -->
       <aside id="dev-sidebar">
           <!-- Cabeçalho Principal do GM -->
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; border-bottom: 1.5px solid #1e293b; padding-bottom: 8px;">
@@ -163,7 +163,7 @@
                   </div>
               </div>
               <div style="display: flex; gap: 6px;">
-                  <button id="dev-toggle-btn" title="Recolher Barra Lateral" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">◀ Recolher</button>
+                  <button id="dev-toggle-btn" title="Fechar o Painel GM (F2 reabre)" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">✕ Fechar</button>
                   <button id="btn-gm-logout" title="Sair do Modo GM e voltar à visão de aluno" style="background: #dc2626; border: none; color: #fff; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">✕ Sair</button>
               </div>
           </div>
@@ -171,12 +171,13 @@
           <!-- Navegação por Abas (Tabs) -->
           <div style="display: flex; background: #0b1120; border-radius: 8px; padding: 3px; margin-bottom: 12px; border: 1px solid #1e293b;">
               <button id="tab-btn-controls" class="gm-tab-btn active" style="flex: 1; padding: 7px 4px; background: #1e293b; color: #38bdf8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🎮 Controles</button>
+              <button id="tab-btn-questions" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📝 Questões <span id="gm-questions-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
           </div>
 
           <!-- ABA 1: CONTROLES DA PARTIDA -->
-          <div id="tab-content-controls" class="gm-tab-content" style="display: flex; flex-direction: column; gap: 12px; overflow-y: auto; flex: 1;">
+          <div id="tab-content-controls" class="gm-tab-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; align-content: start; overflow-y: auto; flex: 1;">
               <!-- Exibição de Tela -->
               <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
@@ -185,25 +186,6 @@
                   </div>
                   <button id="btn-fullscreen-toggle" style="width: 100%; background: #0f172a; border: 1px solid #475569; color: #38bdf8; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold;">⛶ Tela Cheia</button>
                   <button id="dev-animation-test-btn" style="width: 100%; background: #0f172a; border: 1px solid #a855f7; color: #d8b4fe; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold; margin-top: 8px;">🎞️ Testar Animações</button>
-              </div>
-
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">📚 Bancos de Questões</div>
-                  <select id="gm-question-professor" style="width: 100%; background: #020617; color: #cbd5e1; border: 1px solid #475569; border-radius: 6px; padding: 7px; margin-bottom: 8px;">
-                      <option value="so">Sistemas Operacionais</option>
-                      <option value="eng_soft">Engenharia de Software</option>
-                      <option value="poo">Programação Orientada a Objetos</option>
-                      <option value="web">Web &amp; Mobile</option>
-                      <option value="bd">Banco de Dados</option>
-                      <option value="redes">Redes de Computadores</option>
-                  </select>
-                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
-                  <div style="display: flex; gap: 6px;">
-                      <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬆️ Publicar</button>
-                      <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬇️ Baixar JSON</button>
-                  </div>
-                  <button id="gm-publish-base-questions" style="width: 100%; padding: 8px; background: #047857; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px;">📦 Publicar Bancos-base</button>
-                  <div id="gm-question-status" style="min-height: 18px; margin-top: 6px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
               </div>
 
               <!-- Ajuste de Tempos -->
@@ -227,25 +209,90 @@
                   <div id="dev-timers-status" style="font-size: 12px; color: #34d399; text-align: center; margin-top: 4px; min-height: 16px;"></div>
               </div>
 
-              <!-- Controles de Streak & Ultimate -->
+              <!-- Cargas: os botões +/- estão na barra rápida de batalha (#gm-quickbar) -->
+
+              <!-- Sessão da Arena -->
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #c084fc;">⚡ Cargas & Especial (Teste GM)</div>
-                  <div style="display: flex; gap: 8px;">
-                      <button id="dev-streak-plus" style="flex: 1; padding: 8px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">+1 Carga</button>
-                      <button id="dev-streak-minus" style="flex: 1; padding: 8px; background: #9333ea; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">-1 Carga</button>
-                  </div>
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #38bdf8;">🎯 Sessão da Arena</div>
+                  <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
               </div>
 
-              <!-- Ações da Partida -->
+              <!-- Velocidade das Animações -->
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #38bdf8;">🎯 Ações da Arena</div>
-                  <button id="dev-skip-question" style="width: 100%; padding: 9px; background: #0284c7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⏭️ Pular para Próxima Questão</button>
-                  <button id="dev-attack-enemy" style="width: 100%; padding: 9px; background: #b91c1c; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold; margin-bottom: 8px;">⚡ Atacar Inimigo (-20 HP)</button>
-                  <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #a855f7;">🎞️ Velocidade das Animações (FPS)</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                      <label for="dev-anim-walk" style="font-size: 12px;">Walk (idle/run):</label>
+                      <input id="dev-anim-walk" type="number" min="1" max="24" value="8" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                      <label for="dev-anim-attack" style="font-size: 12px;">Attack (1→4):</label>
+                      <input id="dev-anim-attack" type="number" min="1" max="24" value="8" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                      <label for="dev-anim-special" style="font-size: 12px;">Especial (ult1→3):</label>
+                      <input id="dev-anim-special" type="number" min="1" max="24" value="7" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <label for="dev-anim-ult" style="font-size: 12px;">Ultimate (ult1→3):</label>
+                      <input id="dev-anim-ult" type="number" min="1" max="24" value="7" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <button id="dev-apply-anim-btn" style="width: 100%; padding: 8px; background: #a855f7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Aplicar Velocidades</button>
+                  <div id="dev-anim-status" style="font-size: 11px; color: #a855f7; text-align: center; margin-top: 4px; min-height: 14px;"></div>
               </div>
           </div>
 
-          <!-- ABA 2: SALAS NO FIREBASE -->
+          <!-- ABA 2: QUESTÕES (CRUD completo + import/export) -->
+          <div id="tab-content-questions" class="gm-tab-content" style="display: none; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
+              <!-- Toolbar: banco + nova questão + filtro -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="display: flex; gap: 8px; align-items: center;">
+                      <select id="gm-question-professor" style="flex: 1; background: #020617; color: #cbd5e1; border: 1px solid #475569; border-radius: 6px; padding: 7px;">
+                          <option value="so">Programação Orientada a Objetos</option>
+                          <option value="eng_soft">Engenharia de Software</option>
+                          <option value="web">Web &amp; Mobile</option>
+                          <option value="bd">Banco de Dados</option>
+                          <option value="redes">Redes de Computadores</option>
+                          <!-- Coringa não tem banco próprio: em jogo puxa questões de todos os outros -->
+                      </select>
+                      <button id="gm-new-question-btn" style="padding: 7px 12px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">➕ Nova questão</button>
+                  </div>
+                  <div style="font-size: 10.5px; color: #64748b; margin-top: 6px;">🃏 O Coringa não aparece aqui de propósito: em jogo ele puxa questões de TODOS os professores.</div>
+                  <input id="gm-q-search" class="qm-input" placeholder="🔍 Filtrar por texto..." style="margin-top: 8px;">
+              </div>
+
+              <!-- Importar / Exportar (migrado da aba Controles) -->
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">📦 Importar / Exportar Banco</div>
+                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                  <div style="display: flex; gap: 6px;">
+                      <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Substitui TODO o banco do professor selecionado pelo arquivo JSON">⬆️ Publicar JSON (substitui)</button>
+                      <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬇️ Baixar JSON</button>
+                  </div>
+                  <button id="gm-publish-base-questions" style="width: 100%; padding: 8px; background: #047857; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px;" title="Envia os arquivos assets/questions/*.json para o RTDB">📦 Publicar Bancos-base</button>
+              </div>
+
+              <!-- Editor de questão (nova / editar) -->
+              <div id="gm-q-editor" style="display: none; flex-direction: column; gap: 8px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1.5px solid #a855f7;">
+                  <div id="gm-q-editor-title" style="font-weight: bold; font-size: 13px; color: #d8b4fe;">➕ Nova questão</div>
+                  <textarea id="gm-q-text" class="qm-input" rows="3" placeholder="Enunciado da questão..."></textarea>
+                  <div style="font-size: 11px; color: #94a3b8;">Opções (marque o ● da correta — gabarito):</div>
+                  <div id="gm-q-options"></div>
+                  <button id="gm-q-add-option" style="align-self: flex-start; padding: 6px 10px; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">＋ Adicionar opção</button>
+                  <div id="gm-q-error" style="min-height: 14px; font-size: 11.5px; color: #f87171;"></div>
+                  <div style="display: flex; gap: 8px;">
+                      <button id="gm-q-save" style="flex: 1; padding: 9px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Salvar questão</button>
+                      <button id="gm-q-cancel" style="flex: 1; padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">Cancelar</button>
+                  </div>
+              </div>
+
+              <!-- Lista de questões do banco -->
+              <div id="gm-questions-list" style="display: flex; flex-direction: column; gap: 6px;">
+                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Selecione um professor para carregar o banco.</div>
+              </div>
+              <div id="gm-question-status" style="min-height: 18px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+          </div>
+
+          <!-- ABA 3: SALAS NO FIREBASE -->
           <div id="tab-content-rooms" class="gm-tab-content" style="display: none; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
               <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 8px 10px; border-radius: 6px;">
                   <span style="font-size: 12px; font-weight: bold; color: #38bdf8;">📡 Conexão Firebase:</span>
@@ -263,7 +310,7 @@
               </div>
           </div>
 
-          <!-- ABA 3: LOGS EM TEMPO REAL -->
+          <!-- ABA 4: LOGS EM TEMPO REAL -->
           <div id="tab-content-logs" class="gm-tab-content" style="display: none; flex-direction: column; gap: 8px; flex: 1; height: calc(100vh - 140px);">
               <div style="display: flex; justify-content: space-between; align-items: center; background: #1e293b; padding: 6px 10px; border-radius: 6px;">
                   <div style="font-size: 12px; color: #facc15; font-weight: bold;">📜 Console de Eventos</div>
@@ -280,48 +327,109 @@
       </aside>
     </div>
 
+    <!-- Barra rápida de GM em batalha (só visível com GM ativo, em MainScene e painel fechado) -->
+    <div id="gm-quickbar">
+        <div class="gm-qb-title">🛡️ GM</div>
+        <button id="dev-streak-plus" title="+1 Carga (habilita especial/ultimate)" style="background: #16a34a;"><span>➕</span>Carga</button>
+        <button id="dev-attack-enemy" title="Atacar inimigo (-20 HP)" style="background: #b91c1c;"><span>⚡</span>Atacar</button>
+        <button id="dev-special-btn" title="Disparar Especial (-28 HP, zera cargas)" style="background: #d97706;"><span>💥</span>Especial</button>
+        <button id="dev-ultimate-btn" title="Disparar ULTIMATE — K.O. imediato" style="background: #dc2626;"><span>🔥</span>Ultimate</button>
+        <button id="dev-skip-question" title="Pular para a próxima questão" style="background: #0284c7;"><span>⏭️</span>Pular</button>
+        <button id="dev-streak-minus" title="-1 Carga" style="background: #9333ea;"><span>➖</span>Carga</button>
+    </div>
+
     <!-- Botão Flutuante Discreto para Reabrir a Barra Lateral (Apenas quando GM logado e barra recolhida) -->
     <button id="gm-reopen-pill" title="Reabrir Painel do Game Master">🛠️ Painel GM</button>
 
-    <!-- Modal de Conta do Jogador: cadastro opcional, com acesso visitante -->
+    <!-- Modal unificado do Jogador: abas Perfil (ranking) e Conta (login/visitante) -->
     <div id="account-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 26px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 370px; max-width: 92vw;">
-            <div style="font-size: 36px; margin-bottom: 4px;">🎓</div>
-            <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 21px; font-weight: bold;">Acesso do Jogador</h2>
-            <p style="color: #94a3b8; font-size: 12px; margin: 0 0 14px 0;">Crie uma conta para manter seu perfil e jogar como visitante quando preferir.</p>
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 16px 18px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 400px; max-width: 92vw;">
 
-            <div style="display: flex; gap: 6px; margin-bottom: 14px;">
-                <button id="account-tab-login" type="button" style="flex: 1; padding: 9px; background: #2563eb; color: #fff; border: 1px solid #60a5fa; border-radius: 7px; font-weight: bold; cursor: pointer;">Entrar</button>
-                <button id="account-tab-register" type="button" style="flex: 1; padding: 9px; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; border-radius: 7px; font-weight: bold; cursor: pointer;">Cadastrar</button>
+            <!-- Conteúdo único: Perfil (sempre) + Conta (login se deslogado / resumo se logado) -->
+
+            <!-- Perfil (apelido, elo, stats) -->
+            <div id="profile-view">
+                <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">👤 Perfil do Jogador</h2>
+                <div id="profile-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin-bottom: 1px;"></div>
+                <div id="profile-mode" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
+                <div id="profile-nick-edit" style="display: none; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 6px;">
+                        <input id="profile-nick-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" class="qm-input" style="text-align: center; font-weight: bold; padding: 7px 9px;">
+                        <button id="profile-nick-save" type="button" title="Salvar apelido" style="padding: 7px 11px; background: #16a34a; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">💾</button>
+                    </div>
+                    <div id="profile-nick-msg" style="min-height: 12px; font-size: 10.5px; color: #64748b; margin-top: 2px;"></div>
+                </div>
+                <div id="profile-body" style="min-height: 80px;"></div>
             </div>
 
-            <div id="account-nickname-row" style="display: none; margin-bottom: 9px;">
-                <input id="account-nickname-input" type="text" maxlength="14" placeholder="Apelido (2 a 14 caracteres)" style="font-size: 14px; font-weight: bold; width: 100%; padding: 10px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none;">
-            </div>
-            <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 14px; width: 100%; margin-bottom: 9px; padding: 10px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
-            <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 14px; width: 100%; margin-bottom: 9px; padding: 10px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
-            <div id="account-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 10px;"></div>
+            <!-- VIEW: Conta (login/visitante quando deslogado; resumo da conta quando logado) -->
+            <div style="border-top: 1px solid #1e293b; margin: 10px 0 8px 0; padding-top: 8px; color: #64748b; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;">🔐 Conta</div>
+            <div id="account-view">
 
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button id="account-submit-btn" type="button" style="padding: 11px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
-                <button id="account-reset-btn" type="button" style="padding: 7px; background: transparent; color: #7dd3fc; border: none; font-size: 12px; font-weight: bold; cursor: pointer;">Esqueci minha senha</button>
-                <button id="account-google-btn" type="button" style="padding: 10px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;"><span style="display: inline-block; margin-right: 6px; color: #4285f4; font-family: Arial, sans-serif; font-size: 17px; font-weight: 800; line-height: 1; vertical-align: -2px;">G</span> Entrar com Google</button>
-                <button id="account-logout-btn" type="button" style="display: none; padding: 10px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
-                <button id="account-guest-btn" type="button" style="padding: 10px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
-                <button id="account-close-btn" type="button" style="padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
+                <!-- Subview: formulário de acesso (deslogado) -->
+                <div id="account-form-view">
+                    <div style="color: #f8fafc; font-size: 14px; font-weight: bold; margin-bottom: 8px;">🎓 Entre com sua conta ou jogue como visitante</div>
+
+                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                        <button id="account-tab-login" type="button" style="flex: 1; padding: 7px; background: #2563eb; color: #fff; border: 1px solid #60a5fa; border-radius: 7px; font-weight: bold; font-size: 12px; cursor: pointer;">Entrar</button>
+                        <button id="account-tab-register" type="button" style="flex: 1; padding: 7px; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; border-radius: 7px; font-weight: bold; font-size: 12px; cursor: pointer;">Cadastrar</button>
+                    </div>
+
+                    <div id="account-nickname-row" style="display: none; margin-bottom: 6px;">
+                        <input id="account-nickname-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" style="font-size: 13px; font-weight: bold; width: 100%; padding: 8px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none;">
+                    </div>
+                    <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
+                    <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
+                    <div id="account-error-msg" style="min-height: 16px; font-size: 11.5px; color: #f87171; font-weight: bold; margin-bottom: 6px;"></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <button id="account-submit-btn" type="button" style="padding: 9px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
+                        <button id="account-reset-btn" type="button" style="padding: 4px; background: transparent; color: #7dd3fc; border: none; font-size: 11.5px; font-weight: bold; cursor: pointer;">Esqueci minha senha</button>
+                        <button id="account-google-btn" type="button" style="padding: 8px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;"><span style="display: inline-block; margin-right: 6px; color: #4285f4; font-family: Arial, sans-serif; font-size: 15px; font-weight: 800; line-height: 1; vertical-align: -2px;">G</span> Entrar com Google</button>
+                        <button id="account-guest-btn" type="button" style="padding: 8px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
+                    </div>
+                </div>
+
+                <!-- Subview: conta conectada (logado) -->
+                <div id="account-logged-view" style="display: none;">
+                    <div style="background: #0b1120; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
+                        <div style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Conectado como</div>
+                        <div id="account-logged-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin: 2px 0;"></div>
+                        <div id="account-logged-email" style="color: #94a3b8; font-size: 11.5px;"></div>
+                    </div>
+                    <div id="account-logged-msg" style="min-height: 14px; font-size: 11px; color: #34d399; margin-bottom: 6px;"></div>
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <button id="account-reset-logged-btn" type="button" style="padding: 8px; background: #1e293b; border: 1px solid #475569; color: #7dd3fc; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">🔑 Redefinir senha por e-mail</button>
+                        <button id="account-logout-btn" type="button" style="padding: 8px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
+                    </div>
+                </div>
+
+                <button id="account-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 7px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
             </div>
         </div>
     </div>
 
+    <!-- Modal de Ranking Geral (todas as posições + filtro por elo) -->
+    <div id="ranking-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 460px; max-width: 94vw;">
+            <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 19px; font-weight: bold;">🏆 Ranking da Arena</h2>
+            <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por Pontos de Ranking (RP)</div>
+            <div id="ranking-tier-tabs" style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;"></div>
+            <div id="ranking-div-tabs" style="display: none; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;"></div>
+            <div id="ranking-body" style="max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 120px;"></div>
+            <button id="ranking-close-btn" type="button" style="width: 100%; margin-top: 10px; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
+        </div>
+    </div>
+
     <!-- Overlay de Definir Apelido -->
-    <div id="nickname-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
+    <div id="nickname-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 3000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 340px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
             <div style="font-size: 38px; margin-bottom: 6px;">👤</div>
             <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 22px; font-weight: bold;">Seu Apelido</h2>
             <p style="color: #94a3b8; font-size: 13px; margin: 0 0 16px 0;">Como deseja ser chamado no combate?</p>
             
             <div style="margin-bottom: 14px;">
-                <input id="nickname-modal-input" type="text" maxlength="14" placeholder="Ex: DevNinja" 
+                <input id="nickname-modal-input" type="text" maxlength="20" placeholder="Ex: DevNinja" 
                        style="font-size: 18px; font-weight: bold; width: 220px; padding: 10px; text-align: center; background: #020617; border: 2px solid #38bdf8; border-radius: 8px; color: #38bdf8; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);">
             </div>
 
@@ -357,7 +465,7 @@
             <!-- Campo Apelido -->
             <div style="margin-bottom: 12px; text-align: left;">
                 <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">SEU APELIDO:</label>
-                <input id="join-nickname-input" type="text" maxlength="14" placeholder="Ex: Jogador 2" 
+                <input id="join-nickname-input" type="text" maxlength="20" placeholder="Ex: Jogador 2" 
                        style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
             </div>
 
@@ -403,7 +511,9 @@
     </div>
 
     <script type="module">
-        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset } from '/src/auth.js';
+        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname } from '/src/auth.js';
+        import { professors } from '/src/professors.js';
+        import { RANK_TIERS, getRankForPoints, loadMyLeaderboardEntry, loadTopLeaderboard } from '/src/ranking.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
@@ -423,17 +533,58 @@
         const accountLogoutBtn = document.getElementById('account-logout-btn');
         const accountGuestBtn = document.getElementById('account-guest-btn');
         const accountCloseBtn = document.getElementById('account-close-btn');
+        const accountFormView = document.getElementById('account-form-view');
+        const accountLoggedView = document.getElementById('account-logged-view');
+        const accountLoggedEmail = document.getElementById('account-logged-email');
+        const accountLoggedNick = document.getElementById('account-logged-nick');
+        const accountLoggedMsg = document.getElementById('account-logged-msg');
+        const accountResetLoggedBtn = document.getElementById('account-reset-logged-btn');
         let accountMode = 'login';
         let authenticatedUser = null;
         let accountRequired = false;
+
+        // Conta state-aware: deslogado mostra SÓ o formulário de acesso; logado
+        // mostra SÓ a área do jogador (perfil + resumo da conta). Login e
+        // perfil nunca aparecem juntos no modal.
+        function renderAccountAuthState() {
+            const logged = !!authenticatedUser;
+            if (profileView) profileView.style.display = logged ? 'block' : 'none';
+            if (accountFormView) accountFormView.style.display = logged ? 'none' : 'block';
+            if (accountLoggedView) accountLoggedView.style.display = logged ? 'block' : 'none';
+            if (logged) {
+                if (accountLoggedEmail) accountLoggedEmail.textContent = authenticatedUser.email || '—';
+                if (accountLoggedNick) accountLoggedNick.textContent = sessionStorage.getItem('labcombat_nickname') || authenticatedUser.displayName || 'Jogador';
+                if (accountLoggedMsg) accountLoggedMsg.textContent = '';
+            } else {
+                accountEmailInput.value = '';
+                accountPasswordInput.value = '';
+                accountNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || '';
+                accountErrorMsg.textContent = 'Sem conta? Você pode continuar como visitante.';
+            }
+        }
+
+        if (accountResetLoggedBtn) {
+            accountResetLoggedBtn.addEventListener('click', async () => {
+                if (!authenticatedUser?.email) return;
+                accountResetLoggedBtn.disabled = true;
+                const result = await requestPasswordReset(authenticatedUser.email);
+                if (accountLoggedMsg) {
+                    accountLoggedMsg.textContent = result.success
+                        ? `✓ E-mail de redefinição enviado para ${authenticatedUser.email}`
+                        : `❌ ${result.message}`;
+                    accountLoggedMsg.style.color = result.success ? '#34d399' : '#f87171';
+                }
+                accountResetLoggedBtn.disabled = false;
+            });
+        }
 
         function setAccountMode(mode) {
             accountMode = mode;
             const isRegistering = mode === 'register';
             accountNicknameRow.style.display = isRegistering ? 'block' : 'none';
             accountNicknameInput.placeholder = isRegistering
-                ? 'Apelido obrigatório (2 a 14 caracteres)'
-                : 'Apelido (2 a 14 caracteres)';
+                ? 'Apelido obrigatório (2 a 20 caracteres)'
+                : 'Apelido (2 a 20 caracteres)';
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
             accountResetBtn.style.display = isRegistering ? 'none' : 'block';
             accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
@@ -450,32 +601,22 @@
         }
 
         window.addEventListener('open-account-modal', (event) => {
+            if (window.__gmPanelClosedAt && Date.now() - window.__gmPanelClosedAt < 800) return; // clique atravessou o painel GM
             accountRequired = Boolean(event.detail?.required);
             accountOverlay.style.display = 'flex';
-            accountErrorMsg.textContent = authenticatedUser
-                ? `Conta ativa: ${authenticatedUser.email}`
-                : 'Sem conta? Você pode continuar como visitante.';
-            accountLogoutBtn.style.display = authenticatedUser ? 'block' : 'none';
-            accountSubmitBtn.style.display = authenticatedUser ? 'none' : 'block';
-            accountResetBtn.style.display = authenticatedUser ? 'none' : accountMode === 'register' ? 'none' : 'block';
-            accountGoogleBtn.style.display = authenticatedUser ? 'none' : 'block';
-            accountGuestBtn.style.display = authenticatedUser ? 'none' : 'block';
             accountCloseBtn.style.display = accountRequired ? 'none' : 'block';
-            accountEmailInput.value = authenticatedUser?.email || '';
-            accountPasswordInput.value = '';
-            accountNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || '';
-            accountEmailInput.focus();
+            renderAccountAuthState();
+            if (!authenticatedUser) accountEmailInput.focus();
         });
 
         observeAuthState((user) => {
             authenticatedUser = user;
             if (user) {
                 sessionStorage.setItem('labcombat_access_mode', 'account');
-                if (accountRequired) {
-                    accountRequired = false;
-                    closeAccountModal();
-                }
+                accountRequired = false;
+                closeAccountModal(); // login com sucesso sempre fecha o modal (antes só fechava no fluxo obrigatório)
             }
+            renderAccountAuthState();
             window.dispatchEvent(new CustomEvent('account-state-changed', {
                 detail: user ? { uid: user.uid, email: user.email, nickname: user.displayName } : null
             }));
@@ -484,37 +625,14 @@
         accountTabLogin.addEventListener('click', () => setAccountMode('login'));
         accountTabRegister.addEventListener('click', () => setAccountMode('register'));
         accountCloseBtn.addEventListener('click', closeAccountModal);
-        accountGuestBtn.addEventListener('click', async () => {
-            if (accountNicknameRow.style.display !== 'block') {
-                accountNicknameRow.style.display = 'block';
-                accountNicknameInput.placeholder = 'Apelido obrigatório para visitante';
-                if (['Jogador 1', 'Jogador 2'].includes(accountNicknameInput.value.trim())) {
-                    accountNicknameInput.value = '';
-                }
-                accountErrorMsg.textContent = 'Defina seu apelido para continuar como visitante.';
-                accountNicknameInput.focus();
-                return;
-            }
-            const guestNickname = accountNicknameInput.value.trim();
-            if (guestNickname.length < 2 || guestNickname.length > 14) {
-                accountErrorMsg.textContent = 'O apelido do visitante deve ter entre 2 e 14 caracteres.';
-                accountNicknameInput.focus();
-                return;
-            }
-            accountGuestBtn.disabled = true;
-            accountErrorMsg.textContent = 'Preparando acesso de visitante...';
-            const access = await ensureGuestAuth();
-            if (!access.success) {
-                accountGuestBtn.disabled = false;
-                accountErrorMsg.textContent = `Não foi possível ativar o visitante: ${access.message}`;
-                return;
-            }
-            sessionStorage.setItem('labcombat_nickname', guestNickname);
-            sessionStorage.setItem('labcombat_access_mode', 'guest');
-            window.dispatchEvent(new CustomEvent('nickname-changed', { detail: guestNickname }));
-            accountRequired = false;
-            accountGuestBtn.disabled = false;
-            closeAccountModal();
+        accountGuestBtn.addEventListener('click', () => {
+            // Visitante: abre o MODAL de apelido dedicado POR CIMA do modal de
+            // conta (que continua aberto embaixo — cancelar só fecha o apelido).
+            // O guestAuth real acontece no salvar (saveNicknameFromModal).
+            guestNicknameFlow = true;
+            guestFlowWasRequired = accountRequired;
+            accountRequired = false; // apelido define o acesso; fechar conta no save
+            window.dispatchEvent(new CustomEvent('open-nickname-modal'));
         });
         accountLogoutBtn.addEventListener('click', async () => {
             accountLogoutBtn.disabled = true;
@@ -522,7 +640,9 @@
                 await logoutAccount();
                 sessionStorage.setItem('labcombat_access_mode', 'guest');
                 accountRequired = false;
-                closeAccountModal();
+                // Retorna à tela de login (o observeAuthState também re-renderiza)
+                authenticatedUser = null;
+                renderAccountAuthState();
             } catch (error) {
                 accountErrorMsg.textContent = error.message || 'Não foi possível sair da conta.';
             } finally {
@@ -593,19 +713,35 @@
 
         // Elementos de Abas da Sidebar GM
         const tabBtnControls = document.getElementById('tab-btn-controls');
+        const tabBtnQuestions = document.getElementById('tab-btn-questions');
         const tabBtnRooms = document.getElementById('tab-btn-rooms');
         const tabBtnLogs = document.getElementById('tab-btn-logs');
         const tabContentControls = document.getElementById('tab-content-controls');
+        const tabContentQuestions = document.getElementById('tab-content-questions');
         const tabContentRooms = document.getElementById('tab-content-rooms');
         const tabContentLogs = document.getElementById('tab-content-logs');
         const gmRoomsCount = document.getElementById('gm-rooms-count');
         const gmLogsCount = document.getElementById('gm-logs-count');
+        const gmQuestionsCount = document.getElementById('gm-questions-count');
         const gmQuestionProfessor = document.getElementById('gm-question-professor');
         const gmQuestionFile = document.getElementById('gm-question-file');
         const gmUploadQuestions = document.getElementById('gm-upload-questions');
         const gmDownloadQuestions = document.getElementById('gm-download-questions');
         const gmPublishBaseQuestions = document.getElementById('gm-publish-base-questions');
         const gmQuestionStatus = document.getElementById('gm-question-status');
+
+        // Elementos do CRUD de Questões
+        const gmNewQuestionBtn = document.getElementById('gm-new-question-btn');
+        const gmQuestionsList = document.getElementById('gm-questions-list');
+        const gmQSearch = document.getElementById('gm-q-search');
+        const gmQEditor = document.getElementById('gm-q-editor');
+        const gmQEditorTitle = document.getElementById('gm-q-editor-title');
+        const gmQText = document.getElementById('gm-q-text');
+        const gmQOptions = document.getElementById('gm-q-options');
+        const gmQAddOption = document.getElementById('gm-q-add-option');
+        const gmQSave = document.getElementById('gm-q-save');
+        const gmQCancel = document.getElementById('gm-q-cancel');
+        const gmQError = document.getElementById('gm-q-error');
 
         // Elementos do Monitor de Salas e Terminal de Logs
         const roomsListEl = document.getElementById('dev-active-rooms-list');
@@ -652,21 +788,264 @@
         refreshAdminAccess();
         observeAuthState(() => refreshAdminAccess());
 
+        // ===== Trava global de clique no canvas enquanto houver overlay aberto =====
+        // Cobre painel GM, conta/perfil, apelido, entrar em sala e ranking:
+        // quando qualquer um estiver visível, body.modal-open desativa os
+        // pointer-events do canvas (ver style.css) — nada "vaza" pro jogo.
+        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'orientation-prompt'];
+        const __overlayObserver = new MutationObserver(() => {
+            const anyVisible = overlayIds.some(id => {
+                const el = document.getElementById(id);
+                return el && getComputedStyle(el).display !== 'none';
+            });
+            document.body.classList.toggle('modal-open', anyVisible);
+        });
+        overlayIds.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) __overlayObserver.observe(el, { attributes: true, attributeFilter: ['style', 'class'] });
+        });
+        // painel GM muda pela classe do body, então observamos o body também
+        __overlayObserver.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        // estado inicial
+        document.body.classList.toggle('modal-open', overlayIds.some(id => {
+            const el = document.getElementById(id);
+            return el && getComputedStyle(el).display !== 'none';
+        }));
+
+        // ===== Modal unificado: Perfil do Jogador + Conta (seção única, sem abas) =====
+        const profileView = document.getElementById('profile-view');
+        const accountView = document.getElementById('account-view');
+        const profileNick = document.getElementById('profile-nick');
+        const profileMode = document.getElementById('profile-mode');
+        const profileBody = document.getElementById('profile-body');
+        const profileNickEdit = document.getElementById('profile-nick-edit');
+        const profileNickInput = document.getElementById('profile-nick-input');
+        const profileNickSave = document.getElementById('profile-nick-save');
+        const profileNickMsg = document.getElementById('profile-nick-msg');
+
+        window.addEventListener('open-profile-modal', () => {
+            if (window.__gmPanelClosedAt && Date.now() - window.__gmPanelClosedAt < 800) return; // clique atravessou o painel GM
+            accountRequired = false; // perfil nunca é obrigatório
+            accountRequired = false; // perfil nunca é obrigatório
+            if (accountCloseBtn) accountCloseBtn.style.display = 'block';
+            if (accountOverlay) accountOverlay.style.display = 'flex';
+            renderAccountAuthState(); // garante que login e perfil não se misturem
+            renderProfileModal();
+        });
+        if (accountOverlay) accountOverlay.addEventListener('click', (e) => { if (e.target === accountOverlay) closeAccountModal(); });
+
+        if (profileNickSave) {
+            profileNickSave.addEventListener('click', async () => {
+                const uid = localStorage.getItem('labcombat_account_uid');
+                const val = (profileNickInput?.value || '').trim();
+                const result = await updateAccountNickname(uid, val);
+                if (!result.success) {
+                    if (profileNickMsg) { profileNickMsg.textContent = result.message; profileNickMsg.style.color = '#f87171'; }
+                    return;
+                }
+                // Sincroniza o apelido no ranking (se já houver entrada)
+                try {
+                    const lbRef = ref(db, `leaderboard/${uid}/nickname`);
+                    const lbSnap = await get(ref(db, `leaderboard/${uid}`));
+                    if (lbSnap.exists()) await set(lbRef, result.nickname);
+                } catch { /* ranking ainda não existe pra essa conta — ok */ }
+                if (profileNick) profileNick.textContent = result.nickname;
+                if (profileNickMsg) { profileNickMsg.textContent = '✓ Apelido atualizado!'; profileNickMsg.style.color = '#34d399'; }
+                window.dispatchEvent(new CustomEvent('nickname-changed', { detail: result.nickname }));
+            });
+        }
+
+        async function renderProfileModal() {
+            const nickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador';
+            const uid = localStorage.getItem('labcombat_account_uid');
+            const isGuest = sessionStorage.getItem('labcombat_access_mode') === 'guest' || !uid;
+
+            if (profileNick) profileNick.textContent = nickname;
+            if (profileMode) profileMode.textContent = isGuest ? 'modo visitante' : 'conta vinculada';
+            if (profileNickEdit) {
+                profileNickEdit.style.display = isGuest ? 'none' : 'block';
+                if (!isGuest && profileNickInput) profileNickInput.value = nickname;
+                if (profileNickMsg) profileNickMsg.textContent = '';
+            }
+            if (!profileBody) return;
+            profileBody.innerHTML = '<div style="color:#64748b; padding:12px; font-size:11.5px;">Carregando ranking...</div>';
+
+            if (isGuest) {
+                profileBody.innerHTML = `
+                    <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
+                        Você joga como <strong style="color:#f8fafc;">visitante</strong> — suas partidas <strong style="color:#f8fafc;">não pontuam</strong> no ranking.<br>
+                        Crie uma conta abaixo para acumular RP e subir de elo: 🥉→🥈→🥇→💎→👑
+                    </div>`;
+                return;
+            }
+
+            try {
+                const { entry, position, total } = await loadMyLeaderboardEntry(uid);
+                if (!entry) {
+                    profileBody.innerHTML = `
+                        <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
+                            Nenhuma partida ranqueada ainda.<br>Vença a 1ª para ganhar <strong style="color:#34d399;">+25 RP</strong>! 🚀
+                        </div>`;
+                    return;
+                }
+                const points = entry.points || 0;
+                const rank = getRankForPoints(points);
+                const wins = entry.wins || 0;
+                const matches = entry.matches || 0;
+                const losses = matches - wins;
+                const winRate = matches ? Math.round((wins / matches) * 100) : 0;
+                const subjects = entry.subjects || {};
+                const favId = Object.entries(subjects).sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+                const favProf = favId ? (professors.find(p => p.id === favId)?.shortName || favId) : '—';
+                const progress = rank.nextMin != null ? Math.min(100, Math.round(((points - rank.rankMin) / (rank.nextMin - rank.rankMin)) * 100)) : 100;
+                profileBody.innerHTML = `
+                    <div style="background:#0b1120; border:1.5px solid #334155; border-radius:10px; padding:10px; margin-bottom:8px;">
+                        <div style="color:#f8fafc; font-size:14.5px; font-weight:bold;">${rank.icon} ${rank.label}</div>
+                        <div style="color:#c084fc; font-size:12px; font-weight:bold; margin-top:1px;">${points} RP ${position ? `· 🏆 #${position} de ${total}` : ''}</div>
+                        <div style="background:#020617; border:1px solid #334155; border-radius:6px; height:7px; margin-top:7px; overflow:hidden;">
+                            <div style="height:100%; width:${progress}%; background:linear-gradient(90deg,#a855f7,#38bdf8);"></div>
+                        </div>
+                        <div style="color:#64748b; font-size:10px; margin-top:3px;">${rank.nextMin != null ? `Próximo: ${rank.nextMin} RP` : '👑 Elo máximo alcançado!'}</div>
+                    </div>
+                    <div style="display:flex; gap:5px; text-align:center;">
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#34d399; font-weight:bold; font-size:14px;">${wins}</div><div style="color:#64748b; font-size:9.5px;">vitórias</div></div>
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#f87171; font-weight:bold; font-size:14px;">${losses}</div><div style="color:#64748b; font-size:9.5px;">derrotas</div></div>
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#38bdf8; font-weight:bold; font-size:14px;">${winRate}%</div><div style="color:#64748b; font-size:9.5px;">win rate</div></div>
+                    </div>
+                    <div style="color:#94a3b8; font-size:10.5px; margin-top:7px;">Matéria mais jogada: <strong style="color:#f8fafc;">${favProf}</strong></div>`;
+            } catch (error) {
+                profileBody.innerHTML = `<div style="color:#f87171; padding:12px; font-size:11.5px;">❌ Falha ao carregar ranking: ${error.message}</div>`;
+            }
+        }
+
+        // ===== Ranking Geral (todas as posições + filtro por elo) =====
+        const rankingOverlay = document.getElementById('ranking-overlay');
+        const rankingBody = document.getElementById('ranking-body');
+        const rankingCloseBtn = document.getElementById('ranking-close-btn');
+        const rankingTierTabs = document.getElementById('ranking-tier-tabs');
+        const rankingDivTabs = document.getElementById('ranking-div-tabs');
+        let rankingAll = [];        // cache da leitura atual
+        let rankingFilter = 'all';  // tier ativo no filtro
+        let rankingDivision = null; // divisão ativa (IV/III/II/I) ou null = todas
+
+        function closeRankingModal() { if (rankingOverlay) rankingOverlay.style.display = 'none'; }
+
+        window.addEventListener('open-ranking-modal', () => {
+            if (!rankingOverlay) return;
+            rankingOverlay.style.display = 'flex';
+            renderRankingModal();
+        });
+        if (rankingCloseBtn) rankingCloseBtn.addEventListener('click', closeRankingModal);
+        if (rankingOverlay) rankingOverlay.addEventListener('click', (e) => { if (e.target === rankingOverlay) closeRankingModal(); });
+
+        function renderRankingRows() {
+            if (!rankingBody) return;
+            const myUid = localStorage.getItem('labcombat_account_uid');
+            let filtrados = rankingFilter === 'all'
+                ? rankingAll
+                : rankingAll.filter(e => getRankForPoints(e.points || 0).id === rankingFilter);
+            if (rankingDivision) {
+                filtrados = filtrados.filter(e => getRankForPoints(e.points || 0).division === rankingDivision);
+            }
+            if (!filtrados.length) {
+                rankingBody.innerHTML = '<div style="color:#94a3b8; padding:18px; font-size:12px; text-align:center;">Ninguém nesse elo/divisão ainda. 🎯</div>';
+                return;
+            }
+            rankingBody.innerHTML = filtrados.map((e) => {
+                const points = e.points || 0;
+                const rank = getRankForPoints(points);
+                const posGeral = rankingAll.indexOf(e) + 1;
+                const wl = `${e.wins || 0}V/${(e.matches || 0) - (e.wins || 0)}D`;
+                const highlight = e.uid === myUid ? 'border-color:#a855f7; background:#1a1230;' : '';
+                return `<div style="display:flex; align-items:center; gap:8px; background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:7px 10px; ${highlight}">
+                    <span style="width:30px; font-size:12px; color:#f59e0b; font-weight:bold;">${posGeral}º</span>
+                    <span style="flex:1; color:#f8fafc; font-size:12.5px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}</span>
+                    <span style="font-size:11px; color:#cbd5e1; white-space:nowrap;">${rank.label}</span>
+                    <span style="font-size:10.5px; color:#64748b; white-space:nowrap;">${wl}</span>
+                    <span style="font-size:11.5px; color:#c084fc; font-weight:bold; white-space:nowrap;">${points} RP</span>
+                </div>`;
+            }).join('');
+        }
+
+        async function renderRankingModal() {
+            if (rankingBody) rankingBody.innerHTML = '<div style="color:#64748b; padding:18px; font-size:12px;">Carregando ranking...</div>';
+            // Chips de filtro por elo
+            if (rankingTierTabs) {
+                const tiers = [['all', 'Todos'], ...RANK_TIERS.map(t => [t.id, `${t.icon} ${t.name.split(' /')[0]}`])];
+                rankingTierTabs.innerHTML = tiers.map(([id, label]) =>
+                    `<button data-tier="${id}" style="padding:6px 10px; font-size:11px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${rankingFilter === id ? '#f59e0b' : '#334155'}; background:${rankingFilter === id ? '#78350f' : '#0b1120'}; color:${rankingFilter === id ? '#fde68a' : '#94a3b8'};">${label}</button>`
+                ).join('');
+                rankingTierTabs.querySelectorAll('button').forEach(btn => {
+                    btn.addEventListener('click', () => { rankingFilter = btn.dataset.tier; rankingDivision = null; renderRankingModalChips(); renderDivisionTabs(); renderRankingRows(); });
+                });
+            }
+            try {
+                rankingAll = await loadTopLeaderboard(999);
+                if (!rankingAll.length) {
+                    rankingBody.innerHTML = '<div style="color:#94a3b8; padding:18px; font-size:12.5px; text-align:center;">Ninguém pontuou ainda.<br>Vença partidas com conta para aparecer aqui! 🏆</div>';
+                    return;
+                }
+                renderRankingRows();
+            } catch (error) {
+                rankingBody.innerHTML = `<div style="color:#f87171; padding:14px; font-size:12px;">❌ Falha ao carregar ranking: ${error.message}</div>`;
+            }
+        }
+
+        function renderRankingModalChips() {
+            if (!rankingTierTabs) return;
+            rankingTierTabs.querySelectorAll('button').forEach(btn => {
+                const active = btn.dataset.tier === rankingFilter;
+                btn.style.border = `1px solid ${active ? '#f59e0b' : '#334155'}`;
+                btn.style.background = active ? '#78350f' : '#0b1120';
+                btn.style.color = active ? '#fde68a' : '#94a3b8';
+            });
+        }
+
+        // Sub-filtro de divisões IV/III/II/I (só aparece com um elo específico ativo)
+        function renderDivisionTabs() {
+            if (!rankingDivTabs) return;
+            const tier = RANK_TIERS.find(t => t.id === rankingFilter);
+            if (!tier || tier.span == null) { // 'Todos' ou Arquiteto (sem divisões)
+                rankingDivTabs.style.display = 'none';
+                rankingDivTabs.innerHTML = '';
+                return;
+            }
+            const divs = [null, 'IV', 'III', 'II', 'I'];
+            rankingDivTabs.innerHTML = divs.map(d => {
+                const id = d || '';
+                const active = rankingDivision === d;
+                return `<button data-div="${id}" style="padding:4px 9px; font-size:10.5px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${active ? '#38bdf8' : '#334155'}; background:${active ? '#0c4a6e' : '#0b1120'}; color:${active ? '#7dd3fc' : '#94a3b8'};">${d || 'Todas'}</button>`;
+            }).join('');
+            rankingDivTabs.style.display = 'flex';
+            rankingDivTabs.querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    rankingDivision = btn.dataset.div || null;
+                    renderDivisionTabs();
+                    renderRankingRows();
+                });
+            });
+        }
+
         // Gerenciamento de Troca de Abas
         function switchTab(target) {
-            [tabBtnControls, tabBtnRooms, tabBtnLogs].forEach(b => {
+            [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs].forEach(b => {
                 if (!b) return;
                 b.style.background = 'transparent';
                 b.style.color = '#94a3b8';
             });
-            [tabContentControls, tabContentRooms, tabContentLogs].forEach(c => {
+            [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs].forEach(c => {
                 if (c) c.style.display = 'none';
             });
 
             if (target === 'controls' && tabBtnControls && tabContentControls) {
                 tabBtnControls.style.background = '#1e293b';
                 tabBtnControls.style.color = '#38bdf8';
-                tabContentControls.style.display = 'flex';
+                tabContentControls.style.display = 'grid';
+            } else if (target === 'questions' && tabBtnQuestions && tabContentQuestions) {
+                tabBtnQuestions.style.background = '#1e293b';
+                tabBtnQuestions.style.color = '#38bdf8';
+                tabContentQuestions.style.display = 'flex';
+                loadQuestionsCrud();
             } else if (target === 'rooms' && tabBtnRooms && tabContentRooms) {
                 tabBtnRooms.style.background = '#1e293b';
                 tabBtnRooms.style.color = '#38bdf8';
@@ -681,6 +1060,7 @@
         }
 
         if (tabBtnControls) tabBtnControls.addEventListener('click', () => switchTab('controls'));
+        if (tabBtnQuestions) tabBtnQuestions.addEventListener('click', () => switchTab('questions'));
         if (tabBtnRooms) tabBtnRooms.addEventListener('click', () => switchTab('rooms'));
         if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => switchTab('logs'));
 
@@ -692,9 +1072,11 @@
                     fetchActiveRooms();
                 } else {
                     document.body.classList.remove('dev-sidebar-open');
+                    window.__gmPanelClosedAt = Date.now(); // anti click-through no canvas
                 }
             } else {
                 document.body.classList.remove('gm-active', 'dev-sidebar-open');
+                window.__gmPanelClosedAt = Date.now(); // idem: sair do modo GM
             }
 
             // Dispara redimensionamento para o Phaser recalcular o canvas
@@ -867,6 +1249,7 @@
                             </div>
                             <div style="display: flex; gap: 4px;">
                                 <button class="btn-copy-code" title="Copiar Código" style="background: #1e293b; border: 1px solid #475569; color: #38bdf8; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">📋 Copiar</button>
+                                ${(r && r.p1 && r.p2) ? '<button class="btn-watch-room" title="Assistir a partida como espectador (somente leitura)" style="background: #164e63; border: 1px solid #0891b2; color: #67e8f9; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">👀 Assistir</button>' : ''}
                                 <button class="btn-del-room" title="Excluir Sala" style="background: #450a0a; border: 1px solid #991b1b; color: #f87171; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">🗑️</button>
                             </div>
                         </div>
@@ -888,6 +1271,17 @@
                         const roomInput = document.getElementById('room-input');
                         if (roomInput) roomInput.value = k;
                     });
+
+                    const watchBtn = card.querySelector('.btn-watch-room');
+                    if (watchBtn) {
+                        watchBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            logEvent('admin', `👀 GM assistindo a sala [${k}] como espectador.`);
+                            sidebarOpen = false;
+                            updateLayoutClasses();
+                            if (window.game) window.game.scene.start('MainScene', { roomId: k, playerId: 'spectator', nickname: '👀 GM (espectador)' });
+                        });
+                    }
 
                     const delBtn = card.querySelector('.btn-del-room');
                     delBtn.addEventListener('click', async (e) => {
@@ -978,22 +1372,25 @@
         updateLayoutClasses();
 
         // Alternar recolher/abrir sidebar do GM
+        // (pointerdown + trava de 800ms: evita que o gesto "atravesse" o painel
+        // e acione o chip 👤 do menu que fica embaixo, na mesma posição da tela)
         if (toggleBtn) {
-            toggleBtn.addEventListener('click', () => {
+            toggleBtn.addEventListener('pointerdown', () => {
                 sidebarOpen = false;
+                window.__gmPanelClosedAt = Date.now();
                 updateLayoutClasses();
             });
         }
 
         if (gmReopenPill) {
-            gmReopenPill.addEventListener('click', () => {
+            gmReopenPill.addEventListener('pointerdown', () => {
                 sidebarOpen = true;
                 updateLayoutClasses();
             });
         }
 
         if (btnGmLogout) {
-            btnGmLogout.addEventListener('click', () => {
+            btnGmLogout.addEventListener('pointerdown', () => {
                 const authenticatedUser = getAuthenticatedUser();
                 if (authenticatedUser) {
                     logEvent('admin', `[Admin] Logout: ${authenticatedUser.email || authenticatedUser.uid}.`, {
@@ -1003,6 +1400,7 @@
                 }
                 gmActive = false;
                 sidebarOpen = false;
+                window.__gmPanelClosedAt = Date.now();
                 updateLayoutClasses();
             });
         }
@@ -1071,6 +1469,50 @@
         if (startDelayInput) startDelayInput.addEventListener('change', () => emitTimers(true));
         if (questionLimitInput) questionLimitInput.addEventListener('change', () => emitTimers(true));
 
+        // Controles de velocidade das animações
+        const animWalk = document.getElementById('dev-anim-walk');
+        const animAttack = document.getElementById('dev-anim-attack');
+        const animSpecial = document.getElementById('dev-anim-special');
+        const animUlt = document.getElementById('dev-anim-ult');
+        const btnApplyAnim = document.getElementById('dev-apply-anim-btn');
+        const animStatus = document.getElementById('dev-anim-status');
+
+        // Restaura FPS salvo (persistente entre recargas)
+        const savedAnimWalk = parseInt(localStorage.getItem('dev_anim_walk_fps'), 10);
+        const savedAnimAttack = parseInt(localStorage.getItem('dev_anim_attack_fps'), 10);
+        const savedAnimSpecial = parseInt(localStorage.getItem('dev_anim_special_fps'), 10);
+        const savedAnimUlt = parseInt(localStorage.getItem('dev_anim_ult_fps'), 10);
+        if (savedAnimWalk && animWalk) animWalk.value = savedAnimWalk;
+        if (savedAnimAttack && animAttack) animAttack.value = savedAnimAttack;
+        if (savedAnimSpecial && animSpecial) animSpecial.value = savedAnimSpecial;
+        if (savedAnimUlt && animUlt) animUlt.value = savedAnimUlt;
+
+        function emitAnimSpeeds() {
+            if (!gmActive) return;
+            const walk = Math.max(1, Math.min(24, parseInt(animWalk?.value) || 8));
+            const attack = Math.max(1, Math.min(24, parseInt(animAttack?.value) || 8));
+            const special = Math.max(1, Math.min(24, parseInt(animSpecial?.value) || 7));
+            const ult = Math.max(1, Math.min(24, parseInt(animUlt?.value) || 7));
+            animWalk.value = walk;
+            animAttack.value = attack;
+            animSpecial.value = special;
+            animUlt.value = ult;
+            localStorage.setItem('dev_anim_walk_fps', walk);
+            localStorage.setItem('dev_anim_attack_fps', attack);
+            localStorage.setItem('dev_anim_special_fps', special);
+            localStorage.setItem('dev_anim_ult_fps', ult);
+            window.dispatchEvent(new CustomEvent('dev-anim-speeds', { detail: { walk, attack, special, ult } }));
+            if (animStatus) {
+                animStatus.textContent = '✓ Aplicado!';
+                setTimeout(() => { if (animStatus) animStatus.textContent = ''; }, 2000);
+            }
+        }
+        if (btnApplyAnim) btnApplyAnim.addEventListener('click', emitAnimSpeeds);
+        if (animWalk) animWalk.addEventListener('change', emitAnimSpeeds);
+        if (animAttack) animAttack.addEventListener('change', emitAnimSpeeds);
+        if (animSpecial) animSpecial.addEventListener('change', emitAnimSpeeds);
+        if (animUlt) animUlt.addEventListener('change', emitAnimSpeeds);
+
         const btnStreakPlus = document.getElementById('dev-streak-plus');
         if (btnStreakPlus) {
             btnStreakPlus.addEventListener('click', () => {
@@ -1081,6 +1523,20 @@
         if (btnStreakMinus) {
             btnStreakMinus.addEventListener('click', () => {
                 window.dispatchEvent(new CustomEvent('dev-streak', { detail: -1 }));
+            });
+        }
+        const btnSpecial = document.getElementById('dev-special-btn');
+        if (btnSpecial) {
+            btnSpecial.addEventListener('click', () => {
+                if (!gmActive) return;
+                window.dispatchEvent(new CustomEvent('dev-special'));
+            });
+        }
+        const btnUltimate = document.getElementById('dev-ultimate-btn');
+        if (btnUltimate) {
+            btnUltimate.addEventListener('click', () => {
+                if (!gmActive) return;
+                window.dispatchEvent(new CustomEvent('dev-ultimate'));
             });
         }
         const btnSkipQuestion = document.getElementById('dev-skip-question');
@@ -1180,7 +1636,7 @@
         if (gmPublishBaseQuestions) {
             gmPublishBaseQuestions.addEventListener('click', async () => {
                 if (!gmActive) return;
-                const professorIds = ['so', 'eng_soft', 'poo', 'web', 'bd', 'redes'];
+                const professorIds = ['so', 'eng_soft', 'web', 'bd', 'redes'];
                 gmPublishBaseQuestions.disabled = true;
                 gmPublishBaseQuestions.textContent = 'Publicando bancos-base...';
                 try {
@@ -1190,8 +1646,11 @@
                         const bank = await response.json();
                         await set(ref(db, `questionBanks/${professorId}`), bank);
                     }));
+                    // Remove o banco legado do antigo id 'poo' (hoje o Coringa
+                    // não tem banco próprio — puxa de todos os outros em jogo)
+                    await remove(ref(db, 'questionBanks/poo')).catch(() => {});
                     if (gmQuestionStatus) {
-                        gmQuestionStatus.textContent = '✓ Bancos-base publicados para os 6 professores.';
+                        gmQuestionStatus.textContent = '✓ Bancos-base publicados para os 5 professores (Coringa usa todos).';
                         gmQuestionStatus.style.color = '#34d399';
                     }
                 } catch (error) {
@@ -1205,6 +1664,183 @@
                 }
             });
         }
+
+        // ===== CRUD de Questões (aba Questões) =====
+        let crudBank = [];        // banco do professor selecionado (array de questões)
+        let crudEditingId = null; // id em edição; null = criando nova
+        let editOptions = ['', ''];
+        let editCorrect = 0;
+
+        function setCrudStatus(message, ok = true) {
+            if (gmQuestionStatus) {
+                gmQuestionStatus.textContent = message;
+                gmQuestionStatus.style.color = ok ? '#34d399' : '#f87171';
+            }
+        }
+
+        async function loadQuestionsCrud() {
+            if (!gmActive || !gmQuestionProfessor || !gmQuestionsList) return;
+            gmQuestionsList.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Carregando banco...</div>';
+            try {
+                const snapshot = await get(ref(db, `questionBanks/${gmQuestionProfessor.value}`));
+                const bank = snapshot.val();
+                crudBank = (Array.isArray(bank) ? bank : Object.values(bank || {}))
+                    .filter(q => q && q.id != null)
+                    .sort((a, b) => a.id - b.id);
+            } catch (error) {
+                crudBank = [];
+                gmQuestionsList.innerHTML = `<div style="color: #f87171; text-align: center; padding: 12px;">❌ ${error.message}</div>`;
+                return;
+            }
+            closeQuestionEditor();
+            renderQuestionsList();
+        }
+
+        function renderQuestionsList() {
+            if (!gmQuestionsList) return;
+            if (gmQuestionsCount) gmQuestionsCount.textContent = crudBank.length ? `${crudBank.length}` : '';
+            const filtro = (gmQSearch?.value || '').trim().toLowerCase();
+            const visiveis = crudBank.filter(q => !filtro || String(q.text).toLowerCase().includes(filtro));
+            if (!visiveis.length) {
+                gmQuestionsList.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">${crudBank.length ? 'Nenhuma questão bate com o filtro.' : 'Banco vazio — crie a primeira questão ou importe um JSON.'}</div>`;
+                return;
+            }
+            gmQuestionsList.innerHTML = '';
+            visiveis.forEach((q) => {
+                const row = document.createElement('div');
+                row.className = 'qm-row';
+                const badge = document.createElement('span');
+                badge.className = 'qm-id';
+                badge.textContent = `#${q.id}`;
+                const text = document.createElement('span');
+                text.className = 'qm-text';
+                text.textContent = q.text;
+                const meta = document.createElement('span');
+                meta.className = 'qm-meta';
+                meta.textContent = `${q.options.length} opções · gabarito ${String.fromCharCode(65 + q.correctIndex)}`;
+                const btnEdit = document.createElement('button');
+                btnEdit.className = 'qm-edit';
+                btnEdit.textContent = '✏️';
+                btnEdit.title = 'Editar questão';
+                btnEdit.addEventListener('click', () => openQuestionEditor(q.id));
+                const btnDel = document.createElement('button');
+                btnDel.className = 'qm-del';
+                btnDel.textContent = '🗑️';
+                btnDel.title = 'Excluir questão';
+                btnDel.addEventListener('click', () => deleteQuestion(q.id));
+                row.append(badge, text, meta, btnEdit, btnDel);
+                gmQuestionsList.appendChild(row);
+            });
+        }
+
+        function renderEditorOptions() {
+            if (!gmQOptions) return;
+            gmQOptions.innerHTML = '';
+            editOptions.forEach((text, i) => {
+                const row = document.createElement('div');
+                row.className = 'qm-opt-row';
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = 'gm-q-correct';
+                radio.checked = i === editCorrect;
+                radio.title = 'Marcar esta opção como gabarito';
+                radio.addEventListener('change', () => { editCorrect = i; });
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = text;
+                input.placeholder = `Opção ${String.fromCharCode(65 + i)}`;
+                input.addEventListener('input', () => { editOptions[i] = input.value; });
+                const del = document.createElement('button');
+                del.className = 'qm-opt-del';
+                del.textContent = '✕';
+                del.title = 'Remover opção';
+                del.addEventListener('click', () => {
+                    if (editOptions.length <= 2) return;
+                    editOptions.splice(i, 1);
+                    if (i < editCorrect) editCorrect--;
+                    else if (editCorrect >= editOptions.length) editCorrect = editOptions.length - 1;
+                    renderEditorOptions();
+                });
+                row.append(radio, input, del);
+                gmQOptions.appendChild(row);
+            });
+        }
+
+        function openQuestionEditor(id) {
+            if (!gmActive) return;
+            const question = id == null ? null : crudBank.find(q => q.id === id);
+            crudEditingId = question ? question.id : null;
+            editOptions = question ? question.options.map(String) : ['', ''];
+            editCorrect = question ? question.correctIndex : 0;
+            if (gmQEditorTitle) gmQEditorTitle.textContent = question ? `✏️ Editando questão #${question.id}` : '➕ Nova questão';
+            if (gmQText) gmQText.value = question ? question.text : '';
+            if (gmQError) gmQError.textContent = '';
+            renderEditorOptions();
+            if (gmQEditor) {
+                gmQEditor.style.display = 'flex';
+                gmQEditor.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                gmQText?.focus();
+            }
+        }
+
+        function closeQuestionEditor() {
+            if (gmQEditor) gmQEditor.style.display = 'none';
+            crudEditingId = null;
+        }
+
+        async function persistCrudBank(okMessage) {
+            await set(ref(db, `questionBanks/${gmQuestionProfessor.value}`), crudBank);
+            setCrudStatus(okMessage);
+            logEvent('admin', `[Questões] Banco "${gmQuestionProfessor.value}" editado via CRUD (${crudBank.length} questões).`);
+            renderQuestionsList();
+        }
+
+        async function saveQuestionEditor() {
+            if (!gmActive) return;
+            const text = (gmQText?.value || '').trim();
+            const options = editOptions.map(o => o.trim());
+            if (!text) { if (gmQError) gmQError.textContent = 'Escreva o enunciado da questão.'; return; }
+            if (options.length < 2 || options.some(o => !o)) { if (gmQError) gmQError.textContent = 'Precisa de 2 a 6 opções, todas preenchidas.'; return; }
+            if (!(editCorrect >= 0 && editCorrect < options.length)) { if (gmQError) gmQError.textContent = 'Marque qual opção é o gabarito.'; return; }
+
+            const isNew = crudEditingId == null;
+            const question = isNew
+                ? { id: crudBank.reduce((max, q) => Math.max(max, Number(q.id) || 0), 0) + 1, text, options, correctIndex: editCorrect }
+                : { ...crudBank.find(q => q.id === crudEditingId), text, options, correctIndex: editCorrect };
+            crudBank = isNew
+                ? [...crudBank, question].sort((a, b) => a.id - b.id)
+                : crudBank.map(q => (q.id === crudEditingId ? question : q));
+
+            if (gmQSave) gmQSave.disabled = true;
+            try {
+                await persistCrudBank(isNew ? `✓ Questão #${question.id} criada.` : `✓ Questão #${question.id} salva.`);
+                closeQuestionEditor();
+            } catch (error) {
+                if (gmQError) gmQError.textContent = `❌ ${error.message}`;
+            } finally {
+                if (gmQSave) gmQSave.disabled = false;
+            }
+        }
+
+        async function deleteQuestion(id) {
+            if (!gmActive || !confirm(`Excluir a questão #${id} deste banco?`)) return;
+            crudBank = crudBank.filter(q => q.id !== id);
+            try {
+                await persistCrudBank(`✓ Questão #${id} excluída.`);
+            } catch (error) {
+                setCrudStatus(`❌ ${error.message}`, false);
+                await loadQuestionsCrud();
+            }
+        }
+
+        if (gmNewQuestionBtn) gmNewQuestionBtn.addEventListener('click', () => openQuestionEditor(null));
+        if (gmQSave) gmQSave.addEventListener('click', saveQuestionEditor);
+        if (gmQCancel) gmQCancel.addEventListener('click', closeQuestionEditor);
+        if (gmQAddOption) gmQAddOption.addEventListener('click', () => {
+            if (editOptions.length < 6) { editOptions.push(''); renderEditorOptions(); }
+        });
+        if (gmQSearch) gmQSearch.addEventListener('input', renderQuestionsList);
+        if (gmQuestionProfessor) gmQuestionProfessor.addEventListener('change', loadQuestionsCrud);
 
         const btnAnimationTest = document.getElementById('dev-animation-test-btn');
         if (btnAnimationTest) {
@@ -1257,6 +1893,11 @@
         const btnCancelNickname = document.getElementById('btn-cancel-nickname');
 
         window.addEventListener('open-nickname-modal', () => {
+            // Com conta logada, o apelido é o da conta: redireciona ao Perfil
+            if (localStorage.getItem('labcombat_account_uid') && sessionStorage.getItem('labcombat_access_mode') !== 'guest') {
+                window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                return;
+            }
             if (nicknameOverlay && nicknameInput) {
                 nicknameOverlay.style.display = 'flex';
                 nicknameInput.value = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
@@ -1266,11 +1907,37 @@
             }
         });
 
-        function saveNicknameFromModal() {
+        // Estado do fluxo "entrar como visitante": apelido via modal dedicado
+        let guestNicknameFlow = false;
+        let guestFlowWasRequired = false;
+
+        async function saveNicknameFromModal() {
             const val = nicknameInput.value.trim();
-            if (!val) {
-                if (nicknameErrorMsg) nicknameErrorMsg.textContent = 'Digite um apelido válido.';
+            if (!val || val.length < 2 || val.length > 14) {
+                if (nicknameErrorMsg) nicknameErrorMsg.textContent = 'Digite um apelido válido (2 a 20 caracteres).';
                 return;
+            }
+            // Unicidade: apelido vinculado a uma conta não pode ser usado por visitante
+            if (!localStorage.getItem('labcombat_account_uid')) {
+                try {
+                    if (await isNicknameTaken(val)) {
+                        if (nicknameErrorMsg) { nicknameErrorMsg.textContent = 'Esse apelido já pertence a uma conta registrada.'; nicknameErrorMsg.style.color = '#f87171'; }
+                        return;
+                    }
+                } catch { /* falha de rede na checagem: segue o fluxo */ }
+            }
+            // Veio do botão "Continuar como visitante": conclui o acesso anônimo
+            if (guestNicknameFlow) {
+                if (nicknameErrorMsg) { nicknameErrorMsg.textContent = 'Preparando acesso de visitante...'; nicknameErrorMsg.style.color = '#94a3b8'; }
+                const access = await ensureGuestAuth();
+                if (!access.success) {
+                    if (nicknameErrorMsg) { nicknameErrorMsg.textContent = `Não foi possível ativar o visitante: ${access.message}`; nicknameErrorMsg.style.color = '#f87171'; }
+                    return;
+                }
+                sessionStorage.setItem('labcombat_access_mode', 'guest');
+                guestNicknameFlow = false;
+                accountRequired = false;
+                accountOverlay.style.display = 'none'; // fecha também o modal de conta embaixo
             }
             sessionStorage.setItem('labcombat_nickname', val);
             nicknameOverlay.style.display = 'none';
@@ -1284,6 +1951,13 @@
         });
         btnCancelNickname.addEventListener('click', () => {
             nicknameOverlay.style.display = 'none';
+            if (guestNicknameFlow && guestFlowWasRequired) {
+                // Acesso ainda obrigatório (1ª vez): o modal de conta continua
+                // aberto embaixo e não pode ser fechado sem escolher acesso
+                accountRequired = true;
+                if (accountCloseBtn) accountCloseBtn.style.display = 'none';
+            }
+            guestNicknameFlow = false; // cancelou: conta continua aberta embaixo
         });
 
         // Handlers do Modal de Entrada em Sala & Lista de Salas Abertas
