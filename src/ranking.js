@@ -4,20 +4,21 @@ import { logEvent } from './logger.js';
 
 // Elos de carreira (PLANO_DE_IMPLEMENTACAO.md §1.5), com 4 divisões por elo
 // no estilo League of Legends (IV → III → II → I). O último elo não tem divisões.
-// Vitória +25 RP (+5 bônus se K.O. via ultimate ou "perfect match", isto é,
-// vencer sem errar nenhuma questão). Derrota -10 RP (mínimo 0).
+// Vitória +25 LP (+5 bônus se K.O. via ultimate ou "perfect match", isto é,
+// vencer sem errar nenhuma questão). Derrota -10 LP (mínimo 0).
+// Defaults — o GM pode ajustar no painel (aba Controles → ⚔️ Dano & LabPoints).
 export const RANK_TIERS = [
-    { id: 'estagiario', name: 'Estagiário', icon: '🥉', base: 0, span: 400 },          // 0–399 RP
-    { id: 'junior', name: 'Dev Júnior', icon: '🥈', base: 400, span: 400 },           // 400–799 RP
-    { id: 'pleno', name: 'Dev Pleno', icon: '🥇', base: 800, span: 400 },             // 800–1199 RP
-    { id: 'senior', name: 'Dev Sênior / Tech Lead', icon: '💎', base: 1200, span: 400 }, // 1200–1599 RP
-    { id: 'arquiteto', name: 'Arquiteto / Mestre dos Algoritmos', icon: '👑', base: 1600, span: null } // 1600+ RP
+    { id: 'estagiario', name: 'Estagiário', icon: '🐣', base: 0, span: 400 },          // 0–399 LP
+    { id: 'junior', name: 'Dev Júnior', icon: '☕', base: 400, span: 400 },            // 400–799 LP
+    { id: 'pleno', name: 'Dev Pleno', icon: '💻', base: 800, span: 400 },              // 800–1199 LP
+    { id: 'senior', name: 'Dev Sênior / Tech Lead', icon: '💎', base: 1200, span: 400 }, // 1200–1599 LP
+    { id: 'arquiteto', name: 'Arquiteto / Mestre dos Algoritmos', icon: '👑', base: 1600, span: null } // 1600+ LP
 ];
 
 const DIVISIONS = ['IV', 'III', 'II', 'I']; // IV = mais baixa, I = mais alta (como no LoL)
 
 // Resolve pontos → elo + divisão: { icon, name, division, label, rankMin, nextMin }.
-// label ex.: "🥇 Dev Pleno II". nextMin = null quando já está no elo máximo.
+// label ex.: "💻 Dev Pleno II". nextMin = null quando já está no elo máximo.
 export function getRankForPoints(points) {
     let tier = RANK_TIERS[0];
     for (const t of RANK_TIERS) {
@@ -36,13 +37,29 @@ export function getRankForPoints(points) {
 // Registra o resultado da partida do jogador LOGADO (visitante não pontua).
 // Cada cliente grava o próprio resultado — runTransaction evita perda de
 // atualização se a mesma conta terminar 2 partidas ao mesmo tempo.
-export async function recordMatchResult({ uid, nickname, characterId, won, tie, bonus }) {
-    if (!uid) return;
+// Retorna { delta (aplicado de fato, respeitando o piso de 0), pontos finais,
+// elo atual } para a MainScene exibir no painel de fim de jogo — null se o
+// jogador não tem conta ou a transação abortou.
+// Valores de LP: vêm do parâmetro lp (definidos pelo P1 na sala via painel GM)
+// ou dos defaults locais (dev_lp_win/dev_lp_bonus/dev_lp_loss no localStorage).
+function readLpDefault(key, def) {
+    if (typeof localStorage === 'undefined') return def; // testes (node)
+    const v = parseInt(localStorage.getItem(key), 10);
+    return Number.isFinite(v) && v >= 0 ? v : def;
+}
+
+export async function recordMatchResult({ uid, nickname, characterId, won, tie, bonus, lp = {} }) {
+    if (!uid) return null;
     const entryRef = ref(db, `leaderboard/${uid}`);
-    const delta = tie ? 0 : won ? 25 + (bonus ? 5 : 0) : -10;
+    const lpWin = Number(lp.win) >= 0 ? Number(lp.win) : readLpDefault('dev_lp_win', 25);
+    const lpBonus = Number(lp.bonus) >= 0 ? Number(lp.bonus) : readLpDefault('dev_lp_bonus', 5);
+    const lpLoss = Number(lp.loss) >= 0 ? Number(lp.loss) : readLpDefault('dev_lp_loss', 10);
+    const delta = tie ? 0 : won ? lpWin + (bonus ? lpBonus : 0) : -lpLoss;
+    let prevPoints = 0;
     const result = await runTransaction(entryRef, (current) => {
         const cur = current && typeof current === 'object' ? current : {};
-        const points = Math.max(0, (cur.points || 0) + delta);
+        prevPoints = cur.points || 0;
+        const points = Math.max(0, prevPoints + delta);
         const wins = (cur.wins || 0) + (won ? 1 : 0);
         const matches = (cur.matches || 0) + 1;
         const subjects = { ...(cur.subjects || {}) };
@@ -56,14 +73,16 @@ export async function recordMatchResult({ uid, nickname, characterId, won, tie, 
             updatedAt: serverTimestamp()
         };
     });
-    if (result.committed) {
-        logEvent('info', `[Ranking] Resultado registrado: ${won ? `vitória (+${delta} RP)` : tie ? 'empate (0 RP)' : `derrota (${delta} RP)`}.`, { uid, won, tie, bonus });
-    } else {
+    if (!result.committed) {
         logEvent('warn', '[Ranking] Transação abortada ao registrar resultado.', { uid });
+        return null;
     }
+    logEvent('info', `[Ranking] Resultado registrado: ${won ? `vitória (+${delta} LP)` : tie ? 'empate (0 LP)' : `derrota (${delta} LP)`}.`, { uid, won, tie, bonus });
+    const points = result.snapshot?.val()?.points || 0;
+    return { delta: points - prevPoints, points, rank: getRankForPoints(points) };
 }
 
-// Lê a entrada do jogador + posição geral no ranking (conta quantos têm mais RP).
+// Lê a entrada do jogador + posição geral no ranking (conta quantos têm mais LP).
 export async function loadMyLeaderboardEntry(uid) {
     if (!uid) return null;
     const [mineSnap, allSnap] = await Promise.all([
@@ -84,7 +103,7 @@ export async function loadMyLeaderboardEntry(uid) {
     return { entry, position, total };
 }
 
-// Top N do ranking geral (por RP, desempate por vitórias).
+// Top N do ranking geral (por LP, desempate por vitórias).
 export async function loadTopLeaderboard(limit = 10) {
     const snap = await get(ref(db, 'leaderboard'));
     if (!snap.exists()) return [];
