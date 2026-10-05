@@ -399,6 +399,13 @@
                     <div id="account-nickname-row" style="display: none; margin-bottom: 6px;">
                         <input id="account-nickname-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" style="font-size: 13px; font-weight: bold; width: 100%; padding: 8px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none;">
                     </div>
+                    <!-- Aceite LGPD: só aparece no modo Criar conta (obrigatório) -->
+                    <div id="account-terms-row" style="display: none; margin-bottom: 7px; text-align: left;">
+                        <label style="display: flex; align-items: flex-start; gap: 6px; cursor: pointer; font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
+                            <input id="account-terms-check" type="checkbox" style="margin-top: 2px; accent-color: #34d399; width: 15px; height: 15px; cursor: pointer;">
+                            <span>Li e aceito os <button id="account-terms-link" type="button" style="background: none; border: none; padding: 0; color: #34d399; font-size: 11.5px; font-weight: bold; text-decoration: underline; cursor: pointer;">Termos de Uso e Aviso de Privacidade</button></span>
+                        </label>
+                    </div>
                     <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
                     <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
                     <div id="account-error-msg" style="min-height: 16px; font-size: 11.5px; color: #f87171; font-weight: bold; margin-bottom: 6px;"></div>
@@ -662,6 +669,9 @@
             accountNicknameInput.placeholder = isRegistering
                 ? 'Apelido obrigatório (2 a 20 caracteres)'
                 : 'Apelido (2 a 20 caracteres)';
+            // Aceite dos termos: só no cadastro; obrigatório p/ criar conta
+            const termsRow = document.getElementById('account-terms-row');
+            if (termsRow) termsRow.style.display = isRegistering ? 'block' : 'none';
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
             accountResetBtn.style.display = isRegistering ? 'none' : 'block';
             accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
@@ -756,6 +766,13 @@
         accountSubmitBtn.addEventListener('click', async () => {
             const email = accountEmailInput.value.trim();
             const password = accountPasswordInput.value;
+            if (accountMode === 'register') {
+                const termsCheck = document.getElementById('account-terms-check');
+                if (termsCheck && !termsCheck.checked) {
+                    accountErrorMsg.textContent = '⚠️ Você precisa aceitar os Termos de Uso para criar a conta.';
+                    return;
+                }
+            }
             accountSubmitBtn.disabled = true;
             accountErrorMsg.textContent = 'Conectando...';
             const result = accountMode === 'register'
@@ -945,6 +962,13 @@
         if (termsLink) termsLink.addEventListener('click', () => { if (termsOverlay) termsOverlay.style.display = 'flex'; });
         if (termsCloseBtn) termsCloseBtn.addEventListener('click', closeTermsModal);
         if (termsOverlay) termsOverlay.addEventListener('click', (e) => { if (e.target === termsOverlay) closeTermsModal(); });
+        // O link dos termos também aparece dentro do formulário de cadastro
+        const accountTermsLink = document.getElementById('account-terms-link');
+        if (accountTermsLink) accountTermsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (termsOverlay) termsOverlay.style.display = 'flex';
+        });
 
         if (profileNickSave) {
             profileNickSave.addEventListener('click', async () => {
