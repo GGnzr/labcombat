@@ -22,7 +22,7 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 - **Limpeza Automática:** Gatilhos nativos de `onDisconnect` que limpam jogadores inativos e salas abandonadas.
 
 ### 🕹️ Seleção de Personagens (Estilo Arcade)
-- **Grid de Lutadores:** Escolha entre diferentes disciplinas da computação (Web & Mobile, Banco de Dados, Engenharia de Software, Redes, Sistemas Operacionais, POO).
+- **Grid de Lutadores:** Escolha entre diferentes disciplinas da computação (Web & Mobile, Banco de Dados, Engenharia de Software, Redes, Programação Orientada a Objetos) e o imprevisível **Coringa**, que puxa questões de todas as matérias.
 - **Pré-visualização Dinâmica:** Sprites animados em repouso (Idle) e portraits retro.
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
 - **Modo Solo para Testes:** Botão `⚡ Iniciar Solo` para testar as rodadas de perguntas diretamente sem precisar de um segundo jogador.
@@ -57,9 +57,9 @@ Cada lutador representa uma disciplina fundamental da área de tecnologia:
 
 | Disciplina | Tópicos & Especialidades |
 | :--- | :--- |
-| **Sistemas Operacionais** | Threads, Processos & Kernel |
-| **Engenharia de Software** | Scrum, Requisitos & Clean Code |
 | **Programação Orientada a Objetos** | Classes, Polimorfismo & Herança |
+| **Coringa** 🃏 | Caos puro: questões de todas as disciplinas |
+| **Engenharia de Software** | Scrum, Requisitos & Clean Code |
 | **Web & Mobile** | Frontend, Fullstack & APIs |
 | **Banco de Dados** | SQL, Índices & Normalização |
 | **Redes de Computadores** | TCP/IP, Roteamento & Ping |

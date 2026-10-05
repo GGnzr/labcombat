@@ -1,6 +1,22 @@
 import { get, ref } from 'firebase/database';
 import { db } from './firebase.js';
 import { logEvent } from './logger.js';
+import { professors } from './professors.js';
+
+const CORINGA_ID = 'coringa';
+
+/**
+ * Regra do Coringa: se um dos lutadores da partida for o 'coringa', o catálogo
+ * de questões deixa de ser "união dos 2 bancos" e vira a união dos bancos de
+ * TODOS os outros professores (o coringa NÃO tem banco próprio).
+ * Centralizado aqui: MainScene e CharacterSelectScene herdam via
+ * loadQuestionBanks() — os dois clientes computam o mesmo conjunto.
+ */
+export function resolveMatchProfessorIds(professorIds) {
+    const uniqueIds = [...new Set(professorIds.filter(Boolean))];
+    if (!uniqueIds.includes(CORINGA_ID)) return uniqueIds;
+    return professors.map(p => p.id).filter(id => id !== CORINGA_ID);
+}
 
 function isValidQuestion(question) {
     return question && question.id != null && typeof question.text === 'string'
@@ -50,7 +66,7 @@ export async function loadQuestionBank(professorId) {
 }
 
 export async function loadQuestionBanks(professorIds) {
-    const uniqueIds = [...new Set(professorIds.filter(Boolean))];
+    const uniqueIds = resolveMatchProfessorIds(professorIds);
     logEvent('info', '[Questões] Iniciando carregamento dos bancos da partida.', {
         professorIds: uniqueIds
     });
