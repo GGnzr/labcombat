@@ -751,6 +751,7 @@ class SoundManagerClass {
 
         this._bgmCurrentTrack = track;
         this._bgmPlaying = true;
+        this._bgmLoopCount = 0; // contador de variação por loop (acordes/frases)
 
         if (track === 'menu') {
             this._createMenuBGMLoop();
@@ -826,29 +827,44 @@ class SoundManagerClass {
         const barDur = beatDur * 4;
         const loopDur = barDur * 8;
 
-        // Progressão harmônica (2 compassos por acorde)
-        const chords = [
-            { root: 220.00, notes: [220.00, 261.63, 329.63] },  // Am (A3, C4, E4)
-            { root: 174.61, notes: [174.61, 220.00, 261.63] },  // F  (F3, A3, C4)
-            { root: 261.63, notes: [261.63, 329.63, 392.00] },  // C  (C4, E4, G4)
-            { root: 196.00, notes: [196.00, 246.94, 293.66] },  // G  (G3, B3, D4)
+        // Progressões alternantes (2 compassos por acorde) — trocam a cada loop
+        const chordSets = [
+            [ { root: 220.00, notes: [220.00, 261.63, 329.63] },  // Am
+              { root: 174.61, notes: [174.61, 220.00, 261.63] },  // F
+              { root: 261.63, notes: [261.63, 329.63, 392.00] },  // C
+              { root: 196.00, notes: [196.00, 246.94, 293.66] }], // G
+            [ { root: 220.00, notes: [220.00, 261.63, 329.63] },  // Am
+              { root: 164.81, notes: [164.81, 196.00, 246.94] },  // Em
+              { root: 174.61, notes: [174.61, 220.00, 261.63] },  // F
+              { root: 196.00, notes: [196.00, 246.94, 293.66] }], // G
+            [ { root: 261.63, notes: [261.63, 329.63, 392.00] },  // C
+              { root: 196.00, notes: [196.00, 246.94, 293.66] },  // G
+              { root: 220.00, notes: [220.00, 261.63, 329.63] },  // Am
+              { root: 174.61, notes: [174.61, 220.00, 261.63] }], // F
         ];
 
-        // Melodia (Hz, 0 = pausa)
-        const melody = [
-            523.25, 493.88, 440.00, 392.00, 440.00, 493.88, 523.25, 0,
-            587.33, 523.25, 493.88, 440.00, 392.00, 440.00, 0, 0,
-            349.23, 392.00, 440.00, 523.25, 493.88, 440.00, 392.00, 0,
-            349.23, 329.63, 293.66, 349.23, 392.00, 440.00, 0, 0,
-            523.25, 587.33, 659.25, 523.25, 493.88, 440.00, 523.25, 0,
-            659.25, 587.33, 523.25, 493.88, 523.25, 587.33, 0, 0,
-            493.88, 440.00, 392.00, 440.00, 493.88, 523.25, 587.33, 0,
-            493.88, 440.00, 392.00, 329.63, 293.66, 329.63, 0, 0,
+        // Melodia em frases de 2 compassos; cada loop remonta numa ordem diferente
+        const phrases = [
+            [523.25, 493.88, 440.00, 392.00, 440.00, 493.88, 523.25, 0,
+             587.33, 523.25, 493.88, 440.00, 392.00, 440.00, 0, 0],
+            [349.23, 392.00, 440.00, 523.25, 493.88, 440.00, 392.00, 0,
+             349.23, 329.63, 293.66, 349.23, 392.00, 440.00, 0, 0],
+            [523.25, 587.33, 659.25, 523.25, 493.88, 440.00, 523.25, 0,
+             659.25, 587.33, 523.25, 493.88, 523.25, 587.33, 0, 0],
+            [493.88, 440.00, 392.00, 440.00, 493.88, 523.25, 587.33, 0,
+             493.88, 440.00, 392.00, 329.63, 293.66, 329.63, 0, 0],
         ];
+        const structures = [ [0,1,2,3], [1,2,0,3], [0,3,1,2], [2,0,3,1] ];
 
         const scheduleLoop = () => {
             if (!this._bgmPlaying) return;
             const now = ctx.currentTime;
+
+            // Variação por loop: outra progressão, outra ordem de frases
+            const loopIdx = this._bgmLoopCount++;
+            const chords = chordSets[loopIdx % chordSets.length];
+            const melody = structures[loopIdx % structures.length].flatMap(pi => phrases[pi]);
+            const walkBass = loopIdx % 2 === 1; // loops ímpares: baixo caminha pela quinta
 
             if (this._bgmMasterGain) {
                 const targetVol = this.muted || this.musicMuted ? 0 : this._bgmBaseVolume * this.musicVolume;
@@ -918,23 +934,27 @@ class SoundManagerClass {
             for (let beat = 0; beat < 32; beat++) {
                 const t = now + (beat * beatDur);
 
-                // Hi-hat
-                const hhBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.03), ctx.sampleRate);
-                const hhData = hhBuffer.getChannelData(0);
-                for (let s = 0; s < hhData.length; s++) hhData[s] = Math.random() * 2 - 1;
-                const hh = ctx.createBufferSource();
-                hh.buffer = hhBuffer;
-                const hhF = ctx.createBiquadFilter();
-                hhF.type = 'highpass';
-                hhF.frequency.setValueAtTime(8000, t);
-                const hhG = ctx.createGain();
-                hhG.gain.setValueAtTime(0.08, t);
-                hhG.gain.exponentialRampToValueAtTime(0.001, t + 0.03);
-                hh.connect(hhF);
-                hhF.connect(hhG);
-                hhG.connect(this._bgmMasterGain);
-                hh.start(t);
-                hh.stop(t + 0.035);
+                // Hi-hat (a cada tempo; nos loops ímpares, dobra p/ colcheias)
+                const hatOffsets = walkBass ? [0, 0.5] : [0];
+                hatOffsets.forEach((subOff) => {
+                    const ht = t + (subOff * beatDur);
+                    const hhBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.03), ctx.sampleRate);
+                    const hhData = hhBuffer.getChannelData(0);
+                    for (let s = 0; s < hhData.length; s++) hhData[s] = Math.random() * 2 - 1;
+                    const hh = ctx.createBufferSource();
+                    hh.buffer = hhBuffer;
+                    const hhF = ctx.createBiquadFilter();
+                    hhF.type = 'highpass';
+                    hhF.frequency.setValueAtTime(8000, ht);
+                    const hhG = ctx.createGain();
+                    hhG.gain.setValueAtTime(subOff ? 0.05 : 0.08, ht);
+                    hhG.gain.exponentialRampToValueAtTime(0.001, ht + 0.03);
+                    hh.connect(hhF);
+                    hhF.connect(hhG);
+                    hhG.connect(this._bgmMasterGain);
+                    hh.start(ht);
+                    hh.stop(ht + 0.035);
+                });
 
                 // Kick (1 e 3)
                 if (beat % 4 === 0 || beat % 4 === 2) {
@@ -1001,27 +1021,40 @@ class SoundManagerClass {
         const barDur = beatDur * 4;
         const loopDur = barDur * 8;
 
-        const chords = [
-            { root: 164.81, notes: [164.81, 196.00, 246.94] },  // Em
-            { root: 130.81, notes: [130.81, 164.81, 196.00] },  // C
-            { root: 146.83, notes: [146.83, 185.00, 220.00] },  // D
-            { root: 123.47, notes: [123.47, 155.56, 185.00, 220.00] }, // B7
+        // Progressões alternantes de batalha (Em menor, estilo KOF)
+        const chordSets = [
+            [ { root: 164.81, notes: [164.81, 196.00, 246.94] },  // Em
+              { root: 130.81, notes: [130.81, 164.81, 196.00] },  // C
+              { root: 146.83, notes: [146.83, 185.00, 220.00] },  // D
+              { root: 123.47, notes: [123.47, 155.56, 185.00, 220.00] } ], // B7
+            [ { root: 164.81, notes: [164.81, 196.00, 246.94] },  // Em
+              { root: 196.00, notes: [196.00, 246.94, 293.66] },  // G
+              { root: 146.83, notes: [146.83, 185.00, 220.00] },  // D
+              { root: 220.00, notes: [220.00, 277.18, 329.63] } ], // A
         ];
 
-        const melody = [
-            659.25, 622.25, 587.33, 659.25, 0, 523.25, 587.33, 0,
-            659.25, 783.99, 659.25, 587.33, 523.25, 587.33, 659.25, 0,
-            523.25, 587.33, 659.25, 783.99, 880.00, 783.99, 659.25, 0,
-            523.25, 493.88, 440.00, 523.25, 587.33, 659.25, 0, 0,
-            587.33, 659.25, 739.99, 880.00, 0, 783.99, 739.99, 659.25,
-            587.33, 659.25, 739.99, 587.33, 523.25, 587.33, 0, 0,
-            493.88, 587.33, 659.25, 739.99, 880.00, 987.77, 880.00, 739.99,
-            659.25, 587.33, 493.88, 440.00, 493.88, 587.33, 659.25, 0,
+        // Riffs de 2 compassos; a ordem muda a cada loop (mantém a identidade do tema)
+        const phrases = [
+            [659.25, 622.25, 587.33, 659.25, 0, 523.25, 587.33, 0,
+             659.25, 783.99, 659.25, 587.33, 523.25, 587.33, 659.25, 0],
+            [523.25, 587.33, 659.25, 783.99, 880.00, 783.99, 659.25, 0,
+             523.25, 493.88, 440.00, 523.25, 587.33, 659.25, 0, 0],
+            [587.33, 659.25, 739.99, 880.00, 0, 783.99, 739.99, 659.25,
+             587.33, 659.25, 739.99, 587.33, 523.25, 587.33, 0, 0],
+            [493.88, 587.33, 659.25, 739.99, 880.00, 987.77, 880.00, 739.99,
+             659.25, 587.33, 493.88, 440.00, 493.88, 587.33, 659.25, 0],
         ];
+        const structures = [ [0,1,2,3], [1,2,0,3], [0,3,1,2], [3,0,2,1] ];
 
         const scheduleLoop = () => {
             if (!this._bgmPlaying) return;
             const now = ctx.currentTime;
+
+            // Variação por loop: outra progressão e outra ordem de riffs
+            const loopIdx = this._bgmLoopCount++;
+            const chords = chordSets[loopIdx % chordSets.length];
+            const melody = structures[loopIdx % structures.length].flatMap(pi => phrases[pi]);
+            const doubleKick = loopIdx % 2 === 1; // loops ímpares: kick extra no contratempo
 
             if (this._bgmMasterGain) {
                 const targetVol = this.muted || this.musicMuted ? 0 : this._bgmBaseVolume * this.musicVolume;
@@ -1136,19 +1169,20 @@ class SoundManagerClass {
                     hh.stop(ht + 0.03);
                 }
 
-                // Kick pesado (1 e 3)
-                if (beat % 4 === 0 || beat % 4 === 2) {
+                // Kick pesado (1 e 3) — loops ímpares: chute extra no contratempo
+                if (beat % 4 === 0 || beat % 4 === 2 || (doubleKick && beat % 4 === 3)) {
+                    const kt = (doubleKick && beat % 4 === 3) ? t + beatDur / 2 : t;
                     const kick = ctx.createOscillator();
                     const kickG = ctx.createGain();
                     kick.type = 'sine';
-                    kick.frequency.setValueAtTime(200, t);
-                    kick.frequency.exponentialRampToValueAtTime(45, t + 0.1);
-                    kickG.gain.setValueAtTime(0.25, t);
-                    kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+                    kick.frequency.setValueAtTime(200, kt);
+                    kick.frequency.exponentialRampToValueAtTime(45, kt + 0.1);
+                    kickG.gain.setValueAtTime(0.25, kt);
+                    kickG.gain.exponentialRampToValueAtTime(0.001, kt + 0.12);
                     kick.connect(kickG);
                     kickG.connect(this._bgmMasterGain);
-                    kick.start(t);
-                    kick.stop(t + 0.13);
+                    kick.start(kt);
+                    kick.stop(kt + 0.13);
                 }
 
                 // Snare potente (2 e 4)
