@@ -405,6 +405,7 @@
                             <input id="account-terms-check" type="checkbox" style="margin-top: 2px; accent-color: #34d399; width: 15px; height: 15px; cursor: pointer;">
                             <span>Li e aceito os <button id="account-terms-link" type="button" style="background: none; border: none; padding: 0; color: #34d399; font-size: 11.5px; font-weight: bold; text-decoration: underline; cursor: pointer;">Termos de Uso e Aviso de Privacidade</button></span>
                         </label>
+                        <div id="account-google-hint" style="font-size: 10px; color: #64748b; margin-top: 3px; padding-left: 21px;">(o cadastro pelo Google também exige aceitar os termos ☝️)</div>
                     </div>
                     <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
                     <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
@@ -670,8 +671,10 @@
                 ? 'Apelido obrigatório (2 a 20 caracteres)'
                 : 'Apelido (2 a 20 caracteres)';
             // Aceite dos termos: só no cadastro; obrigatório p/ criar conta
+            // (desabilita também o "Entrar com Google" até aceitar)
             const termsRow = document.getElementById('account-terms-row');
             if (termsRow) termsRow.style.display = isRegistering ? 'block' : 'none';
+            updateTermsGate();
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
             accountResetBtn.style.display = isRegistering ? 'none' : 'block';
             accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
@@ -737,6 +740,21 @@
 
         accountTabLogin.addEventListener('click', () => setAccountMode('login'));
         accountTabRegister.addEventListener('click', () => setAccountMode('register'));
+
+        // Gate dos termos no cadastro: "Entrar com Google" fica desabilitado
+        // até aceitar (o cadastro por e-mail já é barrado no submit)
+        const accountTermsCheck = document.getElementById('account-terms-check');
+        function updateTermsGate() {
+            const isRegistering = accountMode === 'register';
+            const accepted = !!accountTermsCheck && accountTermsCheck.checked;
+            const blocked = isRegistering && !accepted;
+            if (accountGoogleBtn) {
+                accountGoogleBtn.disabled = blocked;
+                accountGoogleBtn.style.opacity = blocked ? '0.45' : '1';
+                accountGoogleBtn.style.cursor = blocked ? 'not-allowed' : 'pointer';
+            }
+        }
+        if (accountTermsCheck) accountTermsCheck.addEventListener('change', updateTermsGate);
         accountCloseBtn.addEventListener('click', closeAccountModal);
         accountGuestBtn.addEventListener('click', () => {
             // Visitante: abre o MODAL de apelido dedicado POR CIMA do modal de
@@ -808,6 +826,14 @@
                 : result.message;
         });
         accountGoogleBtn.addEventListener('click', async () => {
+            // Barreira dupla: botão desabilitado já impede, mas se passou, checa de novo
+            if (accountMode === 'register') {
+                const termsCheck = document.getElementById('account-terms-check');
+                if (termsCheck && !termsCheck.checked) {
+                    accountErrorMsg.textContent = '⚠️ Aceite os Termos de Uso para criar a conta.';
+                    return;
+                }
+            }
             accountGoogleBtn.disabled = true;
             accountErrorMsg.textContent = 'Abrindo login do Google...';
             const result = await loginWithGoogle();
