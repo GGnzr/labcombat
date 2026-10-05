@@ -3,7 +3,6 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getDatabase } from "firebase/database";
 
-// TODO: Replace with your app's Firebase project configuration
 const firebaseConfig = {
   apiKey: "AIzaSyAGyuV-o1ztv2BXQJgftLgRw1SIJnZXt_k",
   authDomain: "labcombat.firebaseapp.com",
