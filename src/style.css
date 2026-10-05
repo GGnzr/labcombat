@@ -241,3 +241,29 @@ body.in-battle #gh-footer-link {
   display: none !important; /* não cobre o HUD da luta */
 }
 
+/* Link de Termos no rodapé, ao lado do GitHub */
+#terms-footer-link {
+  position: fixed;
+  left: 118px;
+  bottom: 12px;
+  z-index: 150;
+  background: #0d1117;
+  border: 1.5px solid #30363d;
+  color: #8b949e;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: all 0.15s ease;
+}
+#terms-footer-link:hover {
+  border-color: #34d399;
+  color: #34d399;
+  transform: translateY(-1px);
+}
+body.in-battle #terms-footer-link {
+  display: none !important;
+}
+

@@ -302,7 +302,7 @@ A **LGPD** estabelece regras rígidas para a coleta, tratamento e armazenamento 
   * O `localStorage` armazena apenas preferências de interface do próprio dispositivo (ex: volume mudo, último apelido usado).
 
 ### 5.3 Termos de Uso e Aviso de Privacidade
-Incluir um link discreto no rodapé do menu principal com um modal de transparência contendo o seguinte texto:
+✅ **Implementado:** link "🔒 Termos de Uso" no rodapé do menu (ao lado do badge do GitHub) abre um modal com o texto de transparência. Conteúdo atualizado p/ refletir a Fase 4 (contas coletam e-mail + apelido; visitantes coletam só apelido):
 
 > **🔒 Aviso de Privacidade e Termos de Uso:**
 > *"O LabCombat é uma ferramenta exclusivamente educacional. Não coletamos dados pessoais sensíveis, documentos ou e-mails de estudantes. Os apelidos inseridos são públicos dentro da sala da partida e descartados ao término da sessão. Ao utilizar este jogo, você concorda com o uso de cookies estritamente técnicos para a sincronização da partida em tempo real."*
