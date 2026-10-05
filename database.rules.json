@@ -25,6 +25,8 @@
         "currentQuestionId": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
         "questionStartedAt": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
         "questionStartTime": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "matchStartTime": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "countdownStartTime": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
         "attackWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
         "specialWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
         "ultimateWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
@@ -41,7 +43,7 @@
       ".read": true,
       ".write": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
       "$uid": {
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && auth.uid === $uid && newData.child('points').isNumber() && newData.child('points').val() >= 0 && newData.child('points').val() <= (!data.exists() ? 100 : data.child('points').val() + 100) && newData.child('matches').isNumber() && newData.child('matches').val() === (!data.exists() ? 1 : data.child('matches').val() + 1) && newData.child('wins').isNumber() && newData.child('wins').val() >= (!data.exists() ? 0 : data.child('wins').val()) && newData.child('wins').val() <= (!data.exists() ? 1 : data.child('wins').val() + 1)"
       }
     },
     "nicknames": {

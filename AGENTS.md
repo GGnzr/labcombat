@@ -377,8 +377,10 @@ na mesma entrega**.
   confirmação dupla + log admin.
 - **Regras de segurança do RTDB**: arquivo pronto em `database.rules.json`
   (default-deny; salas só pelos participantes via `p1.uid`/`p2.uid` de Auth,
-  GM via `adminUsers`, `questionBanks`/`logs` escrita só GM, `leaderboard`/
-  `nicknames`/`users` escritas apenas pelo próprio uid). **Para aplicar**: cole
+  GM via `adminUsers`, `questionBanks`/`logs` escrita só GM, anti-trapaça no
+  leaderboard: LP sobe no máx **+100 por partida** e `matches`/`wins` só +1,
+  `nicknames`/`users` escritas apenas pelo próprio uid — ajustes de LP do GM
+  devem ficar ≤100/escrita). **Para aplicar**: cole
   o conteúdo em Firebase Console → Realtime Database → Rules → Publicar.
   ⚠️ Salas antigas (sem `uid`) param de funcionar — limpe-as com o GM antes.
 

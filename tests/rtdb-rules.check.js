@@ -68,8 +68,8 @@ await expectOk('GM publica banco de questÃµes', admin.ref('questionBanks/so').
 await expectOk('leitura de questÃµes livre (anÃ´nimo)', anon.ref('questionBanks/so').get());
 
 console.log('\nâ”€â”€ leaderboard: cada um escreve sÃ³ o prÃ³prio; GM zera temporada â”€â”€');
-await expectOk('jogador grava o prÃ³prio ranking', host.ref('leaderboard/uid_host').set({ points: 25, wins: 1 }));
-await expectFail('jogador NÃƒO grava ranking de outro', host.ref('leaderboard/uid_p2').set({ points: 0 }));
+await expectOk('jogador grava o prÃ³prio ranking', host.ref('leaderboard/uid_host').set({ nickname: 'Host', points: 25, wins: 1, matches: 1 }));
+await expectFail('jogador NÃƒO grava ranking de outro', host.ref('leaderboard/uid_p2').set({ nickname: 'P2', points: 0, wins: 0, matches: 1 }));
 await expectOk('GM zera temporada (remove o nÃ³ inteiro)', admin.ref('leaderboard').remove());
 await expectFail('anÃ´nimo NÃƒO escreve ranking', anon.ref('leaderboard/x').set({ points: 999 }));
 await expectOk('leitura do ranking livre (menu)', anon.ref('leaderboard').get());
