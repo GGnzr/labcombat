@@ -164,7 +164,6 @@
               </div>
               <div style="display: flex; gap: 6px;">
                   <button id="dev-toggle-btn" title="Fechar o Painel GM (F2 reabre)" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">✕ Fechar</button>
-                  <button id="btn-gm-logout" title="Sair do Modo GM e voltar à visão de aluno" style="background: #dc2626; border: none; color: #fff; border-radius: 5px; cursor: pointer; padding: 4px 8px; font-size: 12px; font-weight: bold;">✕ Sair</button>
               </div>
           </div>
 
@@ -177,75 +176,108 @@
           </div>
 
           <!-- ABA 1: CONTROLES DA PARTIDA -->
-          <div id="tab-content-controls" class="gm-tab-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 12px; align-content: start; overflow-y: auto; flex: 1;">
-              <!-- Exibição de Tela -->
+          <div id="tab-content-controls" class="gm-tab-content" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 10px; align-content: start; overflow-y: auto; flex: 1;">
+              <!-- ⏱️ Tempos da Partida -->
               <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #facc15;">⏱️ Tempos da Partida</div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                      <span style="font-weight: bold; font-size: 12px; color: #38bdf8;">🖥️ Resolução Nativa</span>
-                      <span style="font-size: 11px; color: #34d399; font-weight: bold; background: #064e3b; padding: 2px 8px; border-radius: 4px;">16:9 HD (1280x720)</span>
+                      <label for="dev-start-delay" style="font-size: 12px;">Contagem Inicial:</label>
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                          <input id="dev-start-delay" type="number" min="1" max="120" value="3" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                          <span style="font-size: 11px; color: #94a3b8;">seg</span>
+                      </div>
                   </div>
-                  <button id="btn-fullscreen-toggle" style="width: 100%; background: #0f172a; border: 1px solid #475569; color: #38bdf8; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold;">⛶ Tela Cheia</button>
-                  <button id="dev-animation-test-btn" style="width: 100%; background: #0f172a; border: 1px solid #a855f7; color: #d8b4fe; border-radius: 6px; cursor: pointer; padding: 8px; font-size: 12px; font-weight: bold; margin-top: 8px;">🎞️ Testar Animações</button>
-              </div>
-
-              <!-- Ajuste de Tempos -->
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #facc15;">⏱️ Configurar Tempos da Partida</div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-                      <label for="dev-start-delay" style="font-size: 13px;">Contagem Inicial:</label>
-                      <div style="display: flex; align-items: center; gap: 6px;">
-                          <input id="dev-start-delay" type="number" min="1" max="120" value="3" style="width: 60px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 14px; font-weight: bold;">
-                          <span style="font-size: 12px; color: #94a3b8;">seg</span>
+                      <label for="dev-question-limit" style="font-size: 12px;">Tempo por Questão:</label>
+                      <div style="display: flex; align-items: center; gap: 5px;">
+                          <input id="dev-question-limit" type="number" min="3" max="120" value="15" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                          <span style="font-size: 11px; color: #94a3b8;">seg</span>
                       </div>
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                      <label for="dev-question-limit" style="font-size: 13px;">Tempo por Questão:</label>
-                      <div style="display: flex; align-items: center; gap: 6px;">
-                          <input id="dev-question-limit" type="number" min="3" max="120" value="15" style="width: 60px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 14px; font-weight: bold;">
-                          <span style="font-size: 12px; color: #94a3b8;">seg</span>
-                      </div>
+                  <button id="dev-apply-timers-btn" style="width: 100%; padding: 7px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Tempos</button>
+                  <div id="dev-timers-status" style="font-size: 11px; color: #34d399; text-align: center; margin-top: 3px; min-height: 14px;"></div>
+              </div>
+
+              <!-- ⚔️ Combate (dano, vida, modificadores) -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #f87171;">⚔️ Combate (Dano &amp; HP)</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                      <label for="dev-dmg-attack" style="font-size: 12px;">Dano do ataque:</label>
+                      <input id="dev-dmg-attack" type="number" min="1" max="100" value="15" style="width: 56px; background: #020617; color: #f87171; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
-                  <button id="dev-apply-timers-btn" style="width: 100%; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Salvar e Aplicar Tempos</button>
-                  <div id="dev-timers-status" style="font-size: 12px; color: #34d399; text-align: center; margin-top: 4px; min-height: 16px;"></div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                      <label for="dev-dmg-special" style="font-size: 12px;">Dano do especial:</label>
+                      <input id="dev-dmg-special" type="number" min="1" max="100" value="28" style="width: 56px; background: #020617; color: #f87171; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;" title="Ultimate finaliza com K.O. se o HP do oponente for ≤ este valor">
+                      <label for="dev-ult-ko-hp" style="font-size: 12px;">Ultimate K.O. se HP ≤:</label>
+                      <input id="dev-ult-ko-hp" type="number" min="1" max="99" value="33" style="width: 56px; background: #020617; color: #f87171; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;" title="HP inicial de cada jogador — aplica nas próximas partidas da sala">
+                      <label for="dev-max-hp" style="font-size: 12px;">Vida (HP máx):</label>
+                      <input id="dev-max-hp" type="number" min="10" max="200" value="100" style="width: 56px; background: #020617; color: #4ade80; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;" title="Chance de cair OVERCLOCK/FIREWALL/BACKUP/TRY-CATCH na rodada (0 = nunca, 100 = sempre)">
+                      <label for="dev-mod-chance" style="font-size: 12px;">Modificador (%):</label>
+                      <input id="dev-mod-chance" type="number" min="0" max="100" value="30" style="width: 56px; background: #020617; color: #fef08a; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;" title="HP restaurado pelo modificador BACKUP (cura)">
+                      <label for="dev-mod-heal" style="font-size: 12px;">Cura do BACKUP:</label>
+                      <input id="dev-mod-heal" type="number" min="1" max="100" value="10" style="width: 56px; background: #020617; color: #4ade80; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <button id="dev-apply-combat-btn" style="width: 100%; padding: 7px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Combate</button>
+                  <div id="dev-combat-status" style="font-size: 11px; color: #f87171; text-align: center; margin-top: 3px; min-height: 14px;"></div>
               </div>
 
-              <!-- Cargas: os botões +/- estão na barra rápida de batalha (#gm-quickbar) -->
-
-              <!-- Sessão da Arena -->
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #38bdf8;">🎯 Sessão da Arena</div>
-                  <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
+              <!-- 🏆 LabPoints & Temporada (LP + ranking) -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #c084fc;">🏆 LabPoints &amp; Temporada</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                      <label for="dev-lp-win" style="font-size: 12px;">LP por vitória:</label>
+                      <input id="dev-lp-win" type="number" min="0" max="999" value="25" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;" title="Bônus extra: K.O. via ultimate ou vitória sem errar nenhuma questão">
+                      <label for="dev-lp-bonus" style="font-size: 12px;">LP bônus:</label>
+                      <input id="dev-lp-bonus" type="number" min="0" max="999" value="5" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                      <label for="dev-lp-loss" style="font-size: 12px;">LP por derrota:</label>
+                      <input id="dev-lp-loss" type="number" min="0" max="999" value="10" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                  </div>
+                  <button id="dev-apply-lp-btn" style="width: 100%; padding: 7px; background: #7c3aed; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar LP</button>
+                  <div id="dev-lp-status" style="font-size: 11px; color: #c084fc; text-align: center; margin-top: 3px; min-height: 14px;"></div>
+                  <hr style="border: none; border-top: 1px solid #334155; margin: 8px 0;">
+                  <button id="gm-reset-season-btn" style="width: 100%; padding: 8px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;" title="Apaga o nó leaderboard do Firebase (LP, vitórias e elos) — irreversível!">⚠️ Zerar Temporada</button>
+                  <div id="gm-reset-season-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
               </div>
 
-              <!-- Temporada / Ranking -->
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">🏆 Temporada / Ranking</div>
-                  <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; line-height: 1.5;">Zera TODO o ranking (RP, vitórias e elos de todos os jogadores) para começar uma nova temporada.</div>
-                  <button id="gm-reset-season-btn" style="width: 100%; padding: 9px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;" title="Apaga o nó leaderboard do Firebase — irreversível!">⚠️ Zerar Temporada (apagar ranking)</button>
-                  <div id="gm-reset-season-status" style="min-height: 16px; margin-top: 6px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+              <!-- 🎯 Sessão da Arena (cargas GM ficam na barra rápida #gm-quickbar em batalha) -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; align-self: start;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #38bdf8;">🎯 Sessão da Arena</div>
+                  <button id="dev-reset-btn" style="width: 100%; padding: 8px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
               </div>
 
-              <!-- Velocidade das Animações -->
-              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #a855f7;">🎞️ Velocidade das Animações (FPS)</div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+              <!-- 🎞️ Velocidade das Animações -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #a855f7;">🎞️ Velocidade das Animações (FPS)</div>
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                       <label for="dev-anim-walk" style="font-size: 12px;">Walk (idle/run):</label>
-                      <input id="dev-anim-walk" type="number" min="1" max="24" value="8" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                      <input id="dev-anim-walk" type="number" min="1" max="24" value="8" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                       <label for="dev-anim-attack" style="font-size: 12px;">Attack (1→4):</label>
-                      <input id="dev-anim-attack" type="number" min="1" max="24" value="8" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                      <input id="dev-anim-attack" type="number" min="1" max="24" value="8" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
-                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                       <label for="dev-anim-special" style="font-size: 12px;">Especial (ult1→3):</label>
-                      <input id="dev-anim-special" type="number" min="1" max="24" value="7" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                      <input id="dev-anim-special" type="number" min="1" max="24" value="7" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                       <label for="dev-anim-ult" style="font-size: 12px;">Ultimate (ult1→3):</label>
-                      <input id="dev-anim-ult" type="number" min="1" max="24" value="7" style="width: 60px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 5px 8px; text-align: center; font-size: 13px; font-weight: bold;">
+                      <input id="dev-anim-ult" type="number" min="1" max="24" value="7" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
-                  <button id="dev-apply-anim-btn" style="width: 100%; padding: 8px; background: #a855f7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Aplicar Velocidades</button>
-                  <div id="dev-anim-status" style="font-size: 11px; color: #a855f7; text-align: center; margin-top: 4px; min-height: 14px;"></div>
+                  <button id="dev-apply-anim-btn" style="width: 100%; padding: 7px; background: #a855f7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Velocidades</button>
+                  <div id="dev-anim-status" style="font-size: 11px; color: #a855f7; text-align: center; margin-top: 3px; min-height: 14px;"></div>
               </div>
           </div>
 
@@ -347,31 +379,12 @@
     </div>
 
     <!-- Botão Flutuante Discreto para Reabrir a Barra Lateral (Apenas quando GM logado e barra recolhida) -->
-    <button id="gm-reopen-pill" title="Reabrir Painel do Game Master">🛠️ Painel GM</button>
+    <button id="gm-reopen-pill" title="Reabrir Painel do Game Master" style="display: none !important">🛠️ Painel GM</button>
 
-    <!-- Modal unificado do Jogador: abas Perfil (ranking) e Conta (login/visitante) -->
+    <!-- Modal de Conta: SÓ formulário de acesso (Entrar / Criar conta / visitante) -->
     <div id="account-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 16px 18px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 400px; max-width: 92vw;">
-
-            <!-- Conteúdo único: Perfil (sempre) + Conta (login se deslogado / resumo se logado) -->
-
-            <!-- Perfil (apelido, elo, stats) -->
-            <div id="profile-view">
-                <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">👤 Perfil do Jogador</h2>
-                <div id="profile-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin-bottom: 1px;"></div>
-                <div id="profile-mode" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
-                <div id="profile-nick-edit" style="display: none; margin-bottom: 8px;">
-                    <div style="display: flex; gap: 6px;">
-                        <input id="profile-nick-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" class="qm-input" style="text-align: center; font-weight: bold; padding: 7px 9px;">
-                        <button id="profile-nick-save" type="button" title="Salvar apelido" style="padding: 7px 11px; background: #16a34a; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">💾</button>
-                    </div>
-                    <div id="profile-nick-msg" style="min-height: 12px; font-size: 10.5px; color: #64748b; margin-top: 2px;"></div>
-                </div>
-                <div id="profile-body" style="min-height: 80px;"></div>
-            </div>
-
-            <!-- VIEW: Conta (login/visitante quando deslogado; resumo da conta quando logado) -->
-            <div style="border-top: 1px solid #1e293b; margin: 10px 0 8px 0; padding-top: 8px; color: #64748b; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;">🔐 Conta</div>
+            <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">🔐 Conta</h2>
             <div id="account-view">
 
                 <!-- Subview: formulário de acesso (deslogado) -->
@@ -397,23 +410,47 @@
                         <button id="account-guest-btn" type="button" style="padding: 8px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
                     </div>
                 </div>
-
-                <!-- Subview: conta conectada (logado) -->
-                <div id="account-logged-view" style="display: none;">
-                    <div style="background: #0b1120; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
-                        <div style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Conectado como</div>
-                        <div id="account-logged-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin: 2px 0;"></div>
-                        <div id="account-logged-email" style="color: #94a3b8; font-size: 11.5px;"></div>
-                    </div>
-                    <div id="account-logged-msg" style="min-height: 14px; font-size: 11px; color: #34d399; margin-bottom: 6px;"></div>
-                    <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <button id="account-reset-logged-btn" type="button" style="padding: 8px; background: #1e293b; border: 1px solid #475569; color: #7dd3fc; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">🔑 Redefinir senha por e-mail</button>
-                        <button id="account-logout-btn" type="button" style="padding: 8px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
-                    </div>
-                </div>
-
                 <button id="account-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 7px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Link do GitHub do autor (rodapé; esconde durante a batalha) -->
+    <a id="gh-footer-link" href="https://github.com/GGnzr" target="_blank" rel="noopener" title="GitHub do autor">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        <span>GGnzr</span>
+    </a>
+
+    <!-- Modal de Perfil do Jogador (ranking, apelido e sessão da conta) -->
+    <div id="profile-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 16px 18px; border-radius: 14px; text-align: center; border: 2px solid #a855f7; box-shadow: 0 10px 40px rgba(168, 85, 247, 0.25); width: 400px; max-width: 92vw;">
+            <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">👤 Perfil do Jogador</h2>
+            <div id="profile-view">
+                <div id="profile-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin-bottom: 1px;"></div>
+                <div id="profile-mode" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
+                <div id="profile-nick-edit" style="display: none; margin-bottom: 8px;">
+                    <div style="display: flex; gap: 6px;">
+                        <input id="profile-nick-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" class="qm-input" style="text-align: center; font-weight: bold; padding: 7px 9px;">
+                        <button id="profile-nick-save" type="button" title="Salvar apelido" style="padding: 7px 11px; background: #16a34a; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">💾</button>
+                    </div>
+                    <div id="profile-nick-msg" style="min-height: 12px; font-size: 10.5px; color: #64748b; margin-top: 2px;"></div>
+                </div>
+                <div id="profile-body" style="min-height: 80px;"></div>
+            </div>
+            <div style="border-top: 1px solid #1e293b; margin: 10px 0 8px 0; padding-top: 8px; color: #64748b; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;">🔐 Conta</div>
+            <div id="account-logged-view" style="display: none;">
+                <div style="background: #0b1120; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
+                    <div style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Conectado como</div>
+                    <div id="account-logged-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin: 2px 0;"></div>
+                    <div id="account-logged-email" style="color: #94a3b8; font-size: 11.5px;"></div>
+                </div>
+                <div id="account-logged-msg" style="min-height: 14px; font-size: 11px; color: #34d399; margin-bottom: 6px;"></div>
+                <div style="display: flex; flex-direction: column; gap: 6px;">
+                    <button id="account-reset-logged-btn" type="button" style="padding: 8px; background: #1e293b; border: 1px solid #475569; color: #7dd3fc; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">🔑 Redefinir senha por e-mail</button>
+                    <button id="account-logout-btn" type="button" style="padding: 8px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
+                </div>
+            </div>
+            <button id="profile-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 7px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
         </div>
     </div>
 
@@ -421,7 +458,7 @@
     <div id="ranking-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 460px; max-width: 94vw;">
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 19px; font-weight: bold;">🏆 Ranking da Arena</h2>
-            <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por Pontos de Ranking (RP)</div>
+            <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por LabPoints (LP)</div>
             <div id="ranking-tier-tabs" style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;"></div>
             <div id="ranking-div-tabs" style="display: none; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;"></div>
             <div id="ranking-body" style="max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 120px;"></div>
@@ -547,28 +584,35 @@
         const accountLoggedNick = document.getElementById('account-logged-nick');
         const accountLoggedMsg = document.getElementById('account-logged-msg');
         const accountResetLoggedBtn = document.getElementById('account-reset-logged-btn');
+        const profileOverlay = document.getElementById('profile-overlay');
+        const profileCloseBtn = document.getElementById('profile-close-btn');
         let accountMode = 'login';
         let authenticatedUser = null;
         let accountRequired = false;
 
-        // Conta state-aware: deslogado mostra SÓ o formulário de acesso; logado
-        // mostra SÓ a área do jogador (perfil + resumo da conta). Login e
-        // perfil nunca aparecem juntos no modal.
+        // Conta e Perfil são modais SEPARADOS:
+        // - account-overlay: formulário de acesso (entrar/cadastrar/visitante)
+        // - profile-overlay: ranking + apelido + sessão da conta logada
+        // configura o formulário da Conta e a sessão do Perfil conforme o
+        // estado de auth. Visitante = auth ANÔNIMA (isAnonymous) → não é conta.
         function renderAccountAuthState() {
-            const logged = !!authenticatedUser;
-            if (profileView) profileView.style.display = logged ? 'block' : 'none';
-            if (accountFormView) accountFormView.style.display = logged ? 'none' : 'block';
-            if (accountLoggedView) accountLoggedView.style.display = logged ? 'block' : 'none';
-            if (logged) {
-                if (accountLoggedEmail) accountLoggedEmail.textContent = authenticatedUser.email || '—';
-                if (accountLoggedNick) accountLoggedNick.textContent = sessionStorage.getItem('labcombat_nickname') || authenticatedUser.displayName || 'Jogador';
-                if (accountLoggedMsg) accountLoggedMsg.textContent = '';
-            } else {
+            const logged = !!authenticatedUser && !authenticatedUser.isAnonymous;
+            if (!logged) {
                 accountEmailInput.value = '';
                 accountPasswordInput.value = '';
                 accountNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || '';
                 accountErrorMsg.textContent = 'Sem conta? Você pode continuar como visitante.';
+            } else {
+                // Logado não tem nada pra fazer no modal de Conta (acesso):
+                // se ele estiver aberto, fecha e o chip aponta pro Perfil.
+                if (accountOverlay && accountOverlay.style.display === 'flex' && !accountRequired) {
+                    closeAccountModal();
+                }
+                if (accountLoggedEmail) accountLoggedEmail.textContent = authenticatedUser.email || '—';
+                if (accountLoggedNick) accountLoggedNick.textContent = sessionStorage.getItem('labcombat_nickname') || authenticatedUser.displayName || 'Jogador';
+                if (accountLoggedMsg) accountLoggedMsg.textContent = '';
             }
+            if (accountLoggedView) accountLoggedView.style.display = logged ? 'block' : 'none';
         }
 
         if (accountResetLoggedBtn) {
@@ -610,10 +654,20 @@
 
         window.addEventListener('open-account-modal', (event) => {
             if (window.__gmPanelClosedAt && Date.now() - window.__gmPanelClosedAt < 800) return; // clique atravessou o painel GM
+            // Conta logada de verdade: o acesso é pelo Perfil — redireciona.
+            const isLogged = !!authenticatedUser && !authenticatedUser.isAnonymous;
+            if (isLogged && !event.detail?.required) {
+                window.dispatchEvent(new CustomEvent('open-profile-modal'));
+                return;
+            }
             accountRequired = Boolean(event.detail?.required);
             accountOverlay.style.display = 'flex';
             accountCloseBtn.style.display = accountRequired ? 'none' : 'block';
             renderAccountAuthState();
+            // detail.register = true abre já na aba "Criar conta" (ex.: visitante
+            // tocando no chip do perfil ou no convite de LP do fim da partida)
+            if (event.detail?.register) setAccountMode('register');
+            else setAccountMode('login');
             if (!authenticatedUser) accountEmailInput.focus();
         });
 
@@ -623,6 +677,22 @@
                 sessionStorage.setItem('labcombat_access_mode', 'account');
                 accountRequired = false;
                 closeAccountModal(); // login com sucesso sempre fecha o modal (antes só fechava no fluxo obrigatório)
+                // Restaura o apelido da conta na sessão: no login automático
+                // (sessão restaurada pelo Firebase, ex.: outro dia/PC) o fluxo
+                // não passa por loginAccount, então o sessionStorage vinha
+                // vazio e o menu caía no padrão "Jogador 1". Fonte de verdade:
+                // users/{uid}/nickname no RTDB (fallback: displayName).
+                if (!user.isAnonymous) {
+                    get(ref(db, `users/${user.uid}/nickname`))
+                        .then((snap) => snap.exists() ? snap.val() : null)
+                        .catch(() => null)
+                        .then((profileNick) => {
+                            const nickname = profileNick || user.displayName;
+                            if (!nickname) return;
+                            sessionStorage.setItem('labcombat_nickname', nickname);
+                            window.dispatchEvent(new CustomEvent('nickname-changed', { detail: nickname }));
+                        });
+                }
             }
             renderAccountAuthState();
             window.dispatchEvent(new CustomEvent('account-state-changed', {
@@ -648,9 +718,10 @@
                 await logoutAccount();
                 sessionStorage.setItem('labcombat_access_mode', 'guest');
                 accountRequired = false;
-                // Retorna à tela de login (o observeAuthState também re-renderiza)
+                // Sai pelo modal de Perfil (onde o botão de logout mora agora)
                 authenticatedUser = null;
                 renderAccountAuthState();
+                closeProfileModal();
             } catch (error) {
                 accountErrorMsg.textContent = error.message || 'Não foi possível sair da conta.';
             } finally {
@@ -716,8 +787,6 @@
         const questionLimitInput = document.getElementById('dev-question-limit');
         const statusEl = document.getElementById('dev-timers-status');
         const toggleBtn = document.getElementById('dev-toggle-btn');
-        const btnGmLogout = document.getElementById('btn-gm-logout');
-        const gmReopenPill = document.getElementById('gm-reopen-pill');
 
         // Elementos de Abas da Sidebar GM
         const tabBtnControls = document.getElementById('tab-btn-controls');
@@ -834,12 +903,13 @@
         window.addEventListener('open-profile-modal', () => {
             if (window.__gmPanelClosedAt && Date.now() - window.__gmPanelClosedAt < 800) return; // clique atravessou o painel GM
             accountRequired = false; // perfil nunca é obrigatório
-            accountRequired = false; // perfil nunca é obrigatório
-            if (accountCloseBtn) accountCloseBtn.style.display = 'block';
-            if (accountOverlay) accountOverlay.style.display = 'flex';
-            renderAccountAuthState(); // garante que login e perfil não se misturem
+            if (profileOverlay) profileOverlay.style.display = 'flex';
+            renderAccountAuthState(); // ajusta o bloco de sessão da conta
             renderProfileModal();
         });
+        function closeProfileModal() { if (profileOverlay) profileOverlay.style.display = 'none'; }
+        if (profileCloseBtn) profileCloseBtn.addEventListener('click', closeProfileModal);
+        if (profileOverlay) profileOverlay.addEventListener('click', (e) => { if (e.target === profileOverlay) closeProfileModal(); });
         if (accountOverlay) accountOverlay.addEventListener('click', (e) => { if (e.target === accountOverlay) closeAccountModal(); });
 
         if (profileNickSave) {
@@ -882,7 +952,7 @@
                 profileBody.innerHTML = `
                     <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
                         Você joga como <strong style="color:#f8fafc;">visitante</strong> — suas partidas <strong style="color:#f8fafc;">não pontuam</strong> no ranking.<br>
-                        Crie uma conta abaixo para acumular RP e subir de elo: 🥉→🥈→🥇→💎→👑
+                        Crie uma conta abaixo para acumular LabPoints e subir de elo: 🐣→☕→💻→💎→👑
                     </div>`;
                 return;
             }
@@ -892,7 +962,7 @@
                 if (!entry) {
                     profileBody.innerHTML = `
                         <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
-                            Nenhuma partida ranqueada ainda.<br>Vença a 1ª para ganhar <strong style="color:#34d399;">+25 RP</strong>! 🚀
+                            Nenhuma partida ranqueada ainda.<br>Vença a 1ª para ganhar <strong style="color:#34d399;">+25 LP</strong>! 🚀
                         </div>`;
                     return;
                 }
@@ -908,12 +978,12 @@
                 const progress = rank.nextMin != null ? Math.min(100, Math.round(((points - rank.rankMin) / (rank.nextMin - rank.rankMin)) * 100)) : 100;
                 profileBody.innerHTML = `
                     <div style="background:#0b1120; border:1.5px solid #334155; border-radius:10px; padding:10px; margin-bottom:8px;">
-                        <div style="color:#f8fafc; font-size:14.5px; font-weight:bold;">${rank.icon} ${rank.label}</div>
-                        <div style="color:#c084fc; font-size:12px; font-weight:bold; margin-top:1px;">${points} RP ${position ? `· 🏆 #${position} de ${total}` : ''}</div>
+                        <div style="color:#f8fafc; font-size:14.5px; font-weight:bold;">${rank.label}</div>
+                        <div style="color:#c084fc; font-size:12px; font-weight:bold; margin-top:1px;">${points} LP ${position ? `· 🏆 #${position} de ${total}` : ''}</div>
                         <div style="background:#020617; border:1px solid #334155; border-radius:6px; height:7px; margin-top:7px; overflow:hidden;">
                             <div style="height:100%; width:${progress}%; background:linear-gradient(90deg,#a855f7,#38bdf8);"></div>
                         </div>
-                        <div style="color:#64748b; font-size:10px; margin-top:3px;">${rank.nextMin != null ? `Próximo: ${rank.nextMin} RP` : '👑 Elo máximo alcançado!'}</div>
+                        <div style="color:#64748b; font-size:10px; margin-top:3px;">${rank.nextMin != null ? `Próximo: ${rank.nextMin} LP` : '👑 Elo máximo alcançado!'}</div>
                     </div>
                     <div style="display:flex; gap:5px; text-align:center;">
                         <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#34d399; font-weight:bold; font-size:14px;">${wins}</div><div style="color:#64748b; font-size:9.5px;">vitórias</div></div>
@@ -970,7 +1040,7 @@
                     <span style="flex:1; color:#f8fafc; font-size:12.5px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}</span>
                     <span style="font-size:11px; color:#cbd5e1; white-space:nowrap;">${rank.label}</span>
                     <span style="font-size:10.5px; color:#64748b; white-space:nowrap;">${wl}</span>
-                    <span style="font-size:11.5px; color:#c084fc; font-weight:bold; white-space:nowrap;">${points} RP</span>
+                    <span style="font-size:11.5px; color:#c084fc; font-weight:bold; white-space:nowrap;">${points} LP</span>
                 </div>`;
             }).join('');
         }
@@ -1390,28 +1460,8 @@
             });
         }
 
-        if (gmReopenPill) {
-            gmReopenPill.addEventListener('pointerdown', () => {
-                sidebarOpen = true;
-                updateLayoutClasses();
-            });
-        }
-
-        if (btnGmLogout) {
-            btnGmLogout.addEventListener('pointerdown', () => {
-                const authenticatedUser = getAuthenticatedUser();
-                if (authenticatedUser) {
-                    logEvent('admin', `[Admin] Logout: ${authenticatedUser.email || authenticatedUser.uid}.`, {
-                        uid: authenticatedUser.uid,
-                        email: authenticatedUser.email || null
-                    });
-                }
-                gmActive = false;
-                sidebarOpen = false;
-                window.__gmPanelClosedAt = Date.now();
-                updateLayoutClasses();
-            });
-        }
+        // Nota: o pill "Reabrir Painel GM" foi removido — o acesso ao GM é só
+        // pelo botão 🛡️ Modo GM no menu (canto inferior direito) ou F2.
 
         // Modal de Login do GM
         async function openGMLoginModal() {
@@ -1476,6 +1526,61 @@
         if (btnApplyTimers) btnApplyTimers.addEventListener('click', () => emitTimers(true));
         if (startDelayInput) startDelayInput.addEventListener('change', () => emitTimers(true));
         if (questionLimitInput) questionLimitInput.addEventListener('change', () => emitTimers(true));
+
+        // Configuração de Dano e LabPoints (vale a partir da próxima rodada/partida;
+        // em sala como P1, os valores são gravados na sala p/ os 2 clientes)
+        const combatInputs = {
+            dmgAttack: document.getElementById('dev-dmg-attack'),
+            dmgSpecial: document.getElementById('dev-dmg-special'),
+            ultKoHp: document.getElementById('dev-ult-ko-hp'),
+            maxHp: document.getElementById('dev-max-hp'),
+            modChance: document.getElementById('dev-mod-chance'),
+            modHeal: document.getElementById('dev-mod-heal'),
+            lpWin: document.getElementById('dev-lp-win'),
+            lpBonus: document.getElementById('dev-lp-bonus'),
+            lpLoss: document.getElementById('dev-lp-loss')
+        };
+        const combatDefaults = { dmgAttack: 15, dmgSpecial: 28, ultKoHp: 33, maxHp: 100, modChance: 30, modHeal: 10, lpWin: 25, lpBonus: 5, lpLoss: 10 };
+        const combatStatusEl = document.getElementById('dev-combat-status');
+        const lpStatusEl = document.getElementById('dev-lp-status');
+        for (const [key, input] of Object.entries(combatInputs)) {
+            if (input) input.value = localStorage.getItem(`dev_${key.replace(/[A-Z]/g, c => '_' + c.toLowerCase())}`) ?? combatDefaults[key];
+        }
+
+        function emitCombatRules(showFeedback = true, statusTarget = combatStatusEl) {
+            const clamp = (input, def, min, max) => Math.max(min, Math.min(max, parseInt(input.value, 10) || def));
+            const rules = {
+                dmgAttack: clamp(combatInputs.dmgAttack, 15, 1, 100),
+                dmgSpecial: clamp(combatInputs.dmgSpecial, 28, 1, 100),
+                ultKoHp: clamp(combatInputs.ultKoHp, 33, 1, 99),
+                maxHp: clamp(combatInputs.maxHp, 100, 10, 200),
+                modChance: clamp(combatInputs.modChance, 30, 0, 100),
+                modHeal: clamp(combatInputs.modHeal, 10, 1, 100),
+                lpWin: clamp(combatInputs.lpWin, 25, 0, 999),
+                lpBonus: clamp(combatInputs.lpBonus, 5, 0, 999),
+                lpLoss: clamp(combatInputs.lpLoss, 10, 0, 999)
+            };
+            for (const [key, val] of Object.entries(rules)) {
+                localStorage.setItem(`dev_${key.replace(/[A-Z]/g, c => '_' + c.toLowerCase())}`, val);
+            }
+
+            window.dispatchEvent(new CustomEvent('dev-set-combat', { detail: rules }));
+
+            if (showFeedback && statusTarget) {
+                statusTarget.textContent = '✓ Aplicado!';
+                setTimeout(() => { if (statusTarget) statusTarget.textContent = ''; }, 2000);
+            }
+        }
+
+        const btnApplyCombat = document.getElementById('dev-apply-combat-btn');
+        if (btnApplyCombat) btnApplyCombat.addEventListener('click', () => emitCombatRules(true, combatStatusEl));
+        // Botão do card LabPoints: aplica o mesmo conjunto (ids de combate + LP),
+        // mas mostra o feedback no card de LP
+        const btnApplyLp = document.getElementById('dev-apply-lp-btn');
+        if (btnApplyLp) btnApplyLp.addEventListener('click', () => emitCombatRules(true, lpStatusEl));
+        for (const input of Object.values(combatInputs)) {
+            if (input) input.addEventListener('change', () => emitCombatRules(true, combatStatusEl));
+        }
 
         // Controles de velocidade das animações
         const animWalk = document.getElementById('dev-anim-walk');
@@ -1856,7 +1961,7 @@
         if (btnResetSeason) {
             btnResetSeason.addEventListener('click', async () => {
                 if (!gmActive) return;
-                if (!confirm('⚠️ ZERAR TEMPORADA?\n\nIsso apaga TODO o ranking (RP, vitórias e elos de todos os jogadores) para sempre.\n\nDeseja continuar?')) return;
+                if (!confirm('⚠️ ZERAR TEMPORADA?\n\nIsso apaga TODO o ranking (LabPoints, vitórias e elos de todos os jogadores) para sempre.\n\nDeseja continuar?')) return;
                 if (!confirm('Tem CERTEZA ABSOLUTA? Essa ação não pode ser desfeita!')) return;
                 btnResetSeason.disabled = true;
                 btnResetSeason.textContent = 'Zerando...';
@@ -1880,15 +1985,6 @@
             });
         }
 
-        const btnAnimationTest = document.getElementById('dev-animation-test-btn');
-        if (btnAnimationTest) {
-            btnAnimationTest.addEventListener('click', () => {
-                sidebarOpen = false;
-                updateLayoutClasses();
-                if (window.game) window.game.scene.start('AnimationTestScene');
-            });
-        }
-
         // Listener para dispensar aviso de rotação em mobile
         const orientationPrompt = document.getElementById('orientation-prompt');
         const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
@@ -1901,27 +1997,6 @@
         // Limpeza de legado de escala e garantia de 16:9 HD sem distorção
         localStorage.removeItem('labcombat_scale_mode');
         document.body.classList.remove('aspect-fit');
-
-        // Handler de Tela Cheia (Fullscreen)
-        const fullscreenBtn = document.getElementById('btn-fullscreen-toggle');
-        if (fullscreenBtn) {
-            fullscreenBtn.addEventListener('click', () => {
-                if (!document.fullscreenElement) {
-                    document.documentElement.requestFullscreen().catch(() => {});
-                    fullscreenBtn.textContent = '✕ Sair Cheia';
-                } else {
-                    document.exitFullscreen().catch(() => {});
-                    fullscreenBtn.textContent = '⛶ Tela Cheia';
-                }
-            });
-            document.addEventListener('fullscreenchange', () => {
-                if (!document.fullscreenElement) {
-                    fullscreenBtn.textContent = '⛶ Tela Cheia';
-                } else {
-                    fullscreenBtn.textContent = '✕ Sair Cheia';
-                }
-            });
-        }
 
         // Handlers de Apelido (Nickname)
         const nicknameOverlay = document.getElementById('nickname-overlay');

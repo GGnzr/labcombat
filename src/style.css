@@ -207,31 +207,37 @@ body.gm-active.dev-sidebar-open #dev-sidebar {
   display: flex !important;
 }
 
-/* Botão flutuante discreto para reabrir a sidebar quando o GM a recolher */
+/* (o pill de reabrir a sidebar GM foi desativado — acesso só pelo menu/F2) */
 #gm-reopen-pill {
-  display: none;
+  display: none !important;
+}
+
+/* Badge do GitHub do autor no rodapé (fora da batalha para não cobrir o HUD) */
+#gh-footer-link {
   position: fixed;
-  top: 10px;
-  right: 10px;
-  z-index: 999;
-  background: #1e293b;
-  border: 1.5px solid #38bdf8;
-  color: #38bdf8;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: bold;
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-  transition: all 0.2s ease;
+  left: 14px;
+  bottom: 12px;
+  z-index: 150;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: #0d1117;
+  border: 1.5px solid #30363d;
+  color: #e6edf3;
+  padding: 6px 12px 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: all 0.15s ease;
 }
-
-#gm-reopen-pill:hover {
-  background: #38bdf8;
-  color: #0f172a;
+#gh-footer-link:hover {
+  border-color: #58a6ff;
+  color: #58a6ff;
+  transform: translateY(-1px);
 }
-
-body.gm-active:not(.dev-sidebar-open) #gm-reopen-pill {
-  display: block !important;
+body.in-battle #gh-footer-link {
+  display: none !important; /* não cobre o HUD da luta */
 }
 

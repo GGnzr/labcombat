@@ -42,6 +42,7 @@ const EVENT_CONTRACT = [
     { event: 'account-state-changed',   producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'admin-access-changed',    producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'dev-set-timers',          producers: ['index.html'],              consumers: ['src/scenes/MainScene.js', 'src/scenes/MenuScene.js'] },
+    { event: 'dev-set-combat',          producers: ['index.html'],              consumers: ['src/scenes/MainScene.js'] },
     { event: 'dev-anim-speeds',         producers: ['index.html'],              consumers: ['src/scenes/MainScene.js'] },
     { event: 'dev-streak',              producers: ['index.html'],              consumers: ['src/scenes/MainScene.js'] },
     { event: 'dev-next-question',       producers: ['index.html'],              consumers: ['src/scenes/MainScene.js'] },
