@@ -6,6 +6,7 @@ import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
 import { getRandomArena } from '../arenas.js';
 import { loadQuestionBanks } from '../questionBank.js';
+import { loadMyLeaderboardEntry, getRankForPoints } from '../ranking.js';
 import { SoundManager } from '../audio/SoundManager.js';
 
 export class CharacterSelectScene extends Phaser.Scene {
@@ -237,7 +238,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
-        this.p1UltimateText = this.add.text(stageX, 158, '⚡ KERNEL PANIC (TELA AZUL)', { 
+        this.p1UltimateText = this.add.text(stageX, 158, '', { 
             fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
@@ -298,7 +299,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
-        this.p2UltimateText = this.add.text(stageX, 158, '⚡ 404 NOT FOUND (CORS ERROR)', { 
+        this.p2UltimateText = this.add.text(stageX, 158, '', { 
             fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
@@ -489,7 +490,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         const formatNick = (nick, fallback) => {
             if (!nick) return fallback;
             const clean = nick.toUpperCase();
-            return clean.length > 12 ? clean.substring(0, 11) + '…' : clean;
+            return clean.length > 16 ? clean.substring(0, 15) + '…' : clean;
         };
 
         if (side === 'p1') {
@@ -517,17 +518,15 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.p1SubjectText.setStyle({ fill: '#64748b' });
                 }
             }
+            // Especial: nome não é mais exibido na seleção (design pedido)
             if (this.p1UltimateText) {
-                if (isOnline) {
-                    this.p1UltimateText.setText(`⚡ ${prof.ultimateName}`);
-                    this.p1UltimateText.setVisible(true);
-                } else {
-                    this.p1UltimateText.setText('');
-                    this.p1UltimateText.setVisible(false);
-                }
+                this.p1UltimateText.setText('');
+                this.p1UltimateText.setVisible(false);
             }
             if (this.p1NickText) {
-                this.p1NickText.setText(formatNick(nickname, isOnline ? 'JOGADOR 1' : 'AGUARDANDO P1'));
+                const badge = isOnline ? this.rankLabels?.p1 : null;
+                const plain = formatNick(nickname, isOnline ? 'JOGADOR 1' : 'AGUARDANDO P1');
+                this.p1NickText.setText(badge ? `${badge} ${plain}` : plain);
             }
             if (this.p1StatusBadge) {
                 if (!isOnline) {
@@ -567,17 +566,15 @@ export class CharacterSelectScene extends Phaser.Scene {
                     this.p2SubjectText.setStyle({ fill: '#64748b' });
                 }
             }
+            // Especial: nome não é mais exibido na seleção (design pedido)
             if (this.p2UltimateText) {
-                if (isOnline) {
-                    this.p2UltimateText.setText(`⚡ ${prof.ultimateName}`);
-                    this.p2UltimateText.setVisible(true);
-                } else {
-                    this.p2UltimateText.setText('⚡ AGUARDANDO OPONENTE');
-                    this.p2UltimateText.setVisible(true);
-                }
+                this.p2UltimateText.setText('');
+                this.p2UltimateText.setVisible(false);
             }
             if (this.p2NickText) {
-                this.p2NickText.setText(formatNick(nickname, isOnline ? 'JOGADOR 2' : 'AGUARDANDO P2'));
+                const badge = isOnline ? this.rankLabels?.p2 : null;
+                const plain = formatNick(nickname, isOnline ? 'JOGADOR 2' : 'AGUARDANDO P2');
+                this.p2NickText.setText(badge ? `${badge} ${plain}` : plain);
             }
             if (this.p2StatusBadge) {
                 if (!isOnline) {
@@ -666,6 +663,19 @@ export class CharacterSelectScene extends Phaser.Scene {
         // Envia a escolha inicial
         this.syncSelectionToFirebase();
 
+        // Badge de elo na seleção: grava MINHA etiqueta de elo no nó da sala
+        // para o oponente ver (só contas logadas aparecem no ranking)
+        const myUid = localStorage.getItem('labcombat_account_uid');
+        if (myUid && sessionStorage.getItem('labcombat_access_mode') !== 'guest') {
+            loadMyLeaderboardEntry(myUid).then(({ entry }) => {
+                if (!entry) return;
+                const rank = getRankForPoints(entry.points || 0);
+                update(ref(db, `rooms/${this.roomId}/${this.playerId}`), {
+                    rankLabel: `${rank.icon}${rank.division ? ' ' + rank.division : ''}`
+                }).catch(() => {});
+            }).catch(() => {});
+        }
+
         // Offset do relógio do servidor para sincronizar a contagem de início da partida
         this.serverOffsetUnsubscribe = onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
             this.serverTimeOffset = snap.val() || 0;
@@ -695,6 +705,8 @@ export class CharacterSelectScene extends Phaser.Scene {
             const myData = data[myKey];
 
             this.isOpponentConnected = !!oppData;
+            // Etiquetas de elo (quando os jogadores têm conta ranqueada)
+            this.rankLabels = { p1: data.p1?.rankLabel || null, p2: data.p2?.rankLabel || null };
 
             if (oppData) {
                 this.oppProfessorId = oppData.characterId || (oppKey === 'p1' ? 'so' : 'web');

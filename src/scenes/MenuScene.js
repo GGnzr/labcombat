@@ -5,6 +5,7 @@ import { ref, get, set, onDisconnect } from "firebase/database";
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
 import { SoundManager } from '../audio/SoundManager.js';
+import { loadTopLeaderboard, loadMyLeaderboardEntry, getRankForPoints } from '../ranking.js';
 
 const tabInstanceKey = 'labcombat_tab_instance_id';
 const newTabInstanceId = () => globalThis.crypto?.randomUUID?.() || `${Date.now()}-${Math.random()}`;
@@ -75,7 +76,9 @@ export class MenuScene extends Phaser.Scene {
         this.add.rectangle(centerX, 360, width, 720, 0x181e26, 0.20);
 
         // 2. Cabeçalho / Branding Suave Arcade
-        const topBadge = this.add.container(centerX, 42);
+        const lobbyCenterX = (width - 320) / 2;  // centro da coluna de ações (ranking fica na lateral direita)
+
+        const topBadge = this.add.container(lobbyCenterX, 38);
         const topBadgeGfx = this.add.graphics();
         drawRoundedRect(topBadgeGfx, -170, -14, 340, 28, 14, 0x242a35, 0.95, 0x475569, 1.2);
         const topBadgeTxt = this.add.text(0, 0, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
@@ -83,25 +86,40 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         topBadge.add([topBadgeGfx, topBadgeTxt]);
 
-        const titleText = this.add.text(centerX, 95, 'LABCOMBAT', { 
-            fontSize: '62px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6, resolution: 2,
+        const titleText = this.add.text(lobbyCenterX, 88, 'LABCOMBAT', { 
+            fontSize: '56px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6, resolution: 2,
             fontFamily: '"Impact", "Arial Black", system-ui, sans-serif'
         }).setOrigin(0.5);
         titleText.setShadow(0, 0, '#d97706', 14, false, true);
 
-        this.add.text(centerX, 142, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
+        this.add.text(lobbyCenterX, 132, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
             fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
-        createSmoothButton(this, width - 130, 36, 120, 30, '🔐 Conta / Visitante', {
-            radius: 15,
+        // Botão único: Perfil (elo/stats) + Conta (login/visitante) no mesmo modal
+        // Apelido atual vira o chip clicável no topo (👤 nick):
+        // visitante → edita apelido; conta logada → abre o Perfil
+        this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
+        this.btnProfileAccount = createSmoothButton(this, width - 160, 36, 190, 32, `👤 ${this.playerNickname.slice(0, 16)}`, {
+            radius: 16,
             fillColor: 0x242a35,
             hoverFillColor: 0x334155,
-            strokeColor: 0x38bdf8,
-            textColor: '#bae6fd',
-            fontSize: '11px',
-            onClick: () => window.dispatchEvent(new CustomEvent('open-account-modal'))
+            strokeColor: 0xa855f7,
+            textColor: '#e9d5ff',
+            fontSize: '12px',
+            fontStyle: 'bold',
+            onClick: () => this.openPlayerModal()
         });
+
+        this.handleNicknameChanged = (e) => {
+            this.playerNickname = e.detail || 'Jogador 1';
+            this.btnProfileAccount?.setText(`👤 ${this.playerNickname.slice(0, 16)}`);
+        };
+        window.addEventListener('nickname-changed', this.handleNicknameChanged);
+        this.handleAccountStateChanged = () => {
+            this.btnProfileAccount?.setText(`👤 ${(this.playerNickname || 'Jogador 1').slice(0, 16)}`);
+        };
+        window.addEventListener('account-state-changed', this.handleAccountStateChanged);
 
         const accessMode = sessionStorage.getItem('labcombat_access_mode');
         const savedNickname = sessionStorage.getItem('labcombat_nickname') || '';
@@ -112,9 +130,8 @@ export class MenuScene extends Phaser.Scene {
             });
         }
 
-        // Barra de Definição de Apelido (Nickname)
+        // (Barra de apelido removida — o chip do topo cobre esse papel)
         this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
-        this.createNicknameBar(centerX, 190);
 
         // 3. Card 1: Criar Sala (Host / P1)
         this.createHostCard();
@@ -122,8 +139,11 @@ export class MenuScene extends Phaser.Scene {
         // 4. Card 2: Entrar em Sala (Client / P2)
         this.createJoinCard();
 
+        // 4.5. Painel de Ranking (Top 10) — sempre visível ao lado dos cards
+        this.createRankingPanel();
+
         // 5. Mensagens de Status / Feedback (Suave e Arredondado)
-        this.statusText = createSmoothBanner(this, centerX, 560, '', { 
+        this.statusText = createSmoothBanner(this, lobbyCenterX, 545, '', { 
             radius: 14,
             fillColor: 0x242a35,
             strokeColor: 0x475569,
@@ -139,8 +159,8 @@ export class MenuScene extends Phaser.Scene {
         this.createRulesFooter();
 
         // 7. Sub-rodapé informativo
-        this.add.text(centerX, 680, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
-            fontSize: '11px', fill: '#94a3b8', resolution: 2
+        this.add.text(lobbyCenterX, 684, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
+            fontSize: '10px', fill: '#94a3b8', resolution: 2
         }).setOrigin(0.5);
 
         // 8. Botão discreto de Acesso Professor / GM (Suave)
@@ -185,6 +205,9 @@ export class MenuScene extends Phaser.Scene {
             if (this.handleNicknameChanged) {
                 window.removeEventListener('nickname-changed', this.handleNicknameChanged);
             }
+            if (this.handleAccountStateChanged) {
+                window.removeEventListener('account-state-changed', this.handleAccountStateChanged);
+            }
             if (this.handleDevTimersChanged) {
                 window.removeEventListener('dev-set-timers', this.handleDevTimersChanged);
             }
@@ -200,72 +223,19 @@ export class MenuScene extends Phaser.Scene {
         }
     }
 
-    createNicknameBar(x, y) {
-        this.nicknameContainer = this.add.container(x, y);
-
-        const bgGfx = this.add.graphics();
-        const renderBg = (fColor, sColor) => {
-            bgGfx.clear();
-            drawRoundedRect(bgGfx, -220, -20, 440, 40, 20, fColor, 0.96, sColor, 1.5);
-        };
-        renderBg(0x242a35, 0x475569);
-
-        const avatarBg = this.add.circle(-186, 0, 14, 0x334155, 1);
-        const icon = this.add.text(-186, 0, '👤', { 
-            fontSize: '16px',
-            fontFamily: '"Segoe UI Emoji", "Apple Color Emoji", sans-serif'
-        }).setOrigin(0.5);
-
-        const label = this.add.text(-160, 0, 'SEU APELIDO:', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0, 0.5);
-
-        this.nicknameDisplayText = this.add.text(-68, 0, this.playerNickname, { 
-            fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0, 0.5);
-
-        const openModal = () => {
-            window.dispatchEvent(new CustomEvent('open-nickname-modal'));
-        };
-
-        const btnEdit = createSmoothButton(this, 155, 0, 96, 28, '✏️ Alterar', {
-            radius: 14,
-            fillColor: 0x323a48,
-            hoverFillColor: 0x3e4758,
-            strokeColor: 0x526075,
-            textColor: '#f59e0b',
-            fontSize: '11px',
-            onClick: openModal
-        });
-
-        this.nicknameContainer.add([bgGfx, avatarBg, icon, label, this.nicknameDisplayText, btnEdit]);
-
-        this.nicknameContainer.setSize(440, 40);
-        this.nicknameContainer.setInteractive({ useHandCursor: true });
-
-        this.nicknameContainer.on('pointerover', () => {
-            SoundManager.playHover();
-            renderBg(0x2d3544, 0xd97706);
-        });
-        this.nicknameContainer.on('pointerout', () => renderBg(0x242a35, 0x475569));
-        this.nicknameContainer.on('pointerdown', () => {
-            SoundManager.playClick();
-            openModal();
-        });
-
-        // Ouvir mudanças de apelido vindas do modal
-        this.handleNicknameChanged = (e) => {
-            this.playerNickname = e.detail || 'Jogador 1';
-            if (this.nicknameDisplayText) {
-                this.nicknameDisplayText.setText(this.playerNickname);
-            }
-        };
-        window.addEventListener('nickname-changed', this.handleNicknameChanged);
+    // Chip do topo (👤 apelido): conta logada → Perfil; visitante/sem acesso →
+    // modal de Conta (Entrar/Cadastrar/Google — visitante também pode trocar o
+    // apelido ali por "Continuar como visitante")
+    openPlayerModal() {
+        if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
+        const logged = localStorage.getItem('labcombat_account_uid') && sessionStorage.getItem('labcombat_access_mode') !== 'guest';
+        if (logged) window.dispatchEvent(new CustomEvent('open-profile-modal'));
+        else window.dispatchEvent(new CustomEvent('open-account-modal'));
     }
 
     createHostCard() {
-        const cardX = (this.scale.width / 2) - 190;
-        const cardY = 375;
+        const cardX = ((this.scale.width - 320) / 2) - 175;
+        const cardY = 360;
         const card = this.add.container(cardX, cardY);
 
         const bgGfx = this.add.graphics();
@@ -303,14 +273,15 @@ export class MenuScene extends Phaser.Scene {
             renderBg(0x242a35, 0x2563eb, 1.5);
         });
         card.on('pointerdown', () => {
+            if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
             SoundManager.playClick();
             this.createRoom();
         });
     }
 
     createJoinCard() {
-        const cardX = (this.scale.width / 2) + 190;
-        const cardY = 375;
+        const cardX = ((this.scale.width - 320) / 2) + 175;
+        const cardY = 360;
         const card = this.add.container(cardX, cardY);
 
         const bgGfx = this.add.graphics();
@@ -348,6 +319,7 @@ export class MenuScene extends Phaser.Scene {
             renderBg(0x242a35, 0xdc2626, 1.5);
         });
         card.on('pointerdown', () => {
+            if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
             const overlay = document.getElementById('join-overlay');
             if (overlay && overlay.style.display === 'flex') return;
             SoundManager.playClick();
@@ -355,9 +327,123 @@ export class MenuScene extends Phaser.Scene {
         });
     }
 
+    // Sidebar de Ranking (fixa no menu, lateral direita): Top 10 + seu elo.
+    // Dados vêm do RTDB leaderboard/{uid} (src/ranking.js); recarrega a cada
+    // entrada no menu (a cena é recriada a cada retorno).
+    createRankingPanel() {
+        const W = 292;
+        const px = this.scale.width - (W / 2) - 16;   // coluna direita
+        const py = 415;
+        const H = 470;
+
+        const card = createSmoothCard(this, px, py, W, H, {
+            radius: 18,
+            fillColor: 0x0f172a,
+            fillAlpha: 0.97,
+            strokeColor: 0xf59e0b,
+            strokeWidth: 1.5
+        });
+
+        card.add(this.add.text(0, -H / 2 + 22, 'RANKING DA ARENA', {
+            fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 1, resolution: 2
+        }).setOrigin(0.5));
+        card.add(this.add.text(0, -H / 2 + 42, 'Top 10 por Pontos de Ranking (RP)', {
+            fontSize: '10px', fill: '#94a3b8', resolution: 2
+        }).setOrigin(0.5));
+
+        // Lista estilo pódio: 🥇 ouro grande, 🥈 prata médio, 🥉 bronze menor, resto normal
+        const podiumY = -H / 2 + 58;
+        const podiumStyle = [
+            { fs: '15.5px', color: '#fbbf24' },   // 1º — ouro
+            { fs: '13.5px', color: '#e2e8f0' },   // 2º — prata
+            { fs: '12px',   color: '#d68a53' }    // 3º — bronze
+        ];
+        const podiumTexts = podiumStyle.map((s, i) => this.add.text(-W / 2 + 14, podiumY + [0, 32, 58][i], '', {
+            fontSize: s.fs, fill: s.color, fontStyle: 'bold', resolution: 2
+        }).setOrigin(0, 0));
+        const restText = this.add.text(-W / 2 + 14, podiumY + 84, 'Carregando...', {
+            fontSize: '11px', fill: '#cbd5e1', lineSpacing: 8, resolution: 2
+        }).setOrigin(0, 0);
+        card.add([...podiumTexts, restText]);
+
+        // Divisor + bloco "SEU ELO"
+        const divider = this.add.graphics();
+        divider.lineStyle(1, 0x334155);
+        divider.lineBetween(-W / 2 + 14, 96, W / 2 - 14, 96);
+        card.add(divider);
+
+        card.add(this.add.text(0, 112, 'SEU ELO', {
+            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
+        }).setOrigin(0.5));
+        const youMain = this.add.text(0, 146, '', {
+            fontSize: '17px', fill: '#f8fafc', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5);
+        const youSub = this.add.text(0, 172, '', {
+            fontSize: '11px', fill: '#94a3b8', resolution: 2
+        }).setOrigin(0.5);
+        card.add([youMain, youSub]);
+
+        // Link para o ranking geral (todas as posições, filtro por elo)
+        card.add(this.add.text(0, 205, 'Ver ranking completo ›', {
+            fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', function () { this.setStyle({ fill: '#7dd3fc' }); })
+            .on('pointerout', function () { this.setStyle({ fill: '#38bdf8' }); })
+            .on('pointerdown', () => {
+                if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
+                window.dispatchEvent(new CustomEvent('open-ranking-modal'));
+            })
+        );
+
+        const myUid = localStorage.getItem('labcombat_account_uid');
+        const isGuest = sessionStorage.getItem('labcombat_access_mode') === 'guest' || !myUid;
+
+        loadTopLeaderboard(10).then((top) => {
+            if (!this.scene.isActive()) return;
+            const toLine = (e, i) => {
+                const rank = getRankForPoints(e.points || 0);
+                const pos = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
+                const nick = String(e.nickname || 'Jogador'); // nome completo
+                const elo = `${rank.icon}${rank.division ? ' ' + rank.division : ''}`;
+                const line = `${pos} ${nick}  ${elo} ${e.points || 0}RP`;
+                return e.uid === myUid ? `${line} ◄` : line;
+            };
+            podiumTexts.forEach((t, i) => t.setText(top[i] ? toLine(top[i], i) : ''));
+            restText.setText(top.length > 3 ? top.slice(3).map(toLine).join('\n') : (top.length ? '' : 'Ninguém pontuou ainda.\nVença uma partida com conta\npara entrar no ranking! 🚀'));
+        }).catch(() => {
+            if (!this.scene.isActive()) return;
+            restText.setText('Falha ao carregar o ranking.');
+        });
+
+        if (isGuest) {
+            youMain.setText('🎮 Visitante');
+            youSub.setText('Entre com conta p/ pontuar');
+        } else {
+            youMain.setText('...');
+            loadMyLeaderboardEntry(myUid).then(({ entry, position, total }) => {
+                if (!this.scene.isActive()) return;
+                if (!entry) {
+                    youMain.setText('🥉 Sem elo ainda');
+                    youSub.setText('Vença a 1ª partida p/ +25 RP');
+                    return;
+                }
+                const rank = getRankForPoints(entry.points || 0);
+                const winRate = entry.matches ? Math.round(((entry.wins || 0) / entry.matches) * 100) : 0;
+                youMain.setText(rank.label);
+                youSub.setText(`${entry.points || 0} RP${position ? ` · #${position} de ${total}` : ''} · ${winRate}% wins`);
+            }).catch(() => {
+                if (!this.scene.isActive()) return;
+                youMain.setText('');
+                youSub.setText('');
+            });
+        }
+    }
+
     createRulesFooter() {
-        const barWidth = Math.min(this.scale.width - 40, 1020);
-        const bar = createSmoothCard(this, this.scale.width / 2, 620, barWidth, 44, {
+        const lobbyCenterX = (this.scale.width - 320) / 2;
+        const barWidth = Math.min(this.scale.width - 360 - 60, 780);
+        const bar = createSmoothCard(this, lobbyCenterX, 645, barWidth, 44, {
             radius: 16,
             fillColor: 0x242a35,
             fillAlpha: 0.95,
@@ -367,7 +453,7 @@ export class MenuScene extends Phaser.Scene {
 
         const getLimit = () => parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
-        this.rulesText = this.add.text(0, 0, `💚 100 HP  •  ⚡ 3 Cargas de Especial  •  💥 Super Golpe & Ultimate K.O.  •  ⏱️ ${getLimit()}s por Questão`, {
+        this.rulesText = this.add.text(0, 0, `💚 100 HP  •  ⚡ 3 Cargas  •  💥 Super & Ultimate  •  ⏱️ ${getLimit()}s / Questão`, {
             fontSize: '13px', fill: '#f1f5f9', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
@@ -376,7 +462,7 @@ export class MenuScene extends Phaser.Scene {
         this.handleDevTimersChanged = (e) => {
             const limit = e?.detail?.questionTimeLimit || getLimit();
             if (this.rulesText) {
-                this.rulesText.setText(`💚 100 HP  •  ⚡ 3 Cargas de Especial  •  💥 Super Golpe & Ultimate K.O.  •  ⏱️ ${limit}s por Questão`);
+                this.rulesText.setText(`💚 100 HP  •  ⚡ 3 Cargas  •  💥 Super & Ultimate  •  ⏱️ ${limit}s / Questão`);
             }
         };
         window.addEventListener('dev-set-timers', this.handleDevTimersChanged);

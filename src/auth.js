@@ -4,7 +4,7 @@
  */
 
 import { auth, db } from './firebase.js';
-import { ref, get, set, update, child } from "firebase/database";
+import { ref, get, set, update, remove, runTransaction, child } from "firebase/database";
 import {
     createUserWithEmailAndPassword,
     GoogleAuthProvider,
@@ -61,19 +61,63 @@ function getAuthErrorMessage(error) {
     return messages[error?.code] || error?.message || 'Não foi possível concluir a autenticação.';
 }
 
+// ── Apelidos únicos ─────────────────────────────────────────────────────────
+// Índice próprio `nicknames/{apelidoNormalizado} = uid` — verificação atômica
+// via runTransaction (não depende de índices do RTDB). Regra: apelido vinculado
+// a uma conta ninguém mais usa (nem visitante, nem outro cadastro).
+const normalizeNick = (nick) => (nick || '').trim().toLowerCase();
+
+// Tenta reservar o apelido para uid (atômico). Retorna true se conseguiu.
+async function claimNickname(uid, nickname) {
+    const key = normalizeNick(nickname);
+    if (!uid || !key) return false;
+    const result = await runTransaction(ref(db, `nicknames/${key}`), (current) => {
+        if (current == null || current === uid) return uid;
+        return; // aborta — já pertence a outro uid
+    });
+    return result.committed;
+}
+
+// Checagem rápida (UX; a autoridade é o claim da transação):
+export async function isNicknameTaken(nickname, exceptUid = null) {
+    const key = normalizeNick(nickname);
+    if (!key) return false;
+    const snap = await get(ref(db, `nicknames/${key}`));
+    return snap.exists() && snap.val() !== exceptUid;
+}
+
+// Libera o apelido antigo (ao trocar): remove só se ainda apontar pro mesmo uid.
+async function releaseNickname(uid, nickname) {
+    const key = normalizeNick(nickname);
+    if (!key) return;
+    const nickRef = ref(db, `nicknames/${key}`);
+    const snap = await get(nickRef);
+    if (snap.exists() && snap.val() === uid) await remove(nickRef).catch(() => {});
+}
+
 export async function registerAccount({ email, password, nickname }) {
     const cleanEmail = (email || '').trim().toLowerCase();
     const cleanNickname = (nickname || '').trim();
     if (!cleanEmail || !password || !cleanNickname) {
         return { success: false, message: 'E-mail, senha e apelido são obrigatórios.' };
     }
-    if (cleanNickname.length < 2 || cleanNickname.length > 14) {
-        return { success: false, message: 'O apelido deve ter entre 2 e 14 caracteres.' };
+    if (cleanNickname.length < 2 || cleanNickname.length > 20) {
+        return { success: false, message: 'O apelido deve ter entre 2 e 20 caracteres.' };
     }
 
     try {
+        // Apelidos são únicos: primeiro tenta reservar o apelido (rápido)
+        if (await isNicknameTaken(cleanNickname)) {
+            return { success: false, message: 'Esse apelido já pertence a uma conta.' };
+        }
         const credential = await createUserWithEmailAndPassword(auth, cleanEmail, password);
         await updateProfile(credential.user, { displayName: cleanNickname });
+        // Trava atômica de unicidade (ganha de checagens simultâneas)
+        const claimed = await claimNickname(credential.user.uid, cleanNickname);
+        if (!claimed) {
+            await credential.user.delete().catch(() => {});
+            return { success: false, message: 'Esse apelido acabou de ser registrado. Escolha outro.' };
+        }
         await set(ref(db, `users/${credential.user.uid}`), {
             uid: credential.user.uid,
             email: cleanEmail,
@@ -100,6 +144,7 @@ export async function loginAccount({ email, password }) {
         const profile = profileSnapshot.exists() ? profileSnapshot.val() : {};
         const nickname = profile.nickname || credential.user.displayName || 'Jogador 1';
         await set(ref(db, `users/${credential.user.uid}/lastLoginAt`), Date.now());
+        await claimNickname(credential.user.uid, nickname).catch(() => {}); // garante o índice p/ contas antigas
         sessionStorage.setItem('labcombat_nickname', nickname);
         localStorage.setItem('labcombat_account_uid', credential.user.uid);
         return { success: true, user: credential.user, profile };
@@ -118,16 +163,24 @@ export async function loginWithGoogle() {
         const existingProfile = profileSnapshot.exists() ? profileSnapshot.val() : null;
         const fallbackNickname = (credential.user.displayName || credential.user.email?.split('@')[0] || 'Visitante')
             .trim()
-            .slice(0, 14);
+            .slice(0, 20);
         const nickname = existingProfile?.nickname || fallbackNickname;
 
+        let finalNick = nickname;
         if (existingProfile) {
             await update(userRef, { lastLoginAt: Date.now() });
+            await claimNickname(credential.user.uid, nickname).catch(() => {}); // garante o índice p/ contas antigas
         } else {
+            // Google: se o apelido derivado já estiver tomado, adiciona sufixo até livrar
+            for (let i = 2; i <= 9 && (await isNicknameTaken(finalNick)); i++) {
+                finalNick = `${nickname.slice(0, 18)}${i}`;
+            }
+            if (await isNicknameTaken(finalNick)) finalNick = `${'Player'}${Date.now() % 10000}`;
+            await claimNickname(credential.user.uid, finalNick).catch(() => {});
             await set(userRef, {
                 uid: credential.user.uid,
                 email: credential.user.email || '',
-                nickname,
+                nickname: finalNick,
                 role: 'student',
                 registeredAt: Date.now(),
                 lastLoginAt: Date.now(),
@@ -138,11 +191,43 @@ export async function loginWithGoogle() {
             });
         }
 
-        sessionStorage.setItem('labcombat_nickname', nickname);
+        const effectiveNickname = existingProfile ? nickname : finalNick;
+        sessionStorage.setItem('labcombat_nickname', effectiveNickname);
         localStorage.setItem('labcombat_account_uid', credential.user.uid);
-        return { success: true, user: credential.user, profile: { ...(existingProfile || {}), nickname } };
+        return { success: true, user: credential.user, profile: { ...(existingProfile || {}), nickname: effectiveNickname } };
     } catch (error) {
         return { success: false, message: getAuthErrorMessage(error), error };
+    }
+}
+
+// Apelido fica vinculado à conta: alterações só pelo perfil (modal de perfil).
+// Atualiza Auth (displayName) + users/{uid}.nickname. O ranking
+// (leaderboard/{uid}.nickname) é sincronizado pelo chamador quando existir.
+export async function updateAccountNickname(uid, nickname) {
+    const clean = (nickname || '').trim();
+    if (!uid || !clean) return { success: false, message: 'Apelido obrigatório.' };
+    if (clean.length < 2 || clean.length > 20) {
+        return { success: false, message: 'O apelido deve ter entre 2 e 20 caracteres.' };
+    }
+    try {
+        // Unicidade: rejeita se outro uid já reservou esse apelido
+        if (await isNicknameTaken(clean, uid)) {
+            return { success: false, message: 'Esse apelido já pertence a outra conta.' };
+        }
+        const previousNick = sessionStorage.getItem('labcombat_nickname') || auth.currentUser?.displayName || '';
+        const claimed = await claimNickname(uid, clean);
+        if (!claimed) {
+            return { success: false, message: 'Esse apelido acabou de ser registrado. Escolha outro.' };
+        }
+        if (auth.currentUser) await updateProfile(auth.currentUser, { displayName: clean });
+        await update(ref(db, `users/${uid}`), { nickname: clean });
+        if (normalizeNick(previousNick) !== normalizeNick(clean)) {
+            await releaseNickname(uid, previousNick);
+        }
+        sessionStorage.setItem('labcombat_nickname', clean);
+        return { success: true, nickname: clean };
+    } catch (error) {
+        return { success: false, message: error.message };
     }
 }
 

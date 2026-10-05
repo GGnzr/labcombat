@@ -35,7 +35,7 @@ if (Phaser?.GameObjects?.TextStyle?.prototype?.setStyle) {
         if (!style) style = {};
         if (setDefaults) {
             if (!style.fontFamily) {
-                style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+                style.fontFamily = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif, "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji"';
             }
             if (style.resolution === undefined || style.resolution === 0) {
                 style.resolution = 2;
