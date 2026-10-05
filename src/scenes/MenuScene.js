@@ -118,13 +118,17 @@ export class MenuScene extends Phaser.Scene {
         window.addEventListener('nickname-changed', this.handleNicknameChanged);
         this.handleAccountStateChanged = () => {
             this.btnProfileAccount?.setText(`👤 ${(this.playerNickname || 'Jogador 1').slice(0, 16)}`);
+            // login/logout: recarrega o ranking + o card "SEU ELO" ao vivo
+            this.refreshLeaderboard?.();
+            this.refreshMyRankCard?.();
         };
         window.addEventListener('account-state-changed', this.handleAccountStateChanged);
 
         const accessMode = sessionStorage.getItem('labcombat_access_mode');
-        const savedNickname = sessionStorage.getItem('labcombat_nickname') || '';
-        const hasDefaultGuestNickname = accessMode === 'guest' && ['Jogador 1', 'Jogador 2'].includes(savedNickname);
-        if (!accessMode || hasDefaultGuestNickname) {
+        // Modal de conta obrigatório APENAS na 1ª entrada (sem modo de acesso).
+        // Visitante com apelido padrão ("Jogador 1/2") NÃO é forçado de novo:
+        // senão, ao sair de uma sala, ele caía no modal de conta em vez do lobby.
+        if (!accessMode) {
             this.time.delayedCall(0, () => {
                 window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { required: true } }));
             });
@@ -224,13 +228,13 @@ export class MenuScene extends Phaser.Scene {
     }
 
     // Chip do topo (👤 apelido): conta logada → Perfil; visitante/sem acesso →
-    // modal de Conta (Entrar/Cadastrar/Google — visitante também pode trocar o
+    // modal de Conta já na aba "Criar conta" (visitante também pode trocar o
     // apelido ali por "Continuar como visitante")
     openPlayerModal() {
         if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
         const logged = localStorage.getItem('labcombat_account_uid') && sessionStorage.getItem('labcombat_access_mode') !== 'guest';
         if (logged) window.dispatchEvent(new CustomEvent('open-profile-modal'));
-        else window.dispatchEvent(new CustomEvent('open-account-modal'));
+        else window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { register: true } }));
     }
 
     createHostCard() {
@@ -347,7 +351,7 @@ export class MenuScene extends Phaser.Scene {
         card.add(this.add.text(0, -H / 2 + 22, 'RANKING DA ARENA', {
             fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 1, resolution: 2
         }).setOrigin(0.5));
-        card.add(this.add.text(0, -H / 2 + 42, 'Top 10 por Pontos de Ranking (RP)', {
+        card.add(this.add.text(0, -H / 2 + 42, 'Top 10 por LabPoints (LP)', {
             fontSize: '10px', fill: '#94a3b8', resolution: 2
         }).setOrigin(0.5));
 
@@ -396,48 +400,59 @@ export class MenuScene extends Phaser.Scene {
             })
         );
 
-        const myUid = localStorage.getItem('labcombat_account_uid');
-        const isGuest = sessionStorage.getItem('labcombat_access_mode') === 'guest' || !myUid;
-
-        loadTopLeaderboard(10).then((top) => {
-            if (!this.scene.isActive()) return;
-            const toLine = (e, i) => {
-                const rank = getRankForPoints(e.points || 0);
-                const pos = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
-                const nick = String(e.nickname || 'Jogador'); // nome completo
-                const elo = `${rank.icon}${rank.division ? ' ' + rank.division : ''}`;
-                const line = `${pos} ${nick}  ${elo} ${e.points || 0}RP`;
-                return e.uid === myUid ? `${line} ◄` : line;
-            };
-            podiumTexts.forEach((t, i) => t.setText(top[i] ? toLine(top[i], i) : ''));
-            restText.setText(top.length > 3 ? top.slice(3).map(toLine).join('\n') : (top.length ? '' : 'Ninguém pontuou ainda.\nVença uma partida com conta\npara entrar no ranking! 🚀'));
-        }).catch(() => {
-            if (!this.scene.isActive()) return;
-            restText.setText('Falha ao carregar o ranking.');
-        });
-
-        if (isGuest) {
-            youMain.setText('🎮 Visitante');
-            youSub.setText('Entre com conta p/ pontuar');
-        } else {
-            youMain.setText('...');
-            loadMyLeaderboardEntry(myUid).then(({ entry, position, total }) => {
+        // Atualizável: login/logout disparam account-state-changed e recarregam
+        // o ranking + o card "SEU ELO" (antes ficava preso no estado de quando
+        // a cena nasceu — usuário logado após entrar no menu via "Visitante"
+        // até dar F5).
+        this.refreshLeaderboard = () => {
+            const myUid = localStorage.getItem('labcombat_account_uid');
+            loadTopLeaderboard(10).then((top) => {
                 if (!this.scene.isActive()) return;
-                if (!entry) {
-                    youMain.setText('🥉 Sem elo ainda');
-                    youSub.setText('Vença a 1ª partida p/ +25 RP');
-                    return;
-                }
-                const rank = getRankForPoints(entry.points || 0);
-                const winRate = entry.matches ? Math.round(((entry.wins || 0) / entry.matches) * 100) : 0;
-                youMain.setText(rank.label);
-                youSub.setText(`${entry.points || 0} RP${position ? ` · #${position} de ${total}` : ''} · ${winRate}% wins`);
+                const toLine = (e, i) => {
+                    const rank = getRankForPoints(e.points || 0);
+                    const pos = ['🥇', '🥈', '🥉'][i] || `${i + 1}º`;
+                    const nick = String(e.nickname || 'Jogador'); // nome completo
+                    const elo = `${rank.icon}${rank.division ? ' ' + rank.division : ''}`;
+                    const line = `${pos} ${nick}  ${elo} ${e.points || 0} LP`;
+                    return e.uid === myUid ? `${line} ◄` : line;
+                };
+                podiumTexts.forEach((t, i) => t.setText(top[i] ? toLine(top[i], i) : ''));
+                restText.setText(top.length > 3 ? top.slice(3).map(toLine).join('\n') : (top.length ? '' : 'Ninguém pontuou ainda.\nVença uma partida com conta\npara entrar no ranking! 🚀'));
             }).catch(() => {
                 if (!this.scene.isActive()) return;
-                youMain.setText('');
-                youSub.setText('');
+                restText.setText('Falha ao carregar o ranking.');
             });
-        }
+        };
+
+        this.refreshMyRankCard = () => {
+            const myUid = localStorage.getItem('labcombat_account_uid');
+            const isGuest = sessionStorage.getItem('labcombat_access_mode') === 'guest' || !myUid;
+            if (isGuest) {
+                youMain.setText('🎮 Visitante');
+                youSub.setText('Entre com conta p/ pontuar');
+            } else {
+                youMain.setText('...');
+                loadMyLeaderboardEntry(myUid).then(({ entry, position, total }) => {
+                    if (!this.scene.isActive()) return;
+                    if (!entry) {
+                        youMain.setText('🐣 Sem elo ainda');
+                        youSub.setText('Vença a 1ª partida p/ +25 LP');
+                        return;
+                    }
+                    const rank = getRankForPoints(entry.points || 0);
+                    const winRate = entry.matches ? Math.round(((entry.wins || 0) / entry.matches) * 100) : 0;
+                    youMain.setText(rank.label);
+                    youSub.setText(`${entry.points || 0} LP${position ? ` · #${position} de ${total}` : ''} · ${winRate}% wins`);
+                }).catch(() => {
+                    if (!this.scene.isActive()) return;
+                    youMain.setText('');
+                    youSub.setText('');
+                });
+            }
+        };
+
+        this.refreshLeaderboard();
+        this.refreshMyRankCard();
     }
 
     createRulesFooter() {
@@ -466,6 +481,7 @@ export class MenuScene extends Phaser.Scene {
             }
         };
         window.addEventListener('dev-set-timers', this.handleDevTimersChanged);
+        // (link do GitHub é DOM — #gh-footer-link em index.html)
     }
 
     async createRoom() {
@@ -494,11 +510,12 @@ export class MenuScene extends Phaser.Scene {
         try {
             await set(roomRef, {
                 ownerUid,
+                maxHp: parseInt(localStorage.getItem('dev_max_hp'), 10) || 100,
                 p1: { 
                     nickname: this.playerNickname,
                     clientId: tabInstanceId,
                     uid: ownerUid,
-                    hp: 100,
+                    hp: parseInt(localStorage.getItem('dev_max_hp'), 10) || 100,
                     charges: 0,
                     hasShield: false,
                     hasTryCatch: false,
@@ -591,6 +608,16 @@ export class MenuScene extends Phaser.Scene {
         if (errorMsg) errorMsg.textContent = 'Conectando à sala...';
 
         try {
+            // Visitante também precisa de auth (anônima) — as regras do RTDB
+            // identificam os participantes por uid (database.rules.json).
+            const access = await ensureGuestAuth();
+            if (!access.success) {
+                if (errorMsg) errorMsg.textContent = `⚠️ ${access.message}`;
+                resetButton();
+                return;
+            }
+            const playerUid = access.user.uid;
+
             let targetRoomId = inputCode;
             let roomRef = ref(db, `rooms/${targetRoomId}`);
             let snapshot = await get(roomRef);
@@ -678,7 +705,9 @@ export class MenuScene extends Phaser.Scene {
                     await set(p1Ref, { 
                         nickname: nickname,
                         clientId: tabInstanceId,
-                        hp: 100,
+                        uid: playerUid,
+                        // HP inicial respeita o HP máx da sala (ajustável no GM)
+                        hp: Number(data.maxHp) || parseInt(localStorage.getItem('dev_max_hp'), 10) || 100,
                         charges: 0,
                         hasShield: false,
                         hasTryCatch: false,
@@ -704,7 +733,9 @@ export class MenuScene extends Phaser.Scene {
                     await set(p2Ref, { 
                         nickname: nickname,
                         clientId: tabInstanceId,
-                        hp: 100,
+                        uid: playerUid,
+                        // HP inicial respeita o HP máx da sala (ajustável no GM)
+                        hp: Number(data.maxHp) || parseInt(localStorage.getItem('dev_max_hp'), 10) || 100,
                         charges: 0,
                         hasShield: false,
                         hasTryCatch: false,

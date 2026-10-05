@@ -110,6 +110,24 @@ export class MainScene extends Phaser.Scene {
         const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
         this.MATCH_START_DELAY = (devStartDelay && devStartDelay !== 30) ? devStartDelay : 3;
 
+        // Dano/limiar de K.O. e LabPoints ajustáveis pelo painel GM
+        // (localStorage + evento dev-set-combat; em sala como P1, os valores
+        // são gravados na sala e valem para os 2 clientes — ver §5 do AGENTS.md)
+        this.DMG_ATTACK = parseInt(localStorage.getItem('dev_dmg_attack'), 10) || 15;
+        this.DMG_SPECIAL = parseInt(localStorage.getItem('dev_dmg_special'), 10) || 28;
+        this.ULT_KO_HP = parseInt(localStorage.getItem('dev_ult_ko_hp'), 10) || 33;
+        this.MAX_HP = parseInt(localStorage.getItem('dev_max_hp'), 10) || 100;
+        this.DEV_LP = {
+            win: parseInt(localStorage.getItem('dev_lp_win'), 10) || 25,
+            bonus: parseInt(localStorage.getItem('dev_lp_bonus'), 10) || 5,
+            loss: parseInt(localStorage.getItem('dev_lp_loss'), 10) || 10
+        };
+        // Modificadores de rodada: chance (%) e valor da cura do BACKUP
+        // (painel GM, `dev-set-combat`). Chance 0 é válida (desativa).
+        const savedModChance = parseInt(localStorage.getItem('dev_mod_chance'), 10);
+        this.MOD_CHANCE = Number.isFinite(savedModChance) && savedModChance >= 0 ? Math.min(100, savedModChance) : 30;
+        this.MOD_HEAL = parseInt(localStorage.getItem('dev_mod_heal'), 10) || 10;
+
         if (this.nextQuestionTimeout) {
             clearTimeout(this.nextQuestionTimeout);
             this.nextQuestionTimeout = null;
@@ -593,6 +611,23 @@ export class MainScene extends Phaser.Scene {
             fontSize: '10px', fill: '#64748b', resolution: 2 
         }).setOrigin(0.5);
 
+        // Delta de LP + novo elo do jogador com conta (preenchido no fim da partida
+        // via showRankDeltaOnGameOver). Visitante vê convite p/ criar conta.
+        this.goRankText = this.add.text(0, 7, '', {
+            fontSize: '12px', fill: '#facc15', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5).setVisible(false);
+
+        // Text não recebeu clique de forma confiável (hitArea de origem 0.5 +
+        // container) — a zona invisível cobre a linha inteira e vira o alvo real
+        // do "toque aqui" do visitante (só age se um convite estiver visível).
+        this.goRankClickZone = this.add.zone(0, 7, 540, 22);
+        this.goRankClickZone.setInteractive({ useHandCursor: false });
+        this.goRankClickZone.on('pointerdown', () => {
+            if (this.isGuestRankInvite && this.goRankText?.visible) {
+                window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { register: true } }));
+            }
+        });
+
         // Coluna P2
         this.goP2Nick = this.add.text(170, -52, 'P2: JOGADOR 2', { 
             fontSize: '13px', fill: '#f87171', fontStyle: 'bold', resolution: 2 
@@ -735,7 +770,7 @@ export class MainScene extends Phaser.Scene {
             this.goIconText, this.goTitleText, this.goSubText,
             statsBoxBg,
             this.goP1Nick, this.goP1Prof, this.goP1Hearts,
-            vsBadge, this.goRoundsText, modeBadge,
+            vsBadge, this.goRoundsText, modeBadge, this.goRankText, this.goRankClickZone,
             this.goP2Nick, this.goP2Prof, this.goP2Hearts,
             this.requestDeclinedBanner,
             this.btnRematch, this.btnChangeProf, this.btnMainMenu,
@@ -858,6 +893,7 @@ export class MainScene extends Phaser.Scene {
         this.myWrongAnswers = 0;
         this.lastCountedErrorRound = null;
         this.rankingRecorded = false;
+        if (this.goRankText) this.goRankText.setVisible(false);
 
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
@@ -972,7 +1008,7 @@ export class MainScene extends Phaser.Scene {
             await update(ref(db, `rooms/${this.roomId}`), {
                 postMatchRequest: null,
                 arenaId: newArena.id,
-                'p1/hp': 100,
+                'p1/hp': this.MAX_HP,
                 'p1/charges': 0,
                 'p1/hasShield': false,
                 'p1/hasTryCatch': false,
@@ -982,7 +1018,7 @@ export class MainScene extends Phaser.Scene {
                 'p1/answeredAt': null,
                 'p1/answerCorrect': null,
                 'p1/answeredChoice': null,
-                'p2/hp': 100,
+                'p2/hp': this.MAX_HP,
                 'p2/charges': 0,
                 'p2/hasShield': false,
                 'p2/hasTryCatch': false,
@@ -1019,12 +1055,12 @@ export class MainScene extends Phaser.Scene {
                 state: 'character_select',
                 'p1/ready': false,
                 'p2/ready': false,
-                'p1/hp': 100,
+                'p1/hp': this.MAX_HP,
                 'p1/charges': 0,
                 'p1/hasShield': false,
                 'p1/hasTryCatch': false,
                 'p1/lives': 3,
-                'p2/hp': 100,
+                'p2/hp': this.MAX_HP,
                 'p2/charges': 0,
                 'p2/hasShield': false,
                 'p2/hasTryCatch': false,
@@ -1311,6 +1347,36 @@ export class MainScene extends Phaser.Scene {
             this.recreateFighterAnimations();
         };
 
+        this.onDevSetCombat = (e) => {
+            const { dmgAttack, dmgSpecial, ultKoHp, maxHp, lpWin, lpBonus, lpLoss, modChance, modHeal } = e.detail || {};
+            if (dmgAttack) this.DMG_ATTACK = dmgAttack;
+            if (dmgSpecial) this.DMG_SPECIAL = dmgSpecial;
+            if (ultKoHp) this.ULT_KO_HP = ultKoHp;
+            if (maxHp) this.MAX_HP = maxHp;
+            if (modChance != null) this.MOD_CHANCE = modChance;
+            if (modHeal != null) this.MOD_HEAL = modHeal;
+            if (lpWin != null) this.DEV_LP.win = lpWin;
+            if (lpBonus != null) this.DEV_LP.bonus = lpBonus;
+            if (lpLoss != null) this.DEV_LP.loss = lpLoss;
+
+            // Como a rodada é resolvida só no P1, o dano aplicado é o do P1:
+            // gravar na sala mantém os 2 clientes na mesma regra (LP incluso,
+            // porque cada cliente registra o próprio LP no fim da partida).
+            if (this.playerId === 'p1' && this.roomId) {
+                update(ref(db, `rooms/${this.roomId}`), {
+                    dmgAttack: this.DMG_ATTACK,
+                    dmgSpecial: this.DMG_SPECIAL,
+                    ultKoHp: this.ULT_KO_HP,
+                    maxHp: this.MAX_HP,
+                    modChance: this.MOD_CHANCE,
+                    modHeal: this.MOD_HEAL,
+                    lpWin: this.DEV_LP.win,
+                    lpBonus: this.DEV_LP.bonus,
+                    lpLoss: this.DEV_LP.loss
+                }).catch(err => console.error('Erro ao salvar regras de combate dev:', err));
+            }
+        };
+
         window.addEventListener('dev-reset', this.handleDevReset);
         window.addEventListener('dev-streak', this.onDevStreak);
         window.addEventListener('dev-next-question', this.onDevNextQuestion);
@@ -1319,6 +1385,7 @@ export class MainScene extends Phaser.Scene {
         window.addEventListener('dev-ultimate', this.onDevUltimate);
         window.addEventListener('dev-set-timers', this.onDevSetTimers);
         window.addEventListener('dev-anim-speeds', this.onDevAnimSpeeds);
+        window.addEventListener('dev-set-combat', this.onDevSetCombat);
 
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             document.body.classList.remove('in-battle');
@@ -1330,6 +1397,7 @@ export class MainScene extends Phaser.Scene {
             window.removeEventListener('dev-ultimate', this.onDevUltimate);
             window.removeEventListener('dev-set-timers', this.onDevSetTimers);
             window.removeEventListener('dev-anim-speeds', this.onDevAnimSpeeds);
+            window.removeEventListener('dev-set-combat', this.onDevSetCombat);
             if (this.autoLeaveTimeout) {
                 clearTimeout(this.autoLeaveTimeout);
                 this.autoLeaveTimeout = null;
@@ -1388,7 +1456,7 @@ export class MainScene extends Phaser.Scene {
     handleDevAttack(damage = 20) {
         if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
 
-        const normalizedDamage = Math.max(1, Math.min(100, Number(damage) || 20));
+        const normalizedDamage = Math.max(1, Math.min(this.MAX_HP, Number(damage) || 20));
         const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
         const roomRef = ref(db, `rooms/${this.roomId}`);
         get(roomRef).then((snapshot) => {
@@ -1396,7 +1464,7 @@ export class MainScene extends Phaser.Scene {
             const enemy = roomData?.[enemyId];
             if (!enemy) return;
 
-            const nextHp = Math.max(0, (Number(enemy.hp) || 100) - normalizedDamage);
+            const nextHp = Math.max(0, (Number(enemy.hp) || this.MAX_HP) - normalizedDamage);
             // Escreve null primeiro para garantir que o diff detecte a mudança no próximo clique
             return update(roomRef, { attackWinner: null }).then(() => {
                 return update(roomRef, {
@@ -1418,21 +1486,21 @@ export class MainScene extends Phaser.Scene {
         if (!this.roomId || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
 
         const enemyId = this.playerId === 'p1' ? 'p2' : 'p1';
-        const dano = 28; // mesmo dano do super no resolveRound
+        const dano = this.DMG_SPECIAL; // mesmo dano do super no resolveRound (ajustável no GM)
         const roomRef = ref(db, `rooms/${this.roomId}`);
         get(roomRef).then((snapshot) => {
             const roomData = snapshot.val();
             const enemy = roomData?.[enemyId];
             if (!enemy) return;
 
-            const nextHp = Math.max(0, (Number(enemy.hp) || 100) - dano);
+            const nextHp = Math.max(0, (Number(enemy.hp) || this.MAX_HP) - dano);
             // Escreve null primeiro para garantir que o diff detecte a mudança no próximo clique
             return update(roomRef, { specialWinner: null }).then(() => {
                 return update(roomRef, {
                     [`${enemyId}/hp`]: nextHp,
                     [`${this.playerId}/charges`]: 0,
                     specialWinner: this.playerId,
-                    roundAlert: '💥 ESPECIAL DO GM! -28 HP'
+                    roundAlert: `💥 ESPECIAL DO GM! -${dano} HP`
                 });
             });
         }).catch(error => {
@@ -1970,8 +2038,17 @@ export class MainScene extends Phaser.Scene {
         const p1 = data.p1 || {};
         const p2 = data.p2 || {};
 
-        let p1Hp = p1.hp != null ? p1.hp : 100;
-        let p2Hp = p2.hp != null ? p2.hp : 100;
+        // Dano/limiar de K.O./HP máx: valem os da sala (gravados pelo P1 via
+        // painel GM) ou os defaults locais — a resolução roda só no P1.
+        const dmgAttack = Number(data.dmgAttack) || this.DMG_ATTACK;
+        const dmgSpecial = Number(data.dmgSpecial) || this.DMG_SPECIAL;
+        const ultKoHp = Number(data.ultKoHp) || this.ULT_KO_HP;
+        const maxHp = Number(data.maxHp) || this.MAX_HP;
+        // Cura do modificador BACKUP também é configurável (GM)
+        const healAmount = Number(data.modHeal) || this.MOD_HEAL;
+
+        let p1Hp = p1.hp != null ? p1.hp : maxHp;
+        let p2Hp = p2.hp != null ? p2.hp : maxHp;
         let p1Charges = p1.charges || 0;
         let p2Charges = p2.charges || 0;
         let p1Shield = !!p1.hasShield;
@@ -2024,8 +2101,8 @@ export class MainScene extends Phaser.Scene {
                 else p2Shield = true;
             }
             if (modifier === 'heal') {
-                if (fastKey === 'p1') p1Hp = Math.min(100, p1Hp + 10);
-                else p2Hp = Math.min(100, p2Hp + 10);
+                if (fastKey === 'p1') p1Hp = Math.min(maxHp, p1Hp + healAmount);
+                else p2Hp = Math.min(maxHp, p2Hp + healAmount);
             }
             if (modifier === 'try_catch') {
                 if (fastKey === 'p1') p1TryCatch = true;
@@ -2061,8 +2138,8 @@ export class MainScene extends Phaser.Scene {
                 else p2Shield = true;
             }
             if (modifier === 'heal') {
-                if (winnerKey === 'p1') p1Hp = Math.min(100, p1Hp + 10);
-                else p2Hp = Math.min(100, p2Hp + 10);
+                if (winnerKey === 'p1') p1Hp = Math.min(maxHp, p1Hp + healAmount);
+                else p2Hp = Math.min(maxHp, p2Hp + healAmount);
             }
             if (modifier === 'try_catch') {
                 if (winnerKey === 'p1') p1TryCatch = true;
@@ -2079,16 +2156,16 @@ export class MainScene extends Phaser.Scene {
                     winnerCharges = 0;
                     alertMessage = `🛡️ FIREWALL ABSORVEU A ULTIMATE! ${loserNick} SOBREVIVEU!`;
                 } else {
-                    if (loserHp <= 33) {
+                    if (loserHp <= ultKoHp) {
                         loserHp = 0;
                         ultimateWinner = winnerKey;
                         specialWinner = winnerKey;
                         alertMessage = `💥 ULTIMATE FINISHER! K.O. DE ${winnerNick}!`;
                     } else {
-                        loserHp = Math.max(0, loserHp - 28);
+                        loserHp = Math.max(0, loserHp - dmgSpecial);
                         winnerCharges = 0;
                         specialWinner = winnerKey;
-                        alertMessage = `⚡ SUPER GOLPE DE ${winnerNick}! (-28 HP)`;
+                        alertMessage = `⚡ SUPER GOLPE DE ${winnerNick}! (-${dmgSpecial} HP)`;
                     }
                 }
             } else {
@@ -2098,8 +2175,8 @@ export class MainScene extends Phaser.Scene {
                     loserShield = false;
                     alertMessage = `🛡️ FIREWALL DE ${loserNick} ABSORVEU O ATAQUE!`;
                 } else {
-                    loserHp = Math.max(0, loserHp - 15);
-                    alertMessage = `💥 GOLPE DE ${winnerNick}! (-15 HP)`;
+                    loserHp = Math.max(0, loserHp - dmgAttack);
+                    alertMessage = `💥 GOLPE DE ${winnerNick}! (-${dmgAttack} HP)`;
                 }
             }
 
@@ -2140,6 +2217,10 @@ export class MainScene extends Phaser.Scene {
     updateState(data) {
         if (!data) return;
         this.latestData = data;
+        // HP máx / limiar de K.O. da sala (ajustáveis no GM) — usados nas
+        // barras de HP de P1 e P2 mais abaixo (mesma função, escopos distintos)
+        const maxHpHud = Number(data.maxHp) || this.MAX_HP;
+        const ultKoHud = Number(data.ultKoHp) || this.ULT_KO_HP;
         const catalogKey = [data.p1?.characterId, data.p2?.characterId].filter(Boolean).join('|');
         if (!this.questionCatalogPromise || this.questionCatalogKey !== catalogKey) {
             this.questionCatalogKey = catalogKey;
@@ -2266,14 +2347,14 @@ export class MainScene extends Phaser.Scene {
                 this.p1ProfText.setText(displayProf);
             }
 
-            // Barra de HP P1 (356px de largura)
-            const p1Ratio = Math.max(0, Math.min(1, p1Hp / 100));
+            // Barra de HP P1 (356px de largura) — proporcional ao HP máx da sala
+            const p1Ratio = Math.max(0, Math.min(1, p1Hp / maxHpHud));
             let p1Color = 0x10b981;
             let p1Hex = '#34d399';
-            if (p1Hp <= 33) {
+            if (p1Hp <= ultKoHud) {
                 p1Color = 0xef4444;
                 p1Hex = '#ef4444';
-            } else if (p1Hp <= 66) {
+            } else if (p1Hp <= maxHpHud * 0.66) {
                 p1Color = 0xeab308;
                 p1Hex = '#facc15';
             }
@@ -2306,7 +2387,7 @@ export class MainScene extends Phaser.Scene {
             }
             if (this.p1ChargeLabel) {
                 if (p1Charges >= 3) {
-                    if (p2Hp <= 33) {
+                    if (p2Hp <= ultKoHud) {
                         this.p1ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
                     } else {
                         this.p1ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
@@ -2359,14 +2440,14 @@ export class MainScene extends Phaser.Scene {
                 this.p2ProfText.setText(displayProf);
             }
 
-            // Barra de HP P2 (356px de largura)
-            const p2Ratio = Math.max(0, Math.min(1, p2Hp / 100));
+            // Barra de HP P2 (356px de largura) — proporcional ao HP máx da sala
+            const p2Ratio = Math.max(0, Math.min(1, p2Hp / maxHpHud));
             let p2Color = 0x10b981;
             let p2Hex = '#34d399';
-            if (p2Hp <= 33) {
+            if (p2Hp <= ultKoHud) {
                 p2Color = 0xef4444;
                 p2Hex = '#ef4444';
-            } else if (p2Hp <= 66) {
+            } else if (p2Hp <= maxHpHud * 0.66) {
                 p2Color = 0xeab308;
                 p2Hex = '#facc15';
             }
@@ -2399,7 +2480,7 @@ export class MainScene extends Phaser.Scene {
             }
             if (this.p2ChargeLabel) {
                 if (p2Charges >= 3) {
-                    if (p1Hp <= 33) {
+                    if (p1Hp <= ultKoHud) {
                         this.p2ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
                     } else {
                         this.p2ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
@@ -2436,7 +2517,7 @@ export class MainScene extends Phaser.Scene {
                             .setStyle({ fill: '#bae6fd', backgroundColor: '#075985' });
                         break;
                     case 'heal':
-                        this.roundModifierBadge.setText('💚 BACKUP: RESTAURA +10 HP AO ACERTAR PRIMEIRO')
+                        this.roundModifierBadge.setText(`💚 BACKUP: RESTAURA +${Number(data.modHeal) || this.MOD_HEAL} HP AO ACERTAR PRIMEIRO`)
                             .setStyle({ fill: '#bbf7d0', backgroundColor: '#166534' });
                         break;
                     case 'try_catch':
@@ -2793,15 +2874,25 @@ export class MainScene extends Phaser.Scene {
     }
 
     // Ranking: grava o resultado da partida do jogador LOGADO (1x por partida,
-    // nunca para espectador). Bônus de +5 RP: K.O. via ultimate ou "perfect
+    // nunca para espectador). Bônus de +5 LP: K.O. via ultimate ou "perfect
     // match" (vencer sem errar nada). W.O. conta como vitória simples.
+    // Exibe o delta de LP no painel de fim de jogo (showRankDeltaOnGameOver).
     recordMyRanking(isWinner, isTie, roomData) {
         if (this.isSpectator || this.rankingRecorded) return;
         this.rankingRecorded = true;
         const uid = localStorage.getItem('labcombat_account_uid');
-        if (!uid) return; // visitante: sem pontuação
+        if (!uid) {
+            this.showRankDeltaOnGameOver(null); // visitante: convite p/ criar conta
+            return;
+        }
         const won = !!isWinner && !isTie;
         const me = roomData?.[this.playerId] || {};
+        // LP da partida: valores da sala (definidos pelo P1 via painel GM) ou defaults locais
+        const lp = {
+            win: Number(roomData?.lpWin) || this.DEV_LP.win,
+            bonus: Number(roomData?.lpBonus) || this.DEV_LP.bonus,
+            loss: Number(roomData?.lpLoss) || this.DEV_LP.loss
+        };
         recordMatchResult({
             uid,
             nickname: this.nickname,
@@ -2809,11 +2900,41 @@ export class MainScene extends Phaser.Scene {
             won,
             tie: !!isTie,
             bonus: won && !this.isWalkoverWin
-                && (roomData?.ultimateWinner === this.playerId || (this.myWrongAnswers || 0) === 0)
-        }).catch(err => logEvent('warn', `[Ranking] Falha ao registrar resultado: ${err.message}`));
+                && (roomData?.ultimateWinner === this.playerId || (this.myWrongAnswers || 0) === 0),
+            lp
+        })
+            .then((summary) => { if (summary) this.showRankDeltaOnGameOver(summary); })
+            .catch(err => logEvent('warn', `[Ranking] Falha ao registrar resultado: ${err.message}`));
+    }
+
+    // Painel de fim de jogo: quanto o jogador com conta ganhou/perdeu de LP
+    // (+ elo atual). summary null = visitante → convite p/ criar conta.
+    showRankDeltaOnGameOver(summary) {
+        if (!this.goRankText || this.isSpectator || !this.scene.isActive()) return;
+        // Visitante: só avisa — "se quiser pontuar, crie uma conta" (clicável:
+        // a zona invisível goRankClickZone abre o modal de conta sem forçar nada).
+        this.isGuestRankInvite = !summary;
+        if (!summary) {
+            this.goRankText
+                .setText('🎮 Se quiser pontuar no ranking, crie uma conta! (toque aqui)')
+                .setStyle({ fill: '#fbbf24' })
+                .setVisible(true);
+            return;
+        }
+        const { delta, points, rank } = summary;
+        const deltaTxt = delta > 0 ? `+${delta} LP` : delta < 0 ? `${delta} LP` : '0 LP';
+        const fill = delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#facc15';
+        this.goRankText
+            .setText(`${rank.label} • ${deltaTxt} • Total: ${points} LP`)
+            .setStyle({ fill })
+            .setVisible(true);
     }
 
     showGameOver(isWinner, winnerNick, isTie = false, roomData = null) {
+        // Esconde o texto de RP/LP ANTES de registrar o resultado: para
+        // visitantes o aviso é síncrono (showRankDeltaOnGameOver(null)) e não
+        // pode ser escondido logo depois — bug que deixava o aviso invisível.
+        if (this.goRankText) this.goRankText.setVisible(false);
         this.recordMyRanking(isWinner, isTie, roomData);
         if (!this.isGameOver && !this.hasPlayedKOSound) {
             this.hasPlayedKOSound = true;
@@ -2923,10 +3044,13 @@ export class MainScene extends Phaser.Scene {
         const pool = available.length > 0 ? available : catalog;
         const randomQ = pool[Math.floor(Math.random() * pool.length)];
 
-        // Sorteio de Modificador da Rodada (~30% de chance de modificador especial, ~70% normal)
+        // Sorteio de Modificador da Rodada (chance % configurável no painel GM,
+        // gravada na sala pelo P1; default 30). chance 0 = sempre 'normal'.
+        const roomModChance = Number(this.latestData?.modChance);
+        const modChance = Number.isFinite(roomModChance) ? roomModChance : this.MOD_CHANCE;
         let selectedModifier = 'normal';
         const modRoll = Math.random();
-        if (modRoll < 0.30) {
+        if (modRoll < modChance / 100) {
             const modifiers = ['charge', 'shield', 'heal', 'try_catch'];
             selectedModifier = modifiers[Math.floor(Math.random() * modifiers.length)];
         }
@@ -2991,8 +3115,8 @@ export class MainScene extends Phaser.Scene {
                     if (this.playerId === 'p1' && !this.isAdvancingQuestion) {
                         this.isAdvancingQuestion = true;
                         update(ref(db, `rooms/${this.roomId}`), {
-                            'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false, 'p1/answered': false,
-                            'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false, 'p2/answered': false,
+                            'p1/hp': this.MAX_HP, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false, 'p1/answered': false,
+                            'p2/hp': this.MAX_HP, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false, 'p2/answered': false,
                             round: 0,
                             roundModifier: 'normal',
                             roundResolved: false,
