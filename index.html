@@ -217,6 +217,14 @@
                   <button id="dev-reset-btn" style="width: 100%; padding: 9px; background: #dc2626; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">🔄 Resetar / Sair da Sala Atual</button>
               </div>
 
+              <!-- Temporada / Ranking -->
+              <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
+                  <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">🏆 Temporada / Ranking</div>
+                  <div style="font-size: 11px; color: #64748b; margin-bottom: 8px; line-height: 1.5;">Zera TODO o ranking (RP, vitórias e elos de todos os jogadores) para começar uma nova temporada.</div>
+                  <button id="gm-reset-season-btn" style="width: 100%; padding: 9px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;" title="Apaga o nó leaderboard do Firebase — irreversível!">⚠️ Zerar Temporada (apagar ranking)</button>
+                  <div id="gm-reset-season-status" style="min-height: 16px; margin-top: 6px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+              </div>
+
               <!-- Velocidade das Animações -->
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
                   <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #a855f7;">🎞️ Velocidade das Animações (FPS)</div>
@@ -1842,6 +1850,36 @@
         if (gmQSearch) gmQSearch.addEventListener('input', renderQuestionsList);
         if (gmQuestionProfessor) gmQuestionProfessor.addEventListener('change', loadQuestionsCrud);
 
+        // Zerar Temporada: apaga TODO o ranking (leaderboard) — confirmação dupla
+        const btnResetSeason = document.getElementById('gm-reset-season-btn');
+        const resetSeasonStatus = document.getElementById('gm-reset-season-status');
+        if (btnResetSeason) {
+            btnResetSeason.addEventListener('click', async () => {
+                if (!gmActive) return;
+                if (!confirm('⚠️ ZERAR TEMPORADA?\n\nIsso apaga TODO o ranking (RP, vitórias e elos de todos os jogadores) para sempre.\n\nDeseja continuar?')) return;
+                if (!confirm('Tem CERTEZA ABSOLUTA? Essa ação não pode ser desfeita!')) return;
+                btnResetSeason.disabled = true;
+                btnResetSeason.textContent = 'Zerando...';
+                try {
+                    await remove(ref(db, 'leaderboard'));
+                    logEvent('admin', '⚠️ [Admin] Temporada zerada: ranking (leaderboard) apagado.');
+                    if (resetSeasonStatus) {
+                        resetSeasonStatus.textContent = '✓ Temporada zerada! Ranking vazio.';
+                        resetSeasonStatus.style.color = '#34d399';
+                    }
+                } catch (error) {
+                    logEvent('error', `Falha ao zerar temporada: ${error.message}`);
+                    if (resetSeasonStatus) {
+                        resetSeasonStatus.textContent = `❌ ${error.message}`;
+                        resetSeasonStatus.style.color = '#f87171';
+                    }
+                } finally {
+                    btnResetSeason.disabled = false;
+                    btnResetSeason.textContent = '⚠️ Zerar Temporada (apagar ranking)';
+                }
+            });
+        }
+
         const btnAnimationTest = document.getElementById('dev-animation-test-btn');
         if (btnAnimationTest) {
             btnAnimationTest.addEventListener('click', () => {
@@ -2379,6 +2417,7 @@
                 const p2Data = {
                     nickname: nick,
                     clientId: tabInstanceId,
+                    uid: getAuthenticatedUser()?.uid || null,
                     hp: 100,
                     charges: 0,
                     hasShield: false,

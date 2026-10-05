@@ -341,9 +341,14 @@ na mesma entrega**.
   PLANO §1.5), registro automático no fim da partida, **modal unificado Perfil/Conta**,
   **top 10 público em painel fixo no menu** (`createRankingPanel` na MenuScene)
   e **badge de elo na seleção de personagem** (`rankLabel` no nó do jogador).
-  **Falta**: botão GM "Zerar Temporada" (apagar o nó `leaderboard`).
-- **Regras de segurança do RTDB**: hoje são permissivas; o PLANO_DE_IMPLEMENTACAO
-  sugere travar escrita de `questionBanks` para e-mail do professor.
+  GM tem **"Zerar Temporada"** (aba Controles): apaga o nó `leaderboard` com
+  confirmação dupla + log admin.
+- **Regras de segurança do RTDB**: arquivo pronto em `database.rules.json`
+  (default-deny; salas só pelos participantes via `p1.uid`/`p2.uid` de Auth,
+  GM via `adminUsers`, `questionBanks`/`logs` escrita só GM, `leaderboard`/
+  `nicknames`/`users` escritas apenas pelo próprio uid). **Para aplicar**: cole
+  o conteúdo em Firebase Console → Realtime Database → Rules → Publicar.
+  ⚠️ Salas antigas (sem `uid`) param de funcionar — limpe-as com o GM antes.
 
 ## 14. Convenções
 

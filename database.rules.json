@@ -1,0 +1,72 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+
+    "_test_ping": { ".read": true, ".write": "auth != null" },
+
+    "rooms": {
+      ".read": true,
+      "$roomId": {
+        ".write": "auth != null && (root.child('adminUsers').child(auth.uid).val() === true || (!data.exists() ? newData.child('p1').child('uid').val() === auth.uid : data.child('p1').child('uid').val() === auth.uid))",
+        "p1": {
+          ".write": "auth != null && (data.child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)"
+        },
+        "p2": {
+          ".write": "auth != null && (!data.exists() ? newData.child('uid').val() === auth.uid : (data.child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true))"
+        },
+        "sessions": {
+          ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)"
+        },
+        "round": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "roundModifier": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "roundResolved": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "roundAlert": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "currentQuestionId": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "questionStartedAt": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "questionStartTime": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "attackWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "specialWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "ultimateWinner": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "postMatchRequest": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" },
+        "state": { ".write": "auth != null && (root.child('rooms').child($roomId).child('p1').child('uid').val() === auth.uid || root.child('rooms').child($roomId).child('p2').child('uid').val() === auth.uid || root.child('adminUsers').child(auth.uid).val() === true)" }
+      }
+    },
+
+    "questionBanks": {
+      ".read": true,
+      ".write": "auth != null && root.child('adminUsers').child(auth.uid).val() === true"
+    },
+    "leaderboard": {
+      ".read": true,
+      ".write": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "nicknames": {
+      ".read": true,
+      "$nick": {
+        ".write": "auth != null && (!data.exists() ? newData.val() === auth.uid : data.val() === auth.uid)"
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || root.child('adminUsers').child(auth.uid).val() === true)",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "students": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "adminUsers": {
+      ".read": "auth != null",
+      ".write": false
+    },
+    "logs": {
+      ".read": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
+      ".write": "auth != null"
+    }
+  }
+}

@@ -497,6 +497,7 @@ export class MenuScene extends Phaser.Scene {
                 p1: { 
                     nickname: this.playerNickname,
                     clientId: tabInstanceId,
+                    uid: ownerUid,
                     hp: 100,
                     charges: 0,
                     hasShield: false,
