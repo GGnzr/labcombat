@@ -84,12 +84,12 @@ Não há servidor: **o cliente do Player 1 (P1) é a autoridade** da partida.
   "specialWinner": null,
   "ultimateWinner": null,
   "postMatchRequest": null,        // { type:'rematch'|'change_prof', from, fromNick, status?, declinedBy?, declinedNick?, timestamp }
-  "p1": { "nickname": "...", "clientId": "<uuid da aba>", "characterId": "so",
+  "p1": { "nickname": "...", "clientId": "<uuid da aba>", "uid": "<auth uid>", "characterId": "so",
           "ready": false, "hp": 100, "charges": 0,
           "hasShield": false, "hasTryCatch": false, "lives": 3, "streak": 0,
           "answered": false, "answeredAt": null,
           "answerCorrect": null, "answeredChoice": null,
-          "rankLabel": "🥇 II" },                  // opcional: badge de elo gerado na seleção
+          "rankLabel": "💻 II" },                  // opcional: badge de elo gerado na seleção
   "p2": { "...": "mesmo shape" },
   "sessions": { "<tabInstanceId>": { "clientId": "...", "playerId": "p1", "..." } }
 }
@@ -149,6 +149,20 @@ Modificadores de rodada (30% de chance por rodada, uniforme): `charge` (+1 carga
 extra), `shield` (ganha escudo/FIREWALL), `heal` (+10 HP, máx 100),
 `try_catch` (anula o próximo erro). HP máx 100, cargas máx 3.
 Ultimate fica "pronta" com 3 cargas e HP do oponente ≤33 (label do HUD muda).
+
+**Valores ajustáveis pelo painel GM** (aba Controles → ⚔️ Dano & LP; §13):
+dano do ataque (`dev_dmg_attack`, default 15), dano do super/especial
+(`dev_dmg_special`, default 28), limiar de K.O. da ultimate (`dev_ult_ko_hp`,
+default 33), vida inicial/máx (`dev_max_hp`, default 100, painel limita 10–200),
+chance de modificador de rodada (`dev_mod_chance`, default 30%, 0 = nunca) e
+cura do BACKUP (`dev_mod_heal`, default 10, 4º campo do switch do badge),
+e LabPoints (`dev_lp_win` 25, `dev_lp_bonus` 5, `dev_lp_loss` 10).
+Como a rodada é resolvida só no P1, o dano aplicado é o do client do P1; ao
+salvar no GM, o P1 grava os valores na sala (`dmgAttack`/`dmgSpecial`/
+`ultKoHp`/`maxHp`/`modChance`/`modHeal`/`lpWin`/`lpBonus`/`lpLoss`) e o outro
+client usa os mesmos números ao exibir/registrar LP no fim da partida. Novas
+vagas na sala herdam o
+`maxHp` da sala (MenuScene lê da sala; criar sala usa o localStorage do host).
 
 **Pós-partida**: `postMatchRequest` coordena revanche/troca de personagem
 (ver MainScene §1.7 da exploração); recusar fecha a sala (`state:'closed'`).
@@ -225,6 +239,7 @@ index.html; as cenas se comunicam por **CustomEvents** (contrato testado em
 | `open-nickname-modal` | index.html (fluxo visitante) | index.html |
 | `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | MenuScene |
 | `dev-set-timers` | index.html | MainScene + MenuScene |
+| `dev-set-combat` (detail: `{dmgAttack, dmgSpecial, ultKoHp, maxHp, modChance, modHeal, lpWin, lpBonus, lpLoss}`) | index.html | MainScene |
 | `dev-anim-speeds` (detail: `{walk, attack, special, ult}` fps) | index.html | MainScene + AnimationTestScene |
 | `dev-streak`, `dev-next-question`, `dev-attack`, `dev-special`, `dev-ultimate` | index.html | MainScene |
 | `dev-reset` | index.html | MainScene + MenuScene |
@@ -237,6 +252,9 @@ DOM ids usados pelo código Phaser: `app`, `join-overlay`, `join-error-msg`,
 **Storage keys** (não renomear sem migrar):
 localStorage: `dev_start_delay`, `dev_question_limit`, `dev_anim_walk_fps`,
 `dev_anim_attack_fps`, `dev_anim_special_fps`, `dev_anim_ult_fps`,
+`dev_dmg_attack`, `dev_dmg_special`, `dev_ult_ko_hp`, `dev_max_hp`,
+`dev_mod_chance`, `dev_mod_heal`,
+`dev_lp_win`, `dev_lp_bonus`, `dev_lp_loss`,
 `labcombat_volume`,
 `labcombat_effects_volume`, `labcombat_music_volume`, `labcombat_muted`,
 `labcombat_effects_muted`, `labcombat_music_muted`, `labcombat_account_uid`.
@@ -259,19 +277,25 @@ O contexto de áudio só desbloqueia após o 1º gesto do usuário (autoplay pol
 
 ## 10. Painel GM (modo professor)
 
-- Acesso: conta cujo uid está em `adminUsers/{uid}: true` (RTDB). Atalhos F2 ou
-  Ctrl+Shift+D; abas Controles/Questões/Salas/Logs no index.html. O painel é uma
+- Acesso: conta cujo uid está em `adminUsers/{uid}: true` (RTDB). Entrada pelo
+  botão **🛡️ Modo GM** no menu (canto inferior direito); painel aberto fecha
+  com "✕ Fechar" e reabre por **F2 ou Ctrl+Shift+D** (o antigo pill flutuante
+  `#gm-reopen-pill` do topo foi desativado). Abas Controles/Questões/Salas/Logs
+  no index.html. O painel é uma
   **tela de gerenciamento full-screen (overlay)** — o jogo não encolhe, fica
   rodando ao fundo. Em batalha (MainScene marca `body.in-battle`), a **barra
   rápida flutuante `#gm-quickbar`** (➕/➖ carga · ⚡ atacar · 💥 especial ·
   🔥 ultimate · ⏭️ pular questão) aparece com o painel fechado.
-- Funções: ajustar timers da partida, ajustar FPS das animações
+- Funções: ajustar timers da partida, ajustar dano/limiar de K.O. da ultimate e
+  pontuação de LP (vitória/bônus/derrota), ajustar FPS das animações
   (walk/attack/especial/ultimate — persistente em localStorage, aplica ao vivo
   na luta e na AnimationTestScene), cheat de golpe/carga/pular questão/reset,
   gerenciar salas (listar, limpar vazias, limpar todas, **👀 assistir partida
   ao vivo como espectador somente-leitura**), terminal de logs
-  (retenção 30 dias / máx 2000), tela cheia, abrir AnimationTestScene via
-  `window.game.scene.start(...)`.
+  (retenção 30 dias / máx 2000). AnimationTestScene existe, mas NÃO tem botão
+  no painel (aba Controles limpa: Tempos, Combate (dano/vida/modificadores),
+  LabPoints & Temporada, Sessão da Arena e Velocidade das Animações) — abra por
+  código/console se precisar depurar sprites.
 - **Aba Questões (CRUD)**: lista as questões de `questionBanks/{id}` com filtro;
   criar/editar/excluir questão individual (editor com 2–6 opções + gabarito por
   rádio; validação espelha `validateQuestionBank`); importar JSON (substitui o
@@ -334,11 +358,19 @@ na mesma entrega**.
 - **Novo professor**: entrada em `professors.js` (atenção: `id` ≠ pasta do atlas,
   vide `eng_soft` → pasta `eng/`) → atlas + portrait em `public/assets/` →
   `assets/questions/<id>.json` → option no select GM do index.html → `npm test`.
-- **Mudar dano/cargas/timers**: editar constantes em `MainScene.resolveRound` /
-  `update` e os defaults `dev_question_limit`/`dev_start_delay`; documentar aqui.
-- **Ranking/temporada**: implementado — `leaderboard/{uid}` com RP/elos
-  (`src/ranking.js`, elos com 4 divisões estilo LoL: IV→III→II→I, tabela do
-  PLANO §1.5), registro automático no fim da partida, **modal unificado Perfil/Conta**,
+- **Mudar dano/cargas/timers**: de preferência pelo painel GM (localStorage +
+  evento `dev-set-combat`/`dev-set-timers`); se mudar algum DEFAULT, edite as
+  constantes em `MainScene.init` (fallbacks), o `readLpDefault` em
+  `src/ranking.js` e os defaults dos inputs no index.html; documentar aqui.
+- **Ranking/temporada**: implementado — `leaderboard/{uid}` com LP/elos
+  (`src/ranking.js`, pontos chamados **LabPoints (LP)**, elos com 4 divisões
+  estilo LoL: IV→III→II→I, tabela do PLANO §1.5; ícones 🐣•☕•💻•💎•👑),
+  registro automático no fim da partida —
+  `recordMatchResult` retorna `{ delta, points, rank }` e a MainScene exibe no
+  painel de fim de jogo quanto o jogador com conta ganhou/perdeu (+ elo atual;
+  visitante vê convite p/ criar conta) —, **modais separados: Perfil
+  (`open-profile-modal`, ranking/apelido/sessão da conta) e Conta
+  (`open-account-modal`, formulário Entrar/Cadastrar/visitante)**,
   **top 10 público em painel fixo no menu** (`createRankingPanel` na MenuScene)
   e **badge de elo na seleção de personagem** (`rankLabel` no nó do jogador).
   GM tem **"Zerar Temporada"** (aba Controles): apaga o nó `leaderboard` com
@@ -358,8 +390,13 @@ na mesma entrega**.
 - Logs importantes via `logEvent()` (tipos persistidos: `admin`, `error`, `warn`).
 - Textos de UI em pt-BR; identificadores em inglês; comentários em pt-BR.
 - **Apelido**: visitante define/troca pelo modal de apelido (fluxo "Continuar
-  como visitante") — sessionStorage `labcombat_nickname`. Chip 👤 do menu abre:
-  conta logada → Perfil; visitante/sem acesso → modal de Conta (criar conta).
+  como visitante") — sessionStorage `labcombat_nickname`. O modal de conta só é
+  obrigatório na 1ª entrada (sem `labcombat_access_mode`); visitante NÃO é
+  forçado ao voltar de uma partida — no fim da luta (vitória/W.O. inclusive) ele
+  apenas vê o aviso clicável "crie uma conta p/ pontuar" (goRankText, abre o
+  modal já na aba Criar conta). Chip 👤 do menu abre:
+  conta logada → Perfil; visitante/sem acesso → modal de Conta na aba **Criar
+  conta** (`open-account-modal` com `detail.register: true`).
   Com conta logada, o apelido é o da conta (`users/{uid}.nickname`) e só muda
   pelo Perfil (`updateAccountNickname` em auth.js — sincroniza Auth
   displayName e, se existir, `leaderboard/{uid}.nickname`).
