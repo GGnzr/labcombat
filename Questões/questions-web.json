@@ -1,0 +1,717 @@
+[
+  {
+    "correctIndex": 1,
+    "id": "web-1",
+    "options": [
+      "HyperText Programming Language",
+      "HyperText Markup Language",
+      "High Transfer Markup Language",
+      "Home Tool Markup Language"
+    ],
+    "text": "O que significa a sigla HTML?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-2",
+    "options": [
+      "<a>",
+      "<link>",
+      "<href>",
+      "<url>"
+    ],
+    "text": "Qual tag HTML cria um link para outra página?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-3",
+    "options": [
+      "<image>",
+      "<img>",
+      "<figure>",
+      "<src>"
+    ],
+    "text": "Qual tag HTML exibe uma imagem na página?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-4",
+    "options": [
+      "alt",
+      "title",
+      "src",
+      "href"
+    ],
+    "text": "Qual atributo da tag <img> fornece um texto alternativo, importante para a acessibilidade?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-5",
+    "options": [
+      "<h6>",
+      "<h1>",
+      "<head>",
+      "<p>"
+    ],
+    "text": "Qual tag HTML define o título de maior nível dentro do conteúdo da página?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-6",
+    "options": [
+      "<ol>",
+      "<tr>",
+      "<dl>",
+      "<ul>"
+    ],
+    "text": "Qual tag HTML cria uma lista não ordenada?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-7",
+    "options": [
+      "Envio de comandos SQL em campos de login",
+      "Sobrecarga do servidor por excesso de acessos",
+      "Cópia de arquivos do servidor sem permissão",
+      "Injeção de scripts maliciosos em páginas vistas por outros usuários"
+    ],
+    "text": "O que é XSS (Cross-Site Scripting)?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-8",
+    "options": [
+      "<td>",
+      "<table>",
+      "<tr>",
+      "<row>"
+    ],
+    "text": "Qual tag HTML define uma linha de uma tabela?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-9",
+    "options": [
+      "<label>",
+      "<input>",
+      "<legend>",
+      "<fieldset>"
+    ],
+    "text": "Qual tag HTML cria um campo de entrada de dados em um formulário?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-10",
+    "options": [
+      "<aside>",
+      "<footer>",
+      "<section>",
+      "<nav>"
+    ],
+    "text": "Qual tag semântica do HTML5 representa o menu de navegação principal?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-11",
+    "options": [
+      "<header>",
+      "<nav>",
+      "<article>",
+      "<footer>"
+    ],
+    "text": "Qual tag semântica do HTML5 representa o rodapé da página?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-12",
+    "options": [
+      "Linguagem usada para consultar bancos de dados",
+      "Protocolo de comunicação entre servidores",
+      "Linguagem de programação executada no servidor",
+      "Linguagem usada para definir a aparência de páginas HTML"
+    ],
+    "text": "O que é CSS?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-13",
+    "options": [
+      "*id",
+      "#id",
+      "&id",
+      "@id"
+    ],
+    "text": "Qual seletor CSS seleciona um elemento pelo seu id?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-14",
+    "options": [
+      "#classe",
+      "@classe",
+      ".classe",
+      "$classe"
+    ],
+    "text": "Qual seletor CSS seleciona elementos pela sua classe?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-15",
+    "options": [
+      "background-color",
+      "color",
+      "border-color",
+      "font-size"
+    ],
+    "text": "Qual propriedade CSS altera a cor do texto?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-16",
+    "options": [
+      "padding",
+      "margin",
+      "border",
+      "outline"
+    ],
+    "text": "Qual propriedade CSS define o espaço interno entre o conteúdo e a borda?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-17",
+    "options": [
+      "margin",
+      "padding",
+      "border",
+      "width"
+    ],
+    "text": "Qual propriedade CSS define o espaço externo ao redor de um elemento?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-18",
+    "options": [
+      "Conteúdo, margin, borda, padding",
+      "Borda, conteúdo, padding, margin",
+      "Margin, padding, conteúdo, borda",
+      "Conteúdo, padding, borda, margin"
+    ],
+    "text": "No box model, qual é a ordem correta de dentro para fora?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-19",
+    "options": [
+      "flex",
+      "block",
+      "inline",
+      "none"
+    ],
+    "text": "Qual valor da propriedade display ativa o Flexbox?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-20",
+    "options": [
+      "justify-content",
+      "align-items",
+      "flex-wrap",
+      "order"
+    ],
+    "text": "Qual propriedade do Flexbox alinha os itens ao longo do eixo principal?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-21",
+    "options": [
+      "flex",
+      "grid",
+      "block",
+      "inline-block"
+    ],
+    "text": "Qual valor da propriedade display ativa o CSS Grid?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-22",
+    "options": [
+      "Consultar dados em um banco",
+      "Carregar imagens mais rápido",
+      "Validar campos de formulário",
+      "Aplicar estilos conforme características do dispositivo, como a largura da tela"
+    ],
+    "text": "Para que servem as media queries do CSS?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-23",
+    "options": [
+      "charset",
+      "viewport",
+      "author",
+      "keywords"
+    ],
+    "text": "Qual meta tag é essencial para o design responsivo em celulares?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-24",
+    "options": [
+      "Site que responde e-mails automaticamente",
+      "Layout que se adapta a diferentes tamanhos de tela",
+      "Site que funciona apenas em computadores",
+      "Site com muitas animações"
+    ],
+    "text": "O que é design responsivo?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-25",
+    "options": [
+      "static",
+      "relative",
+      "fixed",
+      "inherit"
+    ],
+    "text": "Qual valor de position mantém o elemento fixo na janela mesmo ao rolar a página?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-26",
+    "options": [
+      "Um banco de dados relacional",
+      "Um servidor web",
+      "Um framework front-end com componentes e grid prontos",
+      "Uma linguagem de programação do back-end"
+    ],
+    "text": "O que é o Bootstrap?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-27",
+    "options": [
+      "8",
+      "10",
+      "12",
+      "16"
+    ],
+    "text": "Quantas colunas tem o sistema de grid padrão do Bootstrap?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-28",
+    "options": [
+      "CSS",
+      "SQL",
+      "XML",
+      "JavaScript"
+    ],
+    "text": "Qual linguagem dá comportamento e interatividade às páginas no navegador?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-29",
+    "options": [
+      "const",
+      "let",
+      "var",
+      "static"
+    ],
+    "text": "Qual palavra-chave declara em JavaScript uma variável que não pode ser reatribuída?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-30",
+    "options": [
+      "print.console()",
+      "alert.log()",
+      "console.log()",
+      "write.console()"
+    ],
+    "text": "Qual comando imprime uma mensagem no console do navegador em JavaScript?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-31",
+    "options": [
+      "Os dois operadores são idênticos",
+      "O === compara apenas textos",
+      "O == compara apenas tipos",
+      "O === compara valor e tipo; o == faz conversão de tipos"
+    ],
+    "text": "Qual a diferença entre == e === em JavaScript?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-32",
+    "options": [
+      "Banco de dados interno do navegador",
+      "Representação em árvore da página que o JavaScript pode manipular",
+      "Linguagem de estilos",
+      "Servidor de páginas"
+    ],
+    "text": "O que é o DOM?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-33",
+    "options": [
+      "document.getElementById()",
+      "document.getId()",
+      "window.findId()",
+      "dom.selectId()"
+    ],
+    "text": "Qual método JavaScript seleciona um elemento pelo seu id?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-34",
+    "options": [
+      "hover",
+      "submit",
+      "click",
+      "load"
+    ],
+    "text": "Qual evento ocorre quando o usuário clica em um elemento?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-35",
+    "options": [
+      "$",
+      "#",
+      "@",
+      "%"
+    ],
+    "text": "Em jQuery, qual símbolo é usado como atalho para a biblioteca?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-36",
+    "options": [
+      "$('#menu')",
+      "$('.menu')",
+      "$('@menu')",
+      "$('menu.id')"
+    ],
+    "text": "Qual seletor jQuery seleciona o elemento com id menu?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-37",
+    "options": [
+      "A velocidade de processamento do servidor",
+      "A quantidade de funcionalidades do sistema",
+      "A beleza das cores utilizadas",
+      "A facilidade com que os usuários alcançam seus objetivos no sistema"
+    ],
+    "text": "O que é usabilidade?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-38",
+    "options": [
+      "Usar imagens no lugar de todo o texto",
+      "Usar texto alternativo nas imagens",
+      "Reduzir o contraste das cores",
+      "Desativar a navegação por teclado"
+    ],
+    "text": "Qual prática melhora a acessibilidade de uma página web?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-39",
+    "options": [
+      "Apenas desenvolvedores",
+      "Apenas usuários de celular",
+      "Pessoas com diferentes necessidades, como deficiência visual ou motora",
+      "Apenas grandes empresas"
+    ],
+    "text": "Para quem a acessibilidade web é pensada?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-40",
+    "options": [
+      "Leitores de tela",
+      "Impressoras",
+      "Roteadores",
+      "Antivírus"
+    ],
+    "text": "Qual recurso auxilia pessoas com deficiência visual a navegar em um site?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-41",
+    "options": [
+      "O client-side roda no navegador; o server-side roda no servidor",
+      "O client-side roda no servidor; o server-side roda no navegador",
+      "Ambos rodam sempre no servidor",
+      "Ambos rodam sempre no banco de dados"
+    ],
+    "text": "Qual a diferença entre desenvolvimento client-side e server-side?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-42",
+    "options": [
+      "HTTP",
+      "FTP",
+      "SMTP",
+      "SSH"
+    ],
+    "text": "Qual protocolo é a base da comunicação entre navegador e servidor web?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-43",
+    "options": [
+      "POST",
+      "DELETE",
+      "PUT",
+      "GET"
+    ],
+    "text": "Qual método HTTP é normalmente usado para obter dados de um recurso?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-44",
+    "options": [
+      "200",
+      "500",
+      "404",
+      "301"
+    ],
+    "text": "Qual código de status HTTP indica que a página não foi encontrada?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-45",
+    "options": [
+      "404",
+      "500",
+      "403",
+      "200"
+    ],
+    "text": "Qual código de status HTTP indica sucesso na requisição?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-46",
+    "options": [
+      "500",
+      "404",
+      "200",
+      "302"
+    ],
+    "text": "Qual código de status HTTP indica erro interno no servidor?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-47",
+    "options": [
+      "Deixa as páginas mais bonitas",
+      "Dispensa o uso de servidor",
+      "Criptografa a comunicação entre navegador e servidor",
+      "Aumenta o tamanho das páginas"
+    ],
+    "text": "Qual a principal vantagem do HTTPS em relação ao HTTP?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-48",
+    "options": [
+      "CSS",
+      "PHP",
+      "HTML",
+      "Bootstrap"
+    ],
+    "text": "Qual linguagem é muito usada para gerar páginas dinâmicas no servidor?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-49",
+    "options": [
+      "Model",
+      "View",
+      "Controller",
+      "Router"
+    ],
+    "text": "No padrão MVC, qual camada gerencia os dados e as regras de negócio?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-50",
+    "options": [
+      "Model",
+      "View",
+      "Controller",
+      "Database"
+    ],
+    "text": "No padrão MVC, qual camada define o que é exibido ao usuário?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-51",
+    "options": [
+      "Controller",
+      "View",
+      "Model",
+      "Template"
+    ],
+    "text": "No padrão MVC, qual camada recebe as requisições e coordena Model e View?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-52",
+    "options": [
+      "Eliminar a necessidade de banco de dados",
+      "Misturar interface e regras no mesmo código",
+      "Separar responsabilidades, facilitando a manutenção",
+      "Dispensar a realização de testes"
+    ],
+    "text": "Qual a principal vantagem do padrão MVC?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-53",
+    "options": [
+      "Um serviço gratuito de hospedagem",
+      "Um editor de páginas HTML",
+      "Um tipo de navegador",
+      "Um serviço que permite que sistemas troquem dados pela web"
+    ],
+    "text": "O que é um Web Service?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-54",
+    "options": [
+      "Advanced Page Index",
+      "Application Programming Interface",
+      "Application Process Internet",
+      "Automated Program Input"
+    ],
+    "text": "O que significa a sigla API?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-55",
+    "options": [
+      "JPEG",
+      "MP3",
+      "EXE",
+      "JSON"
+    ],
+    "text": "Qual formato de dados é muito usado em APIs REST?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-56",
+    "options": [
+      "GET",
+      "HEAD",
+      "OPTIONS",
+      "POST"
+    ],
+    "text": "Em uma API REST, qual verbo HTTP costuma ser usado para criar um novo recurso?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-57",
+    "options": [
+      "GET",
+      "POST",
+      "DELETE",
+      "PUT"
+    ],
+    "text": "Em uma API REST, qual verbo HTTP costuma ser usado para remover um recurso?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-58",
+    "options": [
+      "Vírus que infectam o navegador",
+      "Arquivos de configuração do servidor",
+      "Pequenos dados armazenados no navegador por um site",
+      "Imagens usadas no layout"
+    ],
+    "text": "O que são cookies?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "web-59",
+    "options": [
+      "Aumentar a velocidade da internet",
+      "Compilar os arquivos CSS",
+      "Criar o banco de dados",
+      "Manter dados do usuário entre requisições, como o login"
+    ],
+    "text": "Qual é a função de uma sessão (session) em uma aplicação web?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-60",
+    "options": [
+      "Enviar e-mails falsos para roubar dados",
+      "Derrubar o servidor com excesso de acessos",
+      "Inserir comandos SQL maliciosos em campos de entrada",
+      "Roubar cookies usando scripts"
+    ],
+    "text": "O que é um ataque de SQL Injection?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "web-61",
+    "options": [
+      "Reaproveitar estruturas prontas e padronizar o projeto",
+      "Eliminar a necessidade de programar",
+      "Deixar o site automaticamente seguro",
+      "Dispensar o uso de banco de dados"
+    ],
+    "text": "Qual é a vantagem de usar um framework de desenvolvimento web?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-62",
+    "options": [
+      "O navegador acessa diretamente os arquivos do banco",
+      "O CSS envia os dados ao banco",
+      "O código do servidor se conecta ao banco e executa consultas",
+      "O HTML executa comandos SQL sozinho"
+    ],
+    "text": "Como um sistema web costuma integrar-se a um banco de dados?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-63",
+    "options": [
+      "target",
+      "action",
+      "src",
+      "link"
+    ],
+    "text": "Qual atributo de um formulário HTML define para onde os dados serão enviados?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "web-64",
+    "options": [
+      "type",
+      "name",
+      "method",
+      "enctype"
+    ],
+    "text": "Qual atributo de um formulário define o método HTTP de envio, como GET ou POST?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "web-65",
+    "options": [
+      "Gerenciador de downloads",
+      "Ferramentas do desenvolvedor (DevTools)",
+      "Histórico de navegação",
+      "Modo de leitura"
+    ],
+    "text": "Qual ferramenta do navegador permite inspecionar HTML, CSS e erros de JavaScript?"
+  }
+]

@@ -1,0 +1,662 @@
+[
+  {
+    "correctIndex": 2,
+    "id": "eng-101",
+    "options": [
+      "Descrevem restrições de desempenho e segurança",
+      "Definem o custo e o prazo do projeto",
+      "Descrevem o que o sistema deve fazer",
+      "Definem quem compõe a equipe"
+    ],
+    "text": "O que são requisitos funcionais?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-102",
+    "options": [
+      "As funções que o sistema deve executar",
+      "As telas desenhadas para o sistema",
+      "Os contratos assinados com o cliente",
+      "Restrições e qualidades do sistema, como desempenho e segurança"
+    ],
+    "text": "O que são requisitos não funcionais?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-103",
+    "options": [
+      "O sistema deve responder às consultas em até 2 segundos",
+      "O sistema deve estar disponível 99,9% do tempo",
+      "O sistema deve rodar em qualquer navegador",
+      "O sistema deve permitir cadastrar clientes"
+    ],
+    "text": "Qual é um exemplo de requisito funcional?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-104",
+    "options": [
+      "O sistema deve permitir cadastrar produtos",
+      "O sistema deve responder às consultas em até 2 segundos",
+      "O sistema deve emitir relatório de vendas",
+      "O sistema deve permitir que o usuário faça login"
+    ],
+    "text": "Qual é um exemplo de requisito não funcional?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-105",
+    "options": [
+      "Entrevistas",
+      "Compilação",
+      "Backup",
+      "Implantação"
+    ],
+    "text": "Qual técnica é usada para levantar requisitos junto aos usuários?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-106",
+    "options": [
+      "Um modelo inicial do sistema para validar ideias com o usuário",
+      "A versão final entregue ao cliente",
+      "O manual de uso do sistema",
+      "O banco de dados do projeto"
+    ],
+    "text": "O que é um protótipo no levantamento de requisitos?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-107",
+    "options": [
+      "A montagem dos computadores da equipe",
+      "A programação sem nenhum planejamento",
+      "O processo de descobrir, analisar, documentar e gerenciar requisitos",
+      "O teste do hardware do cliente"
+    ],
+    "text": "O que é engenharia de requisitos?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-108",
+    "options": [
+      "Os de usuário são mais gerais; os de sistema são mais detalhados e técnicos",
+      "Os de usuário são mais técnicos que os de sistema",
+      "São exatamente idênticos",
+      "Os de sistema só existem para hardware"
+    ],
+    "text": "Qual é a diferença entre requisitos de usuário e de sistema?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-109",
+    "options": [
+      "A vida útil do computador que o executa",
+      "A duração do contrato com o cliente",
+      "O conjunto de etapas da concepção até a desativação do software",
+      "O tempo de duração de uma sprint"
+    ],
+    "text": "O que é o ciclo de vida de um software?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-110",
+    "options": [
+      "Implantação",
+      "Análise de requisitos",
+      "Manutenção",
+      "Codificação"
+    ],
+    "text": "Qual etapa do desenvolvimento define o que o sistema deve fazer?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-111",
+    "options": [
+      "Cascata",
+      "Scrum",
+      "Kanban",
+      "XP"
+    ],
+    "text": "Qual modelo de processo segue fases sequenciais, em que cada uma só começa quando a anterior termina?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-112",
+    "options": [
+      "Dificuldade de lidar com mudanças de requisitos após o início",
+      "Entregas parciais muito frequentes",
+      "Fases que se sobrepõem constantemente",
+      "Cliente participando o tempo todo"
+    ],
+    "text": "Qual é uma desvantagem do modelo cascata?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-113",
+    "options": [
+      "Cascata",
+      "Espiral",
+      "Kanban",
+      "Scrum"
+    ],
+    "text": "Qual modelo de processo enfatiza a análise de riscos em ciclos repetidos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-114",
+    "options": [
+      "Uma única entrega ao final do projeto",
+      "Entregas parciais, cada uma adicionando novas funcionalidades",
+      "Ausência total de planejamento",
+      "Realização apenas de testes"
+    ],
+    "text": "O que caracteriza o modelo incremental?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-115",
+    "options": [
+      "Guia PMBOK",
+      "Norma ISO 9000",
+      "Código Civil Digital",
+      "Manifesto Ágil"
+    ],
+    "text": "Qual documento reúne os princípios das metodologias ágeis?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-116",
+    "options": [
+      "Processos e ferramentas mais que indivíduos e interações",
+      "Software funcionando mais que documentação abrangente",
+      "Negociação de contratos mais que colaboração com o cliente",
+      "Seguir um plano mais que responder a mudanças"
+    ],
+    "text": "Qual destes é um valor do Manifesto Ágil?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-117",
+    "options": [
+      "Product Owner",
+      "Scrum Master",
+      "Desenvolvedores",
+      "Cliente final"
+    ],
+    "text": "No Scrum, quem é responsável por maximizar o valor do produto e gerenciar o Product Backlog?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-118",
+    "options": [
+      "Scrum Master",
+      "Product Owner",
+      "Gerente de projetos",
+      "Testador"
+    ],
+    "text": "No Scrum, qual papel ajuda a equipe a seguir as práticas e remove impedimentos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-119",
+    "options": [
+      "A lista de bugs já corrigidos",
+      "Uma lista ordenada de tudo o que pode ser necessário no produto",
+      "A reunião diária da equipe",
+      "O relatório final do projeto"
+    ],
+    "text": "O que é o Product Backlog?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-120",
+    "options": [
+      "A lista de todas as ideias do produto",
+      "A ata da retrospectiva",
+      "O cronograma do ano inteiro",
+      "Os itens escolhidos para a sprint e o plano para entregá-los"
+    ],
+    "text": "O que é o Sprint Backlog?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-121",
+    "options": [
+      "Daily Scrum",
+      "Sprint Review",
+      "Sprint Planning",
+      "Sprint Retrospective"
+    ],
+    "text": "Qual evento do Scrum é a reunião curta diária de sincronização da equipe?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-122",
+    "options": [
+      "Sprint Planning",
+      "Daily Scrum",
+      "Sprint Review",
+      "Sprint Retrospective"
+    ],
+    "text": "Qual evento do Scrum apresenta o incremento às partes interessadas para obter feedback?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-123",
+    "options": [
+      "Sprint Review",
+      "Daily Scrum",
+      "Sprint Retrospective",
+      "Sprint Planning"
+    ],
+    "text": "Qual evento do Scrum define o que será feito na sprint?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-124",
+    "options": [
+      "Um tipo de teste de software",
+      "Um período curto e fixo em que um incremento utilizável é produzido",
+      "A reunião de encerramento do projeto",
+      "A lista de requisitos do sistema"
+    ],
+    "text": "O que é uma sprint?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-125",
+    "options": [
+      "Uma reunião da equipe",
+      "Um cargo dentro da equipe",
+      "Um resultado utilizável e concluído ao final de uma sprint",
+      "Um defeito encontrado no sistema"
+    ],
+    "text": "O que é um incremento no Scrum?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-126",
+    "options": [
+      "Um diagrama de classes",
+      "Um plano de testes",
+      "Uma descrição curta de uma funcionalidade sob a perspectiva do usuário",
+      "Um manual técnico"
+    ],
+    "text": "O que é uma user story (história de usuário)?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-127",
+    "options": [
+      "Se [condição], então [ação]",
+      "Entrada, processamento e saída",
+      "Como [papel], quero [funcionalidade], para [benefício]",
+      "Classe, atributo e método"
+    ],
+    "text": "Qual é o formato comum de uma user story?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-128",
+    "options": [
+      "Uma linguagem de modelagem",
+      "Um método visual de fluxo de trabalho, com colunas como A Fazer, Fazendo e Feito",
+      "Um tipo de teste de software",
+      "Um papel do Scrum"
+    ],
+    "text": "O que é o Kanban?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-129",
+    "options": [
+      "O número de membros da equipe",
+      "A duração das reuniões",
+      "O custo do projeto",
+      "A quantidade de tarefas em andamento ao mesmo tempo"
+    ],
+    "text": "No Kanban, o que o limite de WIP controla?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-130",
+    "options": [
+      "Dois projetos desenvolvidos ao mesmo tempo",
+      "Dois clientes definindo requisitos",
+      "Dois desenvolvedores trabalhando juntos no mesmo código",
+      "Duas linguagens usadas no mesmo sistema"
+    ],
+    "text": "O que é a programação em pares (pair programming), prática do XP?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-131",
+    "options": [
+      "Documentação detalhada feita antes de tudo",
+      "Testes realizados só no fim do projeto",
+      "Desenvolvimento guiado por testes, escrevendo-os antes do código",
+      "Teste de desempenho do hardware"
+    ],
+    "text": "O que é TDD?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-132",
+    "options": [
+      "Reescrever todo o sistema do zero",
+      "Adicionar novas funcionalidades ao sistema",
+      "Melhorar a estrutura interna do código sem alterar seu comportamento",
+      "Remover os testes do projeto"
+    ],
+    "text": "O que é refatoração?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-133",
+    "options": [
+      "O máximo de valor possível do produto",
+      "Um modelo visual de protótipos",
+      "Um módulo de verificação de pagamentos",
+      "Um produto mínimo viável, com o essencial para validar a ideia"
+    ],
+    "text": "O que é um MVP?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-134",
+    "options": [
+      "Uma linguagem de programação",
+      "Um sistema gerenciador de banco de dados",
+      "Um protocolo de rede",
+      "Uma linguagem padrão para modelar sistemas visualmente"
+    ],
+    "text": "O que é a UML?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-135",
+    "options": [
+      "Diagrama de casos de uso",
+      "Diagrama de classes",
+      "Diagrama de estados",
+      "Diagrama de componentes"
+    ],
+    "text": "Qual diagrama UML mostra as interações entre os usuários e o sistema?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-136",
+    "options": [
+      "Quem interage com o sistema, como um usuário ou outro sistema",
+      "Uma funcionalidade do sistema",
+      "Uma classe do sistema",
+      "Um banco de dados do sistema"
+    ],
+    "text": "No diagrama de casos de uso, o que é um ator?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-137",
+    "options": [
+      "Diagrama de casos de uso",
+      "Diagrama de atividades",
+      "Diagrama de implantação",
+      "Diagrama de classes"
+    ],
+    "text": "Qual diagrama UML mostra classes, atributos, métodos e relacionamentos?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-138",
+    "options": [
+      "Visibilidade pública",
+      "Visibilidade protegida",
+      "Atributo estático",
+      "Visibilidade privada"
+    ],
+    "text": "No diagrama de classes, o que o símbolo '-' antes de um atributo indica?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-139",
+    "options": [
+      "Visibilidade privada",
+      "Relação de herança",
+      "Atributo derivado",
+      "Visibilidade pública"
+    ],
+    "text": "No diagrama de classes, o que o símbolo '+' antes de um atributo ou método indica?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-140",
+    "options": [
+      "Diagrama de classes",
+      "Diagrama de sequência",
+      "Diagrama de casos de uso",
+      "Diagrama de implantação"
+    ],
+    "text": "Qual diagrama UML mostra a troca de mensagens entre objetos ao longo do tempo?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-141",
+    "options": [
+      "Diagrama de classes",
+      "Diagrama de atividades",
+      "Diagrama de estados",
+      "Diagrama de objetos"
+    ],
+    "text": "Qual diagrama UML representa o fluxo de atividades de um processo?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-142",
+    "options": [
+      "Teste de unidade",
+      "Teste de integração",
+      "Teste de aceitação",
+      "Teste de sistema"
+    ],
+    "text": "Qual tipo de teste verifica o menor trecho de código, como uma função isolada?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-143",
+    "options": [
+      "Teste de integração",
+      "Teste de unidade",
+      "Teste de aceitação",
+      "Teste de estresse"
+    ],
+    "text": "Qual tipo de teste verifica se diferentes módulos funcionam bem juntos?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-144",
+    "options": [
+      "Teste de unidade",
+      "Teste de integração",
+      "Teste de aceitação",
+      "Teste de regressão"
+    ],
+    "text": "Qual tipo de teste valida se o sistema atende às necessidades do cliente?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-145",
+    "options": [
+      "Testar o sistema pela primeira vez",
+      "Testar apenas o hardware",
+      "Reexecutar testes após mudanças para garantir que nada deixou de funcionar",
+      "Testar o sistema com carga máxima"
+    ],
+    "text": "O que é um teste de regressão?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-146",
+    "options": [
+      "Encontrar defeitos e aumentar a confiança na qualidade",
+      "Provar que o software não tem nenhum defeito",
+      "Aumentar o número de linhas de código",
+      "Dispensar a análise de requisitos"
+    ],
+    "text": "Qual é o principal objetivo dos testes de software?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-147",
+    "options": [
+      "A quantidade de linhas de código escritas",
+      "O preço cobrado pelo software",
+      "Apenas a velocidade de execução",
+      "O grau em que o software atende aos requisitos e às necessidades dos usuários"
+    ],
+    "text": "O que é qualidade de software?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-148",
+    "options": [
+      "Uma linguagem de programação",
+      "Um banco de dados relacional",
+      "Um sistema de controle de versão distribuído",
+      "Um editor de texto"
+    ],
+    "text": "O que é o Git?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-149",
+    "options": [
+      "git push",
+      "git add",
+      "git clone",
+      "git init"
+    ],
+    "text": "Qual comando Git adiciona alterações à área de preparação (staging)?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-150",
+    "options": [
+      "git add",
+      "git commit",
+      "git pull",
+      "git status"
+    ],
+    "text": "Qual comando Git registra as alterações preparadas no histórico do repositório?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-151",
+    "options": [
+      "git pull",
+      "git clone",
+      "git init",
+      "git push"
+    ],
+    "text": "Qual comando Git envia os commits locais para o repositório remoto?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-152",
+    "options": [
+      "git init",
+      "git clone",
+      "git push",
+      "git branch"
+    ],
+    "text": "Qual comando Git copia um repositório remoto para a máquina local?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-153",
+    "options": [
+      "git push",
+      "git init",
+      "git remote",
+      "git status"
+    ],
+    "text": "Qual comando Git mostra o estado atual dos arquivos do repositório?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-154",
+    "options": [
+      "git log",
+      "git status",
+      "git add",
+      "git stash"
+    ],
+    "text": "Qual comando Git mostra o histórico de commits?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "eng-155",
+    "options": [
+      "git init",
+      "git clone",
+      "git start",
+      "git new"
+    ],
+    "text": "Qual comando Git inicia um novo repositório?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-156",
+    "options": [
+      "Cria uma nova branch",
+      "Une as alterações de uma branch em outra",
+      "Apaga o repositório local",
+      "Envia os arquivos ao servidor"
+    ],
+    "text": "O que faz o comando git merge?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "eng-157",
+    "options": [
+      "Um pedido de download do repositório",
+      "Uma solicitação para revisar e integrar alterações de uma branch ao código principal",
+      "Uma solicitação de licença do software",
+      "Um comando que apaga commits"
+    ],
+    "text": "O que é um pull request?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-158",
+    "options": [
+      "A adição de novas funcionalidades",
+      "A adaptação a um novo ambiente",
+      "A correção de defeitos encontrados no software em uso",
+      "A melhoria de desempenho preventiva"
+    ],
+    "text": "O que é manutenção corretiva?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "eng-159",
+    "options": [
+      "Mostrar as classes do sistema",
+      "Mostrar os custos do hardware",
+      "Mostrar a lista de usuários",
+      "Mostrar o trabalho restante ao longo do tempo"
+    ],
+    "text": "Para que serve um gráfico burndown?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "eng-160",
+    "options": [
+      "Escolher as cores da interface",
+      "Escrever apenas os testes",
+      "Definir escopo, prazos, recursos e riscos do projeto",
+      "Apagar os requisitos antigos"
+    ],
+    "text": "O que envolve o planejamento do desenvolvimento de software?"
+  }
+]

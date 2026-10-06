@@ -1,0 +1,662 @@
+[
+  {
+    "correctIndex": 1,
+    "id": "poo-1",
+    "options": [
+      "Encapsulamento",
+      "Herança",
+      "Instanciação",
+      "Conversão de tipos"
+    ],
+    "text": "Qual conceito da POO permite que uma classe reaproveite atributos e métodos de outra?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-2",
+    "options": [
+      "Um objeto já criado com valores preenchidos",
+      "Uma tabela de um banco de dados",
+      "Um molde que define atributos e métodos dos objetos",
+      "Uma função que nunca retorna valor"
+    ],
+    "text": "O que é uma classe na Programação Orientada a Objetos?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-3",
+    "options": [
+      "Um arquivo com o código-fonte",
+      "Um método estático",
+      "Uma instância de uma classe",
+      "Uma biblioteca externa"
+    ],
+    "text": "O que é um objeto na POO?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-4",
+    "options": [
+      "Criar um objeto a partir dela",
+      "Apagar um objeto da memória",
+      "Transformá-la em classe abstrata",
+      "Converter seus atributos em texto"
+    ],
+    "text": "O que significa instanciar uma classe?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-5",
+    "options": [
+      "Destruir o objeto ao final do programa",
+      "Herdar métodos de outra classe",
+      "Converter um objeto em outro tipo",
+      "Inicializar um objeto no momento em que ele é criado"
+    ],
+    "text": "Qual é a função de um construtor?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-6",
+    "options": [
+      "public",
+      "static",
+      "private",
+      "abstract"
+    ],
+    "text": "Qual modificador de acesso impede que um atributo seja acessado diretamente de fora da classe?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-7",
+    "options": [
+      "private",
+      "abstract",
+      "public",
+      "final"
+    ],
+    "text": "Qual modificador de acesso permite que um membro seja acessado de qualquer classe?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-8",
+    "options": [
+      "Ocultar o estado interno do objeto e expor acesso controlado a ele",
+      "Permitir que várias classes tenham o mesmo método",
+      "Criar classes que não possuem atributos",
+      "Converter objetos em números"
+    ],
+    "text": "O que é encapsulamento?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-9",
+    "options": [
+      "Ler o valor de um atributo privado",
+      "Alterar o valor de um atributo privado",
+      "Criar um novo objeto da classe",
+      "Declarar uma classe abstrata"
+    ],
+    "text": "Qual é a finalidade de um método getter?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-10",
+    "options": [
+      "Apenas ler o valor de um atributo",
+      "Alterar o valor de um atributo, podendo validá-lo",
+      "Remover o objeto da memória",
+      "Criar uma subclasse"
+    ],
+    "text": "Qual é a finalidade de um método setter?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-11",
+    "options": [
+      "Proteger os atributos contra acesso externo",
+      "Objetos diferentes responderem de formas distintas à mesma chamada de método",
+      "Criar objetos sem a necessidade de uma classe",
+      "Copiar uma classe inteira para outra"
+    ],
+    "text": "O que é polimorfismo?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-12",
+    "options": [
+      "Ocorre um erro de compilação",
+      "Um objeto vazio é criado",
+      "O construtor é simplesmente ignorado",
+      "A classe vira uma interface"
+    ],
+    "text": "O que ocorre ao tentar instanciar diretamente uma classe abstrata?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-13",
+    "options": [
+      "Um método que sempre retorna zero",
+      "Um método declarado sem implementação, definido pelas subclasses",
+      "Um método que só pode ser chamado uma vez",
+      "Um método exclusivo do construtor"
+    ],
+    "text": "O que é um método abstrato?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-14",
+    "options": [
+      "Sobrecarga",
+      "Instanciação",
+      "Encapsulamento",
+      "Sobrescrita"
+    ],
+    "text": "Quando uma subclasse redefine um método herdado da superclasse, isso é chamado de:"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-15",
+    "options": [
+      "Uma subclasse redefinindo um método herdado",
+      "Um método sem nenhum corpo de código",
+      "Mesmo nome de método com parâmetros diferentes na mesma classe",
+      "Um método que chama a si mesmo"
+    ],
+    "text": "O que caracteriza a sobrecarga de métodos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-16",
+    "options": [
+      "A cada objeto, com uma cópia independente",
+      "À própria classe e é compartilhado por todos os objetos",
+      "Apenas à subclasse mais recente",
+      "Somente ao construtor da classe"
+    ],
+    "text": "Um atributo estático (static) pertence:"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-17",
+    "options": [
+      "Diretamente pela classe, sem criar um objeto",
+      "Somente depois de instanciar a classe",
+      "Apenas dentro de um construtor",
+      "Somente por subclasses"
+    ],
+    "text": "Um método estático pode ser chamado:"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-18",
+    "options": [
+      "Referenciar a superclasse",
+      "Referenciar o objeto atual",
+      "Criar uma nova classe",
+      "Encerrar o programa"
+    ],
+    "text": "Qual é o papel da palavra-chave this?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-19",
+    "options": [
+      "Referenciar a superclasse",
+      "Referenciar o objeto atual",
+      "Declarar uma constante",
+      "Criar uma interface"
+    ],
+    "text": "Qual é o papel da palavra-chave super, em linguagens como Java?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-20",
+    "options": [
+      "new",
+      "this",
+      "void",
+      "class"
+    ],
+    "text": "Em Java, qual palavra-chave cria uma nova instância de uma classe?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-21",
+    "options": [
+      "Encapsulamento",
+      "Persistência",
+      "Polimorfismo",
+      "Instanciação"
+    ],
+    "text": "Animal tem o método emitirSom(), e Cachorro e Gato o sobrescrevem. Chamar emitirSom() em cada um exemplifica:"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-22",
+    "options": [
+      "Herança",
+      "Sobrecarga",
+      "Encapsulamento",
+      "Polimorfismo"
+    ],
+    "text": "Um atributo saldo privado, alterado apenas por um método sacar() que valida o valor, exemplifica:"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-23",
+    "options": [
+      "Um método e um atributo",
+      "Uma classe e um objeto",
+      "Um construtor e uma exceção",
+      "Um atributo e um método"
+    ],
+    "text": "Em uma classe Carro, cor e acelerar() são, respectivamente:"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-24",
+    "options": [
+      "Não, todos compartilham os mesmos valores",
+      "Somente se os atributos forem estáticos",
+      "Sim, cada objeto mantém o seu próprio estado",
+      "Somente se houver herança"
+    ],
+    "text": "Dois objetos da mesma classe podem ter valores diferentes em seus atributos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-25",
+    "options": [
+      "Sempre retorna um valor inteiro",
+      "Não possui tipo de retorno e é chamado na criação do objeto",
+      "É chamado manualmente ao final do programa",
+      "Só pode existir em classes abstratas"
+    ],
+    "text": "Qual característica é típica de um construtor?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-26",
+    "options": [
+      "Remover atributos da classe",
+      "Tornar a classe abstrata",
+      "Impedir que a classe seja herdada",
+      "Criar o objeto já com valores iniciais definidos"
+    ],
+    "text": "Qual é a utilidade de um construtor com parâmetros?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-27",
+    "options": [
+      "Impedir o uso de métodos",
+      "Eliminar a necessidade de classes",
+      "Duplicar atributos em todos os objetos",
+      "Reutilização de código"
+    ],
+    "text": "Qual é a principal vantagem da herança?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-28",
+    "options": [
+      "Pode ser acessado livremente",
+      "Torna-se public automaticamente",
+      "É apagado durante a herança",
+      "Não pode ser acessado diretamente por ela"
+    ],
+    "text": "Um atributo private da superclasse, em relação à subclasse:"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-29",
+    "options": [
+      "'Tem um': Carro tem um Motor",
+      "'Depende de': Carro depende de combustível",
+      "'Usa um': Aluno usa um caderno",
+      "'É um': Cachorro é um Animal"
+    ],
+    "text": "Que tipo de relação a herança representa entre duas classes?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-30",
+    "options": [
+      "Cachorro c = new Animal();",
+      "int x = new Animal();",
+      "Animal a = new Cachorro();",
+      "Animal a = 'Cachorro';"
+    ],
+    "text": "Qual declaração só é possível graças à herança e ao polimorfismo (Cachorro herda de Animal)?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-31",
+    "options": [
+      "A versão de Animal",
+      "Nenhuma, ocorre erro",
+      "As duas, em sequência",
+      "A versão de Gato"
+    ],
+    "text": "Animal a = new Gato(); a.falar(); Se Gato sobrescreve falar(), qual versão é executada?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-32",
+    "options": [
+      "Armazenar dados no disco",
+      "Criar objetos prontos para uso",
+      "Converter tipos primitivos",
+      "Definir um contrato de métodos que as classes devem implementar"
+    ],
+    "text": "Qual é o objetivo de uma interface?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-33",
+    "options": [
+      "A interface pode ser instanciada; a abstrata não",
+      "A abstrata pode ter atributos e métodos prontos; a interface define sobretudo um contrato",
+      "A abstrata não pode ser herdada; a interface pode",
+      "Não existe diferença alguma entre elas"
+    ],
+    "text": "Qual a principal diferença entre classe abstrata e interface?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-34",
+    "options": [
+      "if-else",
+      "for",
+      "switch",
+      "try-catch"
+    ],
+    "text": "Qual estrutura é usada para tratar erros em tempo de execução?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-35",
+    "options": [
+      "Executa apenas quando ocorre uma exceção",
+      "Executa apenas se não houver exceção",
+      "Executa havendo ou não uma exceção",
+      "Cancela a execução do programa"
+    ],
+    "text": "No tratamento de exceções, o bloco finally:"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-36",
+    "options": [
+      "Lança uma exceção de forma explícita",
+      "Captura uma exceção lançada",
+      "Encerra o computador",
+      "Cria uma nova classe"
+    ],
+    "text": "O que faz a instrução throw?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-37",
+    "options": [
+      "Conjunto (Set)",
+      "Lista",
+      "Enumeração",
+      "Interface"
+    ],
+    "text": "Qual coleção mantém a ordem dos elementos e permite valores repetidos?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-38",
+    "options": [
+      "Lista",
+      "Fila",
+      "Conjunto (Set)",
+      "Array comum"
+    ],
+    "text": "Qual coleção não permite elementos duplicados?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-39",
+    "options": [
+      "Lista",
+      "Mapa (Map)",
+      "Conjunto (Set)",
+      "Pilha"
+    ],
+    "text": "Qual coleção armazena pares de chave e valor?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-40",
+    "options": [
+      "Pelo índice 3",
+      "Pelo índice 1",
+      "Pelo índice 0",
+      "Pelo índice 2"
+    ],
+    "text": "Em uma lista cujo índice começa em 0, como acessar o terceiro elemento?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-41",
+    "options": [
+      "Criar objetos temporários na memória",
+      "Armazenar dados de modo que permaneçam após o fim da execução",
+      "Aumentar a velocidade do processador",
+      "Esconder os atributos da classe"
+    ],
+    "text": "O que é persistência de dados?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-42",
+    "options": [
+      "Class, Run, Update, Debug",
+      "Create, Read, Update, Delete",
+      "Copy, Remove, Undo, Delete",
+      "Compile, Read, Use, Deploy"
+    ],
+    "text": "O que a sigla CRUD representa?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-43",
+    "options": [
+      "Desenhar a interface gráfica",
+      "Compilar o código-fonte",
+      "Criptografar as senhas dos usuários",
+      "Separar o acesso ao banco de dados da lógica de negócio"
+    ],
+    "text": "Qual é o objetivo do padrão DAO?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-44",
+    "options": [
+      "Uma conexão com o banco de dados",
+      "Uma classe abstrata sem atributos",
+      "Um construtor privado",
+      "Herança múltipla"
+    ],
+    "text": "Para uma aplicação orientada a objetos gravar dados em um banco relacional, o que é necessário?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-45",
+    "options": [
+      "Mantê-la aberta indefinidamente",
+      "Fechá-la",
+      "Duplicá-la a cada consulta",
+      "Reiniciar o servidor"
+    ],
+    "text": "Qual é a boa prática após terminar de usar uma conexão com o banco de dados?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-46",
+    "options": [
+      "Concatenar o texto digitado na consulta",
+      "Desativar o banco de dados",
+      "Usar nomes de variáveis longos",
+      "Consultas parametrizadas (PreparedStatement)"
+    ],
+    "text": "Qual recurso ajuda a evitar SQL Injection ao executar consultas a partir do código?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-47",
+    "options": [
+      "Não retorna valor",
+      "Retorna sempre null",
+      "Retorna sempre um texto",
+      "Só existe em classes abstratas"
+    ],
+    "text": "Um método declarado como void:"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-48",
+    "options": [
+      "somar(int a, int b) e subtrair(int a, int b)",
+      "somar(int a, int b) e somar(double a, double b)",
+      "Dois métodos somar(int a, int b) idênticos",
+      "somar() em Calculadora e somar() em Pessoa"
+    ],
+    "text": "Qual par de métodos é um exemplo de sobrecarga?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-49",
+    "options": [
+      "Aumentar a velocidade de execução",
+      "Evitar o uso de classes",
+      "Controlar quais partes do código podem acessar cada membro",
+      "Compilar o programa mais rápido"
+    ],
+    "text": "Para que servem os modificadores de acesso?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-50",
+    "options": [
+      "8",
+      "7.9",
+      "7",
+      "Sempre ocorre erro"
+    ],
+    "text": "Ao converter explicitamente (cast) o valor 7.9 para inteiro, qual é o resultado na maioria das linguagens?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "poo-51",
+    "options": [
+      "double para int",
+      "int para double",
+      "Texto para int",
+      "boolean para double"
+    ],
+    "text": "Qual conversão de tipos costuma ser feita automaticamente, sem perda de dados?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-52",
+    "options": [
+      "Indicar manualmente que um valor deve ser tratado como outro tipo",
+      "Conversão feita sozinha pelo compilador",
+      "Remover o tipo de uma variável",
+      "Criar um novo tipo no banco de dados"
+    ],
+    "text": "O que é uma conversão de tipos explícita (casting)?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-53",
+    "options": [
+      "O conjunto dos valores de seus atributos em dado momento",
+      "O conjunto de métodos da classe",
+      "O nome do arquivo da classe",
+      "A quantidade de subclasses"
+    ],
+    "text": "O que é o estado de um objeto?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-54",
+    "options": [
+      "As ações que ele pode executar, definidas por seus métodos",
+      "Os valores de seus atributos",
+      "O nome da sua classe",
+      "O local onde ele é armazenado"
+    ],
+    "text": "O que é o comportamento de um objeto?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-55",
+    "options": [
+      "Ela representa um conceito genérico, base para Círculo e Quadrado",
+      "Ela precisa ser instanciada várias vezes",
+      "Ela não deve ter nenhum método",
+      "Ela nunca pode ter subclasses"
+    ],
+    "text": "Qual é uma boa razão para declarar uma classe Forma como abstrata?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-56",
+    "options": [
+      "O objeto é o molde; a classe é a instância",
+      "São sinônimos exatos",
+      "A classe é o molde; o objeto é uma instância criada a partir dele",
+      "A classe só passa a existir após criar o objeto"
+    ],
+    "text": "Em POO, qual é a diferença entre classe e objeto?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "poo-57",
+    "options": [
+      "Definir uma ação ou comportamento que os objetos podem executar",
+      "Guardar um valor fixo",
+      "Definir o nome do banco de dados",
+      "Criar um novo arquivo de projeto"
+    ],
+    "text": "Qual é o papel de um método em uma classe?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-58",
+    "options": [
+      "calcularMedia()",
+      "imprimirBoletim()",
+      "Aluno()",
+      "matricula"
+    ],
+    "text": "Qual das opções representa melhor um atributo de uma classe Aluno?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "poo-59",
+    "options": [
+      "Somente os atributos privados",
+      "Somente o construtor",
+      "Os atributos e métodos acessíveis da superclasse",
+      "Nada, apenas o nome"
+    ],
+    "text": "Se Cachorro herda de Animal, o que a subclasse recebe da superclasse?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "poo-60",
+    "options": [
+      "Herança",
+      "Polimorfismo",
+      "Persistência",
+      "Encapsulamento"
+    ],
+    "text": "Qual princípio da POO é violado quando todos os atributos são públicos e alterados livremente de fora?"
+  }
+]

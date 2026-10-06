@@ -1,0 +1,662 @@
+[
+  {
+    "correctIndex": 0,
+    "id": "bd-1",
+    "options": [
+      "Software que gerencia a criação, o acesso e a manutenção de bancos de dados",
+      "Um tipo de planilha eletrônica",
+      "Um cabo de conexão de rede",
+      "Uma linguagem de estilos de página"
+    ],
+    "text": "O que é um SGBD?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-2",
+    "options": [
+      "MySQL",
+      "HTML",
+      "Photoshop",
+      "Bootstrap"
+    ],
+    "text": "Qual das opções é um SGBD relacional?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-3",
+    "options": [
+      "Um atributo",
+      "Um registro (tupla)",
+      "Um índice",
+      "Uma chave estrangeira"
+    ],
+    "text": "No modelo relacional, o que representa uma linha de uma tabela?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-4",
+    "options": [
+      "Um registro",
+      "Um atributo",
+      "Uma tabela",
+      "Uma transação"
+    ],
+    "text": "No modelo relacional, o que representa uma coluna de uma tabela?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-5",
+    "options": [
+      "Um campo que identifica de forma única cada registro",
+      "Um campo que pode se repetir livremente",
+      "Um campo que referencia outra tabela",
+      "Um campo de texto livre"
+    ],
+    "text": "O que é uma chave primária?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-6",
+    "options": [
+      "Um campo que identifica unicamente o registro na própria tabela",
+      "Um campo criptografado",
+      "Um campo opcional sem relação com outras tabelas",
+      "Um campo que referencia a chave primária de outra tabela"
+    ],
+    "text": "O que é uma chave estrangeira?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-7",
+    "options": [
+      "Sim, pode repetir e ser nula",
+      "Não, deve ser única e não nula",
+      "Pode ser nula, mas não repetir",
+      "Pode repetir, mas não ser nula"
+    ],
+    "text": "Uma chave primária pode ter valores repetidos ou nulos?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-8",
+    "options": [
+      "NOT NULL",
+      "DEFAULT",
+      "UNIQUE",
+      "CHECK"
+    ],
+    "text": "Qual restrição garante que dois registros não tenham o mesmo valor em uma coluna?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-9",
+    "options": [
+      "UNIQUE",
+      "DEFAULT",
+      "NOT NULL",
+      "INDEX"
+    ],
+    "text": "Qual restrição impede que uma coluna receba valor nulo?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-10",
+    "options": [
+      "CHECK",
+      "DEFAULT",
+      "UNIQUE",
+      "FOREIGN KEY"
+    ],
+    "text": "Qual restrição define um valor padrão quando nenhum valor é informado?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-11",
+    "options": [
+      "Garantir que os dados nunca sejam copiados",
+      "Garantir que uma chave estrangeira aponte apenas para registros existentes",
+      "Fazer backup automático dos dados",
+      "Criptografar todas as tabelas"
+    ],
+    "text": "O que é integridade referencial?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-12",
+    "options": [
+      "Definir os comandos SQL de cada consulta",
+      "Configurar o servidor do banco",
+      "Representar os dados e seus relacionamentos sem depender do SGBD",
+      "Criar os backups do banco"
+    ],
+    "text": "Qual é o objetivo da modelagem conceitual?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-13",
+    "options": [
+      "Diagrama de sequência",
+      "Fluxograma de rede",
+      "Diagrama de Gantt",
+      "Entidade-Relacionamento (ER)"
+    ],
+    "text": "Qual diagrama é usado na modelagem conceitual de bancos de dados?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-14",
+    "options": [
+      "Um objeto ou conceito do mundo real sobre o qual se guardam dados",
+      "Um comando SQL",
+      "Um tipo de índice",
+      "Um usuário do SGBD"
+    ],
+    "text": "No modelo ER, o que é uma entidade?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-15",
+    "options": [
+      "Uma ligação entre duas entidades",
+      "Uma tabela do banco",
+      "Uma chave estrangeira",
+      "Uma característica que descreve uma entidade"
+    ],
+    "text": "No modelo ER, o que é um atributo?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-16",
+    "options": [
+      "Uma associação entre entidades",
+      "Um campo de uma tabela",
+      "Uma linguagem de consulta",
+      "Um tipo de dado"
+    ],
+    "text": "No modelo ER, o que é um relacionamento?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-17",
+    "options": [
+      "A quantidade de colunas da tabela",
+      "O tamanho total do banco",
+      "A velocidade de uma consulta",
+      "O número de ocorrências de uma entidade que podem se relacionar com outra"
+    ],
+    "text": "O que é cardinalidade em um relacionamento?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-18",
+    "options": [
+      "1:1",
+      "N:N",
+      "1:N",
+      "0:0"
+    ],
+    "text": "Um cliente faz vários pedidos e cada pedido pertence a um único cliente. Qual é a cardinalidade?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-19",
+    "options": [
+      "1:1",
+      "N:N",
+      "1:N",
+      "0:1"
+    ],
+    "text": "Um aluno cursa várias disciplinas e cada disciplina tem vários alunos. Qual é a cardinalidade?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-20",
+    "options": [
+      "Duplicando colunas em uma das tabelas",
+      "Removendo uma das entidades",
+      "Por uma tabela associativa com as chaves das duas tabelas",
+      "Em um único campo de texto"
+    ],
+    "text": "Como um relacionamento N:N costuma ser representado no modelo relacional?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-21",
+    "options": [
+      "Na tabela do lado 1",
+      "Em uma tabela de log",
+      "Em nenhuma tabela",
+      "Na tabela do lado N"
+    ],
+    "text": "Ao converter um relacionamento 1:N para o modelo relacional, onde fica a chave estrangeira?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-22",
+    "options": [
+      "O lógico é o desenho das telas do sistema",
+      "São exatamente idênticos",
+      "O conceitual já define o armazenamento físico",
+      "O lógico traduz o conceitual em tabelas, colunas e chaves"
+    ],
+    "text": "Qual é a diferença entre o modelo lógico e o conceitual?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-23",
+    "options": [
+      "Criptografar os dados das tabelas",
+      "Organizar as tabelas para reduzir redundância e inconsistências",
+      "Fazer o backup completo do banco",
+      "Criar índices em todas as colunas"
+    ],
+    "text": "O que é normalização?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-24",
+    "options": [
+      "Não ter chave primária",
+      "Ter dependências transitivas",
+      "Ter atributos atômicos, sem valores repetidos ou multivalorados",
+      "Ter apenas uma coluna"
+    ],
+    "text": "Para estar na 1ª Forma Normal (1FN), uma tabela deve:"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-25",
+    "options": [
+      "Dependências transitivas",
+      "Dependências parciais da chave primária",
+      "Dependências de índice",
+      "Dependências de rede"
+    ],
+    "text": "A 2ª Forma Normal (2FN) trata de eliminar qual tipo de dependência?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-26",
+    "options": [
+      "Dependências parciais",
+      "Dependências transitivas",
+      "Atributos multivalorados",
+      "Chaves primárias"
+    ],
+    "text": "A 3ª Forma Normal (3FN) trata de eliminar qual tipo de dependência?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-27",
+    "options": [
+      "Inconsistências e anomalias de atualização",
+      "Aumento da segurança dos dados",
+      "Redução do espaço ocupado",
+      "Eliminação da necessidade de chaves"
+    ],
+    "text": "Qual problema a redundância de dados pode causar?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-28",
+    "options": [
+      "1FN",
+      "2FN",
+      "3FN",
+      "Nenhuma"
+    ],
+    "text": "Uma tabela guarda vários telefones de um cliente em uma única coluna, separados por vírgula. Qual forma normal está sendo violada?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-29",
+    "options": [
+      "Standard Question Logic",
+      "Simple Query Link",
+      "Structured Query Language",
+      "System Quality Language"
+    ],
+    "text": "O que significa a sigla SQL?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-30",
+    "options": [
+      "DDL",
+      "DML",
+      "DQL",
+      "DCL"
+    ],
+    "text": "Qual sublinguagem do SQL contém comandos como CREATE, ALTER e DROP?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-31",
+    "options": [
+      "DDL",
+      "DCL",
+      "DML",
+      "TCL"
+    ],
+    "text": "Qual sublinguagem do SQL contém comandos como INSERT, UPDATE e DELETE?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-32",
+    "options": [
+      "DDL",
+      "DML",
+      "DCL",
+      "DQL"
+    ],
+    "text": "Qual sublinguagem do SQL contém GRANT e REVOKE, usados para permissões?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-33",
+    "options": [
+      "INSERT TABLE",
+      "CREATE TABLE",
+      "NEW TABLE",
+      "MAKE TABLE"
+    ],
+    "text": "Qual comando cria uma nova tabela?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-34",
+    "options": [
+      "UPDATE TABLE",
+      "MODIFY DATA",
+      "CHANGE ROWS",
+      "ALTER TABLE"
+    ],
+    "text": "Qual comando altera a estrutura de uma tabela existente, como adicionar uma coluna?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-35",
+    "options": [
+      "DROP TABLE",
+      "DELETE TABLE",
+      "REMOVE TABLE",
+      "CLEAR TABLE"
+    ],
+    "text": "Qual comando remove uma tabela inteira do banco de dados?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-36",
+    "options": [
+      "ADD ROW",
+      "NEW RECORD",
+      "PUT INTO",
+      "INSERT INTO"
+    ],
+    "text": "Qual comando insere um novo registro em uma tabela?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-37",
+    "options": [
+      "ALTER",
+      "UPDATE",
+      "INSERT",
+      "MODIFY"
+    ],
+    "text": "Qual comando altera dados de registros já existentes?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-38",
+    "options": [
+      "Nenhum registro é alterado",
+      "Todos os registros da tabela são alterados",
+      "Apenas o primeiro registro é alterado",
+      "Sempre ocorre um erro"
+    ],
+    "text": "O que acontece ao executar um UPDATE sem a cláusula WHERE?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-39",
+    "options": [
+      "Todos os registros são removidos, mas a tabela continua existindo",
+      "A tabela e sua estrutura são apagadas",
+      "Nenhum registro é removido",
+      "Apenas o último registro é removido"
+    ],
+    "text": "O que acontece ao executar DELETE FROM clientes; sem WHERE?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-40",
+    "options": [
+      "FETCH TABLE",
+      "GET",
+      "SELECT",
+      "READ"
+    ],
+    "text": "Qual comando é usado para consultar dados em SQL?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-41",
+    "options": [
+      "ORDER BY",
+      "GROUP BY",
+      "FROM",
+      "WHERE"
+    ],
+    "text": "Qual cláusula filtra registros em um SELECT?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-42",
+    "options": [
+      "GROUP BY",
+      "WHERE",
+      "HAVING",
+      "ORDER BY"
+    ],
+    "text": "Qual cláusula ordena o resultado de uma consulta?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-43",
+    "options": [
+      "GROUP BY",
+      "ORDER BY",
+      "WHERE",
+      "LIMIT"
+    ],
+    "text": "Qual cláusula agrupa registros que têm o mesmo valor em uma coluna?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-44",
+    "options": [
+      "WHERE",
+      "ORDER BY",
+      "DISTINCT",
+      "HAVING"
+    ],
+    "text": "Qual cláusula filtra os grupos formados por GROUP BY?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-45",
+    "options": [
+      "SUM",
+      "AVG",
+      "COUNT",
+      "MAX"
+    ],
+    "text": "Qual função de agregação conta o número de registros?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-46",
+    "options": [
+      "SUM",
+      "COUNT",
+      "AVG",
+      "MIN"
+    ],
+    "text": "Qual função de agregação calcula a média dos valores?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-47",
+    "options": [
+      "SUM",
+      "COUNT",
+      "AVG",
+      "MAX"
+    ],
+    "text": "Qual função de agregação soma os valores de uma coluna?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-48",
+    "options": [
+      "Ordena o resultado",
+      "Remove valores duplicados do resultado",
+      "Soma os valores das colunas",
+      "Exclui a tabela consultada"
+    ],
+    "text": "O que faz a palavra DISTINCT em um SELECT?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-49",
+    "options": [
+      "IN",
+      "BETWEEN",
+      "IS",
+      "LIKE"
+    ],
+    "text": "Qual operador busca texto por padrão, como nomes que começam com Ma?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-50",
+    "options": [
+      "LIKE",
+      "BETWEEN",
+      "IN",
+      "EXISTS"
+    ],
+    "text": "Qual operador verifica se um valor está dentro de um intervalo?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-51",
+    "options": [
+      "IS NULL",
+      "= NULL",
+      "== NULL",
+      "EQUALS NULL"
+    ],
+    "text": "Como testar corretamente se uma coluna é nula?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-52",
+    "options": [
+      "Retorna todos os registros da tabela da esquerda",
+      "Retorna todos os registros da tabela da direita",
+      "Retorna apenas os registros com correspondência nas duas tabelas",
+      "Apaga os registros duplicados das tabelas"
+    ],
+    "text": "O que faz um INNER JOIN?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-53",
+    "options": [
+      "Retorna todos os registros da tabela da esquerda, mesmo sem correspondência",
+      "Retorna apenas os registros com correspondência",
+      "Retorna todos os registros da tabela da direita",
+      "Une as tabelas sem usar nenhuma condição"
+    ],
+    "text": "O que faz um LEFT JOIN?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-54",
+    "options": [
+      "Um backup parcial do banco",
+      "Uma tabela temporária obrigatória",
+      "Um índice secundário",
+      "Uma consulta dentro de outra consulta"
+    ],
+    "text": "O que é uma subconsulta?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "bd-55",
+    "options": [
+      "Une duas colunas em uma",
+      "Combina o resultado de duas consultas em um só",
+      "Exclui tabelas duplicadas",
+      "Cria uma chave primária"
+    ],
+    "text": "O que faz o operador UNION?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "bd-56",
+    "options": [
+      "Uma tabela virtual definida por uma consulta",
+      "Uma cópia física de uma tabela",
+      "Um usuário do banco",
+      "Um tipo de backup"
+    ],
+    "text": "O que é uma view?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-57",
+    "options": [
+      "Aumentar a redundância dos dados",
+      "Criptografar as colunas",
+      "Acelerar a busca de registros",
+      "Substituir a chave primária"
+    ],
+    "text": "Qual é a principal função de um índice em um banco de dados?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "bd-58",
+    "options": [
+      "ROLLBACK",
+      "REVOKE",
+      "COMMIT",
+      "TRUNCATE"
+    ],
+    "text": "Qual comando confirma definitivamente as alterações de uma transação?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-59",
+    "options": [
+      "COMMIT",
+      "DROP",
+      "GRANT",
+      "ROLLBACK"
+    ],
+    "text": "Qual comando desfaz as alterações de uma transação ainda não confirmada?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "bd-60",
+    "options": [
+      "Que os dados serão sempre públicos",
+      "Que o acesso dispensa senha",
+      "Que as tabelas não terão chaves",
+      "Ou todas as operações são aplicadas, ou nenhuma"
+    ],
+    "text": "O que a propriedade de atomicidade garante em uma transação?"
+  }
+]

@@ -1,0 +1,662 @@
+[
+  {
+    "correctIndex": 0,
+    "id": "redes-1",
+    "options": [
+      "7",
+      "4",
+      "5",
+      "6"
+    ],
+    "text": "Quantas camadas tem o modelo OSI?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-2",
+    "options": [
+      "Sessão, Apresentação, Física e Enlace",
+      "Hardware, Software, Firmware e Rede",
+      "Aplicação, Transporte, Internet e Acesso à rede",
+      "Usuário, Servidor, Cliente e Banco"
+    ],
+    "text": "Quais camadas pertencem ao modelo TCP/IP?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-3",
+    "options": [
+      "Física",
+      "Enlace de dados",
+      "Rede",
+      "Transporte"
+    ],
+    "text": "Qual camada do modelo OSI é responsável pela transmissão dos bits pelo meio físico?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-4",
+    "options": [
+      "Rede",
+      "Enlace de dados",
+      "Transporte",
+      "Aplicação"
+    ],
+    "text": "Em qual camada do modelo OSI atua o protocolo IP?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-5",
+    "options": [
+      "Rede",
+      "Enlace de dados",
+      "Sessão",
+      "Física"
+    ],
+    "text": "Qual camada do modelo OSI trabalha com endereços MAC e quadros (frames)?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-6",
+    "options": [
+      "Rede",
+      "Apresentação",
+      "Transporte",
+      "Enlace de dados"
+    ],
+    "text": "Qual camada do modelo OSI cuida da comunicação fim a fim, onde atuam TCP e UDP?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-7",
+    "options": [
+      "Aplicação",
+      "Sessão",
+      "Transporte",
+      "Física"
+    ],
+    "text": "Qual camada do modelo OSI é a mais próxima do usuário e abriga protocolos como HTTP e SMTP?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-8",
+    "options": [
+      "Aplicação, Apresentação, Sessão, Transporte, Rede, Enlace, Física",
+      "Física, Rede, Enlace, Transporte, Sessão, Apresentação, Aplicação",
+      "Enlace, Física, Rede, Transporte, Aplicação, Sessão, Apresentação",
+      "Física, Enlace, Rede, Transporte, Sessão, Apresentação, Aplicação"
+    ],
+    "text": "Qual é a ordem correta das camadas do modelo OSI, da 1ª à 7ª?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-9",
+    "options": [
+      "O UDP é confiável e o TCP não garante a entrega",
+      "Ambos garantem a entrega dos dados",
+      "O TCP é confiável e orientado à conexão; o UDP não garante a entrega",
+      "O TCP só funciona em redes Wi-Fi"
+    ],
+    "text": "Qual é a principal diferença entre TCP e UDP?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-10",
+    "options": [
+      "UDP",
+      "TCP",
+      "HTTP",
+      "FTP"
+    ],
+    "text": "Qual protocolo de transporte costuma ser usado em jogos online e transmissões ao vivo, por priorizar a velocidade?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-11",
+    "options": [
+      "Atribuir endereços IP automaticamente",
+      "Criptografar o tráfego da rede",
+      "Enviar mensagens de e-mail",
+      "Traduzir nomes de domínio em endereços IP"
+    ],
+    "text": "Qual é a função do DNS?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-12",
+    "options": [
+      "Traduzir nomes de domínio",
+      "Bloquear acessos de invasores",
+      "Atribuir endereços IP automaticamente aos dispositivos",
+      "Transferir arquivos entre computadores"
+    ],
+    "text": "Qual é a função do DHCP?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-13",
+    "options": [
+      "80",
+      "443",
+      "21",
+      "25"
+    ],
+    "text": "Qual é a porta padrão do protocolo HTTP?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-14",
+    "options": [
+      "80",
+      "22",
+      "443",
+      "53"
+    ],
+    "text": "Qual é a porta padrão do protocolo HTTPS?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-15",
+    "options": [
+      "SSH",
+      "Telnet",
+      "FTP",
+      "HTTP"
+    ],
+    "text": "Qual protocolo é usado para acesso remoto seguro a um servidor?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-16",
+    "options": [
+      "FTP",
+      "DNS",
+      "DHCP",
+      "SMTP"
+    ],
+    "text": "Qual protocolo é usado principalmente para o envio de e-mails?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-17",
+    "options": [
+      "FTP",
+      "SMTP",
+      "DNS",
+      "ICMP"
+    ],
+    "text": "Qual protocolo é usado para transferir arquivos entre computadores?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-18",
+    "options": [
+      "16",
+      "64",
+      "128",
+      "32"
+    ],
+    "text": "Quantos bits tem um endereço IPv4?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-19",
+    "options": [
+      "32",
+      "64",
+      "256",
+      "128"
+    ],
+    "text": "Quantos bits tem um endereço IPv6?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-20",
+    "options": [
+      "8.8.8.8",
+      "192.168.0.10",
+      "200.100.50.25",
+      "142.250.1.1"
+    ],
+    "text": "Qual destes é um endereço IPv4 privado?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-21",
+    "options": [
+      "192.168.0.1",
+      "0.0.0.0",
+      "127.0.0.1",
+      "255.255.255.255"
+    ],
+    "text": "Qual é o endereço de loopback do IPv4?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-22",
+    "options": [
+      "O provedor de internet",
+      "A placa de rede de um dispositivo",
+      "O nome de domínio",
+      "O servidor DNS"
+    ],
+    "text": "O que o endereço MAC identifica?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-23",
+    "options": [
+      "32",
+      "64",
+      "48",
+      "128"
+    ],
+    "text": "Quantos bits tem um endereço MAC?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-24",
+    "options": [
+      "255",
+      "256",
+      "253",
+      "254"
+    ],
+    "text": "Quantos endereços de host utilizáveis existem em uma rede /24?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-25",
+    "options": [
+      "255.255.0.0",
+      "255.0.0.0",
+      "255.255.255.255",
+      "255.255.255.0"
+    ],
+    "text": "Qual é a máscara de sub-rede equivalente a /24?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-26",
+    "options": [
+      "Criptografar os dados da rede",
+      "Definir o nome do dispositivo",
+      "Separar a parte de rede da parte de host no endereço IP",
+      "Limitar a velocidade da conexão"
+    ],
+    "text": "Qual é a função da máscara de sub-rede?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-27",
+    "options": [
+      "Hub",
+      "Repetidor",
+      "Roteador",
+      "Patch panel"
+    ],
+    "text": "Qual dispositivo conecta redes diferentes e encaminha pacotes entre elas?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-28",
+    "options": [
+      "Hub",
+      "Switch",
+      "Modem",
+      "Antena"
+    ],
+    "text": "Qual dispositivo encaminha os quadros apenas para a porta do destinatário, usando endereços MAC?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-29",
+    "options": [
+      "Envia os dados somente ao destinatário",
+      "Roteia pacotes entre redes diferentes",
+      "Traduz nomes em endereços IP",
+      "Repete os dados recebidos para todas as suas portas"
+    ],
+    "text": "O que faz um hub?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-30",
+    "options": [
+      "Armazenar páginas de sites",
+      "Converter sinais para permitir o acesso à internet pela linha do provedor",
+      "Atribuir nomes aos computadores",
+      "Proteger o computador contra vírus"
+    ],
+    "text": "Qual é a função do modem?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-31",
+    "options": [
+      "Uma rede mundial que conecta países",
+      "Uma rede local, que abrange uma área limitada, como uma escola",
+      "Uma rede de satélites",
+      "Uma rede entre cidades distantes"
+    ],
+    "text": "O que é uma rede LAN?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-32",
+    "options": [
+      "Uma rede dentro de uma única sala",
+      "Uma rede entre um celular e um fone",
+      "Uma rede de longa distância, que conecta redes em grandes áreas",
+      "Uma rede de um único computador"
+    ],
+    "text": "O que é uma rede WAN?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-33",
+    "options": [
+      "MAN",
+      "PAN",
+      "LAN",
+      "SAN"
+    ],
+    "text": "Qual tipo de rede abrange uma cidade ou região metropolitana?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-34",
+    "options": [
+      "WAN",
+      "MAN",
+      "VPN",
+      "PAN"
+    ],
+    "text": "Qual tipo de rede conecta dispositivos pessoais próximos, como celular e fone Bluetooth?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-35",
+    "options": [
+      "Barramento",
+      "Estrela",
+      "Anel",
+      "Malha"
+    ],
+    "text": "Qual topologia conecta todos os dispositivos a um ponto central, como um switch?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-36",
+    "options": [
+      "Estrela",
+      "Anel",
+      "Barramento",
+      "Malha"
+    ],
+    "text": "Qual topologia usa um único cabo compartilhado por todos os dispositivos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-37",
+    "options": [
+      "Barramento",
+      "Malha",
+      "Estrela",
+      "Anel"
+    ],
+    "text": "Qual topologia conecta cada dispositivo a vários outros, com alta redundância?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-38",
+    "options": [
+      "Par trançado",
+      "Coaxial",
+      "Cabo de energia",
+      "Fibra óptica"
+    ],
+    "text": "Qual cabo transmite dados por pulsos de luz e tem imunidade a interferência eletromagnética?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-39",
+    "options": [
+      "Fibra óptica",
+      "Cabo HDMI",
+      "Cabo USB",
+      "Par trançado (UTP)"
+    ],
+    "text": "Qual cabo é o mais usado em redes locais cabeadas, com conector RJ-45?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-40",
+    "options": [
+      "802.3",
+      "802.15",
+      "802.16",
+      "802.11"
+    ],
+    "text": "Qual padrão IEEE define as redes Wi-Fi?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-41",
+    "options": [
+      "802.11",
+      "802.3",
+      "802.15",
+      "802.16"
+    ],
+    "text": "Qual padrão IEEE define o Ethernet?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-42",
+    "options": [
+      "Aumentar a velocidade da internet",
+      "Filtrar o tráfego de rede segundo regras de segurança",
+      "Atribuir endereços IP",
+      "Traduzir nomes de domínio"
+    ],
+    "text": "Qual é a função de um firewall?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-43",
+    "options": [
+      "Comprimir arquivos para ocupar menos espaço",
+      "Apagar dados de forma definitiva",
+      "Transformar dados em um formato ilegível para quem não tem a chave",
+      "Duplicar dados em outro servidor"
+    ],
+    "text": "O que é criptografia?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-44",
+    "options": [
+      "Uma rede privada virtual que cria um canal seguro pela internet",
+      "Um vírus que ataca redes",
+      "Uma placa de rede sem fio",
+      "Um protocolo de envio de e-mail"
+    ],
+    "text": "O que é uma VPN?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-45",
+    "options": [
+      "Golpe que tenta enganar a vítima para obter dados pessoais",
+      "Defeito em cabos de rede",
+      "Método de compressão de dados",
+      "Tipo de topologia de rede"
+    ],
+    "text": "O que é phishing?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-46",
+    "options": [
+      "Sobrecarregar um serviço com tráfego de muitos dispositivos até torná-lo indisponível",
+      "Descobrir senhas por tentativa e erro",
+      "Enviar mensagens de spam em massa",
+      "Copiar dados de uma rede sem permissão"
+    ],
+    "text": "O que é um ataque DDoS?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-47",
+    "options": [
+      "Software malicioso criado para causar danos ou roubar informações",
+      "Um cabo de rede defeituoso",
+      "Um protocolo de transferência",
+      "Uma placa de rede antiga"
+    ],
+    "text": "O que é malware?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-48",
+    "options": [
+      "ipconfig",
+      "format",
+      "shutdown",
+      "ping"
+    ],
+    "text": "Qual comando verifica se um host responde na rede?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-49",
+    "options": [
+      "ping",
+      "ipconfig",
+      "cls",
+      "chkdsk"
+    ],
+    "text": "Qual comando exibe a configuração de IP de um computador Windows?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-50",
+    "options": [
+      "1001",
+      "1100",
+      "0101",
+      "1010"
+    ],
+    "text": "Qual é o resultado da conversão do número decimal 10 para binário?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-51",
+    "options": [
+      "128",
+      "224",
+      "192",
+      "240"
+    ],
+    "text": "Qual é o valor decimal do binário 11000000, primeiro octeto de 192.168.0.1?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-52",
+    "options": [
+      "256",
+      "255",
+      "15",
+      "16"
+    ],
+    "text": "Qual é o valor decimal do hexadecimal FF?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-53",
+    "options": [
+      "Desenhar logotipos para os sites",
+      "Escrever manuais de jogos",
+      "Monitorar o funcionamento e gerenciar usuários e permissões",
+      "Formatar planilhas de cálculo"
+    ],
+    "text": "Qual tarefa faz parte da administração de redes?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-54",
+    "options": [
+      "Rede de objetos físicos com sensores conectados à internet",
+      "Uma internet exclusiva para jogos",
+      "Uma rede de computadores antigos",
+      "Um serviço de e-mail corporativo"
+    ],
+    "text": "O que é a internet das coisas (IoT)?"
+  },
+  {
+    "correctIndex": 0,
+    "id": "redes-55",
+    "options": [
+      "Lâmpada inteligente conectada ao Wi-Fi",
+      "Calculadora simples",
+      "Pen drive",
+      "Cabo HDMI"
+    ],
+    "text": "Qual é um exemplo de dispositivo de IoT?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-56",
+    "options": [
+      "Dispositivo que imprime documentos",
+      "Computador ou software que armazena e entrega páginas aos navegadores",
+      "Cabo que liga computadores",
+      "Programa antivírus"
+    ],
+    "text": "O que é um servidor web?"
+  },
+  {
+    "correctIndex": 3,
+    "id": "redes-57",
+    "options": [
+      "Traduzir nomes de domínio",
+      "Enviar e-mails",
+      "Bloquear sites perigosos",
+      "Armazenar e compartilhar arquivos pela rede"
+    ],
+    "text": "Qual é a função de um servidor de arquivos?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-58",
+    "options": [
+      "Todos os dispositivos têm exatamente o mesmo papel",
+      "Clientes solicitam serviços e servidores os fornecem",
+      "Existe apenas um dispositivo na rede",
+      "Dois servidores se comunicam sem clientes"
+    ],
+    "text": "O que é o modelo cliente-servidor?"
+  },
+  {
+    "correctIndex": 2,
+    "id": "redes-59",
+    "options": [
+      "O nome do usuário da rede",
+      "A senha do Wi-Fi",
+      "O dispositivo, geralmente o roteador, que dá saída da rede local para outras redes",
+      "O cabo principal da rede"
+    ],
+    "text": "O que é o gateway padrão (default gateway)?"
+  },
+  {
+    "correctIndex": 1,
+    "id": "redes-60",
+    "options": [
+      "Transfere arquivos",
+      "Envia mensagens de controle e diagnóstico, como as usadas pelo ping",
+      "Resolve nomes de domínio",
+      "Envia e-mails"
+    ],
+    "text": "O que faz o protocolo ICMP?"
+  }
+]
