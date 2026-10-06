@@ -164,8 +164,15 @@ client usa os mesmos números ao exibir/registrar LP no fim da partida. Novas
 vagas na sala herdam o
 `maxHp` da sala (MenuScene lê da sala; criar sala usa o localStorage do host).
 
-**Pós-partida**: `postMatchRequest` coordena revanche/troca de personagem
+**Pós-partida**: `postMatchRequest` coordena revanche/troca de professor
 (ver MainScene §1.7 da exploração); recusar fecha a sala (`state:'closed'`).
+**Pedidos expiram em 15s sem resposta** (`POST_MATCH_TIMEOUT_MS` em
+MainScene): só o remetente exerce a expiração (grava `status:'expired'` +
+`state:'closed'`), e ambos veem o aviso e retornam ao menu (o countdown é
+exibido nos textos de espera/prompt por `startPostMatchCountdown`). A troca
+de professor é um PEDIDO como a revanche (`handleChangeProfessor` — no modo
+solo sem oponente ela continua direta); aceitar a troca leva os dois de volta
+à seleção (`executeChangeProfessorDirectly` → `state:'character_select'`).
 Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
 
 ## 6. Questões
@@ -240,7 +247,7 @@ index.html; as cenas se comunicam por **CustomEvents** (contrato testado em
 
 | Evento | Quem dispara | Quem ouve |
 |---|---|---|
-| `open-account-modal`, `open-gm-modal`, `open-join-modal`, `open-profile-modal`, `open-ranking-modal` | MenuScene | index.html |
+| `open-account-modal`, `open-gm-modal`, `open-join-modal`, `open-profile-modal`, `open-ranking-modal`, `open-rules-modal` | MenuScene | index.html |
 | `open-nickname-modal` | index.html (fluxo visitante) | index.html |
 | `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | MenuScene |
 | `dev-set-timers` | index.html | MainScene + MenuScene |
@@ -376,7 +383,11 @@ na mesma entrega**.
   visitante vê convite p/ criar conta) —, **modais separados: Perfil
   (`open-profile-modal`, ranking/apelido/sessão da conta) e Conta
   (`open-account-modal`, formulário Entrar/Cadastrar/visitante)**,
-  **top 10 público em painel fixo no menu** (`createRankingPanel` na MenuScene)
+  **top 10 público no menu via botão 🏆 da dock inferior do lobby**
+  (`createDock`/`createRankingPanel` na MenuScene — o botão mostra seu LP/elo
+  resumido; clicado abre o painel Top 10 + SEU ELO com botão ✕; o lobby usa
+  layout "dock": tela limpa com título central e ações Criar/Entrar/Ranking/
+  Regras numa doca no rodapé)
   e **badge de elo na seleção de personagem** (`rankLabel` no nó do jogador).
   GM tem **"Zerar Temporada"** (aba Controles): apaga o nó `leaderboard` com
   confirmação dupla + log admin.

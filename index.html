@@ -145,6 +145,19 @@
       #open-rooms-list::-webkit-scrollbar-thumb:hover {
         background: #38bdf8;
       }
+      /* Tela de entrada em sala: em telas estreitas os campos empilham */
+      @media (max-width: 720px) {
+        #join-panel { height: auto !important; max-height: 92vh; overflow-y: auto !important; }
+        #join-left-col { flex-direction: column !important; align-items: stretch !important; }
+        #open-rooms-list { flex: none !important; min-height: 260px !important; max-height: 42vh; }
+        /* Modal de conta: mobile esconde só o branding — o visitante continua visível */
+        #account-panel { width: 420px !important; }
+        #account-brand { display: none !important; }
+        #account-art { padding: 12px 16px !important; flex: none !important; }
+      }
+      /* ✕ de fechar do modal de conta: hover suave (inline style não suporta :hover) */
+      #account-close-btn:hover { background: #7f1d1d !important; color: #ffffff !important; opacity: 1 !important; }
+      #account-close-btn:active { transform: scale(0.92); }
     </style>
   </head>
   <body>
@@ -383,23 +396,48 @@
 
     <!-- Modal de Conta: SÓ formulário de acesso (Entrar / Criar conta / visitante) -->
     <div id="account-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 16px 18px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 400px; max-width: 92vw;">
-            <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">🔐 Conta</h2>
+        <div id="account-panel" style="display: flex; width: 760px; max-width: 96vw; max-height: 92vh; border-radius: 16px; overflow: hidden; border: 2px solid #38bdf8; box-shadow: 0 12px 44px rgba(56, 189, 248, 0.25);">
+            <!-- Coluna esquerda: branding no topo + acesso visitante embaixo (esconde em telas estreitas) -->
+            <div id="account-art" style="flex: 1.05; background: linear-gradient(160deg, #0c1d33, #14294a 55%, #0b3b5c); display: flex; flex-direction: column; justify-content: space-between; align-items: stretch; padding: 30px 24px 24px; position: relative; overflow: hidden;">
+                <div style="position: absolute; inset: 0; background: repeating-linear-gradient(0deg, transparent 0 3px, rgba(6, 10, 18, 0.25) 3px 4px);"></div>
+                <div id="account-brand" style="position: relative; text-align: center; margin-top: 22px;">
+                    <div style="display: inline-block; border: 1px solid #475569; background: rgba(36, 42, 53, 0.9); color: #f59e0b; font-size: 10px; font-weight: bold; letter-spacing: 1px; border-radius: 12px; padding: 4px 12px; margin-bottom: 14px;">⚔️ ARENA DE DUELO 1V1</div>
+                    <div style="font-size: 40px; font-weight: 900; letter-spacing: 4px; color: #fff; text-shadow: 0 0 16px #d97706; font-family: Impact, 'Arial Black', system-ui, sans-serif;">LABCOMBAT</div>
+                    <div style="color: #cbd5e1; font-size: 12px; margin-top: 6px;">Batalha de Conhecimento em Tempo Real</div>
+                </div>
+                <button id="account-guest-btn" type="button" style="position: relative; padding: 10px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer; text-align: center;">👤 Continuar como visitante</button>
+            </div>
+            <!-- Coluna direita: formulário -->
+            <div style="flex: 1; min-width: 0; position: relative; background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; text-align: center; overflow-y: auto;">
+            <button id="account-close-btn" type="button" title="Fechar" style="position: absolute; top: 16px; right: 16px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; background: transparent; border: none; color: #ef4444; cursor: pointer; font-size: 15px; font-weight: bold; z-index: 2; opacity: 0.8; border-radius: 6px; transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;">✕</button>
             <div id="account-view">
 
                 <!-- Subview: formulário de acesso (deslogado) -->
                 <div id="account-form-view">
-                    <div style="color: #f8fafc; font-size: 14px; font-weight: bold; margin-bottom: 8px;">🎓 Entre com sua conta ou jogue como visitante</div>
+                    <div style="color: #f8fafc; font-size: 14px; font-weight: bold; margin-bottom: 10px; padding: 2px 34px 0 34px;">🎓 Entre com sua conta ou jogue como visitante</div>
 
-                    <div style="display: flex; gap: 6px; margin-bottom: 8px;">
-                        <button id="account-tab-login" type="button" style="flex: 1; padding: 7px; background: #2563eb; color: #fff; border: 1px solid #60a5fa; border-radius: 7px; font-weight: bold; font-size: 12px; cursor: pointer;">Entrar</button>
-                        <button id="account-tab-register" type="button" style="flex: 1; padding: 7px; background: #1e293b; color: #cbd5e1; border: 1px solid #475569; border-radius: 7px; font-weight: bold; font-size: 12px; cursor: pointer;">Cadastrar</button>
+                    <div style="display: flex; gap: 6px; margin-bottom: 10px; background: #0b1120; border: 1px solid #1e293b; border-radius: 999px; padding: 4px;">
+                        <button id="account-tab-login" type="button" style="flex: 1; padding: 7px; background: #2563eb; color: #fff; border: none; border-radius: 999px; font-weight: bold; font-size: 12px; cursor: pointer;">Entrar</button>
+                        <button id="account-tab-register" type="button" style="flex: 1; padding: 7px; background: transparent; color: #cbd5e1; border: none; border-radius: 999px; font-weight: bold; font-size: 12px; cursor: pointer;">Cadastrar</button>
                     </div>
 
                     <div id="account-nickname-row" style="display: none; margin-bottom: 6px;">
-                        <input id="account-nickname-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" style="font-size: 13px; font-weight: bold; width: 100%; padding: 8px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none;">
+                        <input id="account-nickname-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" style="font-size: 13px; font-weight: bold; width: 100%; padding: 8px; text-align: center; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #38bdf8; outline: none; box-sizing: border-box;">
                     </div>
-                    <!-- Aceite LGPD: só aparece no modo Criar conta (obrigatório) -->
+                    <input id="account-email-input" type="email" autocomplete="email" placeholder="📧 E-mail" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 9px 11px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none; box-sizing: border-box;">
+                    <input id="account-password-input" type="password" autocomplete="current-password" placeholder="🔒 Senha (mín. 6, com 1 maiúscula e 1 número)" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 9px 11px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none; box-sizing: border-box;">
+                    <!-- Medidor de força da senha: só no modo Cadastrar -->
+                    <div id="account-password-strength" style="display: none; margin: 0 0 6px 0; text-align: left;">
+                        <div style="height: 6px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; overflow: hidden;">
+                            <div id="account-strength-bar" style="height: 100%; width: 0%; background: #f87171; transition: width 0.2s ease, background 0.2s ease;"></div>
+                        </div>
+                        <div id="account-strength-label" style="font-size: 10.5px; color: #64748b; margin-top: 3px;">Força da senha: —</div>
+                    </div>
+                    <!-- Confirmação de senha: só no modo Cadastrar -->
+                    <div id="account-password2-row" style="display: none; margin-bottom: 6px;">
+                        <input id="account-password2-input" type="password" autocomplete="new-password" placeholder="🔒 Confirme a senha" style="font-size: 13px; width: 100%; padding: 9px 11px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none; box-sizing: border-box;">
+                    </div>
+                    <!-- Aceite LGPD: só no Criar conta (obrigatório), abaixo da senha -->
                     <div id="account-terms-row" style="display: none; margin-bottom: 7px; text-align: left;">
                         <label style="display: flex; align-items: flex-start; gap: 6px; cursor: pointer; font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
                             <input id="account-terms-check" type="checkbox" style="margin-top: 2px; accent-color: #34d399; width: 15px; height: 15px; cursor: pointer;">
@@ -407,18 +445,15 @@
                         </label>
                         <div id="account-google-hint" style="font-size: 10px; color: #64748b; margin-top: 3px; padding-left: 21px;">(o cadastro pelo Google também exige aceitar os termos ☝️)</div>
                     </div>
-                    <input id="account-email-input" type="email" autocomplete="email" placeholder="E-mail" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
-                    <input id="account-password-input" type="password" autocomplete="current-password" placeholder="Senha (mínimo 6 caracteres)" style="font-size: 13px; width: 100%; margin-bottom: 6px; padding: 8px; background: #020617; border: 1.5px solid #475569; border-radius: 7px; color: #f8fafc; outline: none;">
                     <div id="account-error-msg" style="min-height: 16px; font-size: 11.5px; color: #f87171; font-weight: bold; margin-bottom: 6px;"></div>
 
                     <div style="display: flex; flex-direction: column; gap: 6px;">
-                        <button id="account-submit-btn" type="button" style="padding: 9px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
+                        <button id="account-submit-btn" type="button" style="padding: 10px; background: linear-gradient(90deg, #2563eb, #0284c7); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">🔓 Entrar na conta</button>
                         <button id="account-reset-btn" type="button" style="padding: 4px; background: transparent; color: #7dd3fc; border: none; font-size: 11.5px; font-weight: bold; cursor: pointer;">Esqueci minha senha</button>
                         <button id="account-google-btn" type="button" style="padding: 8px; background: #fff; color: #1e293b; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;"><span style="display: inline-block; margin-right: 6px; color: #4285f4; font-family: Arial, sans-serif; font-size: 15px; font-weight: 800; line-height: 1; vertical-align: -2px;">G</span> Entrar com Google</button>
-                        <button id="account-guest-btn" type="button" style="padding: 8px; background: #047857; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">👤 Continuar como visitante</button>
                     </div>
                 </div>
-                <button id="account-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 7px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
+            </div>
             </div>
         </div>
     </div>
@@ -526,7 +561,7 @@
 
     <!-- Overlay de Entrada em Sala (Design Moderno & Cyberpunk com Lista de Salas Ativas) -->
     <div id="join-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
-        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 440px; max-width: 94vw; max-height: 90vh; box-sizing: border-box; overflow-x: hidden; overflow-y: auto;">
+        <div id="join-panel" onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px 24px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 880px; max-width: 96vw; height: 620px; max-height: 92vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;">
             
             <!-- Header do Modal -->
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 8px;">
@@ -540,15 +575,20 @@
                 <button id="btn-close-join-x" type="button" title="Fechar" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold;">✕</button>
             </div>
             
+            <!-- Corpo: topo = conexão por código (linha única); embaixo = salas abertas -->
+            <div id="join-cols" style="flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 14px;">
+            <!-- Área Superior: Apelido + Código lado a lado -->
+            <div id="join-left-col" style="width: 100%; flex-shrink: 0; display: flex; flex-direction: row; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
             <!-- Campo Apelido -->
-            <div style="margin-bottom: 12px; text-align: left;">
+            <div style="flex: 1; min-width: 180px; text-align: left;">
                 <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">SEU APELIDO:</label>
                 <input id="join-nickname-input" type="text" maxlength="20" placeholder="Ex: Jogador 2" 
                        style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
+                <div id="join-nick-lock-note" style="display: none; margin-top: 4px; font-size: 10px; color: #94a3b8;">🔒 Apelido da sua conta — altere em Perfil (👤) no menu.</div>
             </div>
 
             <!-- Opção A: Inserir Código -->
-            <div style="margin-bottom: 10px; text-align: left;">
+            <div style="flex: 1.5; min-width: 280px; text-align: left;">
                 <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">CÓDIGO DA SALA (4 CARACTERES):</label>
                 <div style="display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: stretch;">
                     <input id="room-input" type="text" placeholder="ABCD" maxlength="4"
@@ -562,10 +602,13 @@
                 </div>
             </div>
 
-            <div id="join-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 8px; word-break: break-word; text-align: left;"></div>
+            <div id="join-error-msg" style="width: 100%; min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; word-break: break-word; text-align: left;"></div>
 
+            </div>
+            <!-- Área Inferior: Salas Abertas ao Vivo (lista alta com scroll) -->
+            <div style="flex: 1; min-height: 0; display: flex; flex-direction: column; border-top: 1px solid #1e293b; padding-top: 12px;">
             <!-- Divisória com Salas Abertas ao Vivo -->
-            <div style="display: flex; align-items: center; justify-content: space-between; margin: 10px 0 8px 0; border-top: 1px solid #1e293b; padding-top: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin: 0 0 8px 0; padding-top: 2px;">
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-size: 14px;">📡</span>
                     <span style="font-size: 11px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px; text-transform: uppercase;">Salas Abertas ao Vivo</span>
@@ -576,14 +619,68 @@
                 </button>
             </div>
 
-            <!-- Lista de Salas Abertas com Scroll Elegante -->
-            <div id="open-rooms-list" style="max-height: 175px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; margin-bottom: 14px; text-align: left;">
+            <!-- Lista de Salas Abertas com Scroll Elegante (ocupa toda a altura da coluna) -->
+            <div id="open-rooms-list" style="flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; padding-right: 2px; text-align: left;">
                 <!-- Preenchido via Firebase em tempo real -->
+            </div>
+            </div>
             </div>
 
             <!-- Botão Voltar ao Menu -->
-            <button id="btn-cancel-join" type="button" style="width: 100%; padding: 10px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-sizing: border-box;">
+            <button id="btn-cancel-join" type="button" style="width: 100%; padding: 10px; margin-top: 14px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer; box-sizing: border-box; flex-shrink: 0;">
                 ✕ Voltar ao Menu
+            </button>
+        </div>
+    </div>
+
+    <!-- Modal de Regras / Como Jogar (aberto pelo botão 📜 REGRAS da dock do lobby) -->
+    <div id="rules-overlay" style="display: none; position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(3, 7, 18, 0.85); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 1000; animation: fadeIn 0.2s ease;">
+        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px 24px; border-radius: 14px; text-align: left; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.2); width: 820px; max-width: 96vw; max-height: 92vh; box-sizing: border-box; display: flex; flex-direction: column; overflow: hidden;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 26px;">📜</span>
+                    <div>
+                        <h2 style="color: #f8fafc; margin: 0; font-size: 19px; font-weight: bold;">Como Jogar LabCombat</h2>
+                        <div style="color: #94a3b8; font-size: 11px;">Duelo 1v1 de conhecimento em tempo real</div>
+                    </div>
+                </div>
+                <button id="rules-close-btn" type="button" title="Fechar" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold;">✕</button>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 11.5px; color: #cbd5e1; line-height: 1.5;">
+                <div style="grid-column: 1 / -1;">
+                    <div style="color: #f59e0b; font-weight: bold; margin-bottom: 2px;">🎯 O JOGO</div>
+                    Dois jogadores escolhem um professor e respondem perguntas da disciplina dele em simultâneo — resposta certa vira golpe!
+                </div>
+                <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px;">
+                    <div style="color: #38bdf8; font-weight: bold; margin-bottom: 4px;">⚔️ COMBATE</div>
+                    <div>• Ambos respondem a <b>mesma questão</b> (timer de <span id="rules-time">15</span>s)</div>
+                    <div>• <b>Só você acertou</b> → golpe (−<span id="rules-dmg">15</span> HP)</div>
+                    <div>• <b>Os dois acertaram</b> → vence o mais rápido, sem dano</div>
+                    <div>• <b>Errou / tempo zerou</b> → perde 1 carga</div>
+                    <div>• <b>HP 0</b> → K.O.! 💀</div>
+                </div>
+                <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px;">
+                    <div style="color: #a78bfa; font-weight: bold; margin-bottom: 4px;">💥 CARGAS & ULTIMATE</div>
+                    <div>• Rodada vencida carrega <b>⚡ +1</b> (máx. 3)</div>
+                    <div>• Acerto com <b>3 cargas</b> = <b>ULTIMATE</b>: −<span id="rules-ultdmg">28</span> HP</div>
+                    <div>• Oponente com ≤<span id="rules-ultko">33</span> HP na ultimate → <b>K.O. direto</b>! 🔥</div>
+                </div>
+                <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px;">
+                    <div style="color: #34d399; font-weight: bold; margin-bottom: 4px;">🎲 MODIFICADORES (<span id="rules-modchance">30</span>%/rodada)</div>
+                    <div>⚡ Carga extra • 🛡️ FIREWALL (bloqueia 1 golpe) • 💚 BACKUP (+<span id="rules-heal">10</span> HP) • 🐛 TRY/CATCH (anula 1 erro)</div>
+                </div>
+                <div style="background: #0b1120; border: 1px solid #1e293b; border-radius: 10px; padding: 8px 10px;">
+                    <div style="color: #fbbf24; font-weight: bold; margin-bottom: 4px;">🏆 RANKING (LabPoints)</div>
+                    <div>Com <b>conta</b>: vitória +<span id="rules-lpwin">25</span> LP • bônus +<span id="rules-lpbonus">5</span> LP • derrota +<span id="rules-lploss">10</span> LP. Elos: 🐣 → ☕ → 💻 → 💎 → 👑</div>
+                </div>
+                <div style="grid-column: 1 / -1; font-size: 10.5px; color: #94a3b8;">
+                    💡 O <b>Coringa</b> mistura todas as disciplinas • oponente caido por 15s = W.O. • revanche/troca de professor pedem aceite e expiram em 15s.
+                </div>
+            </div>
+
+            <button id="rules-close-btn2" type="button" style="width: 100%; padding: 9px; margin-top: 12px; background: #1e293b; border: 1px solid #334155; color: #cbd5e1; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; box-sizing: border-box; flex-shrink: 0;">
+                ✕ Fechar
             </button>
         </div>
     </div>
@@ -675,12 +772,20 @@
             // (desabilita também o "Entrar com Google" até aceitar)
             const termsRow = document.getElementById('account-terms-row');
             if (termsRow) termsRow.style.display = isRegistering ? 'block' : 'none';
+            // Força + confirmação de senha: só no cadastro
+            const p2Row = document.getElementById('account-password2-row');
+            const strengthRow = document.getElementById('account-password-strength');
+            if (p2Row) p2Row.style.display = isRegistering ? 'block' : 'none';
+            if (strengthRow) strengthRow.style.display = isRegistering ? 'block' : 'none';
+            const p2Inp = document.getElementById('account-password2-input');
+            if (p2Inp && !isRegistering) p2Inp.value = '';
+            updatePasswordStrength();
             updateTermsGate();
             accountSubmitBtn.textContent = isRegistering ? '📝 Criar conta' : '🔓 Entrar na conta';
             accountResetBtn.style.display = isRegistering ? 'none' : 'block';
-            accountTabLogin.style.background = isRegistering ? '#1e293b' : '#2563eb';
+            accountTabLogin.style.background = isRegistering ? 'transparent' : '#2563eb';
             accountTabLogin.style.color = isRegistering ? '#cbd5e1' : '#fff';
-            accountTabRegister.style.background = isRegistering ? '#2563eb' : '#1e293b';
+            accountTabRegister.style.background = isRegistering ? '#2563eb' : 'transparent';
             accountTabRegister.style.color = isRegistering ? '#fff' : '#cbd5e1';
             accountErrorMsg.textContent = '';
         }
@@ -756,6 +861,33 @@
             }
         }
         if (accountTermsCheck) accountTermsCheck.addEventListener('change', updateTermsGate);
+
+        // Medidor de força da senha (cadastro): 8+ chars, maiúsculas+minúsculas,
+        // dígitos e símbolos somam pontos → barra Fraca → Forte
+        const accountStrengthBar = document.getElementById('account-strength-bar');
+        const accountStrengthLabel = document.getElementById('account-strength-label');
+        function updatePasswordStrength() {
+            if (!accountStrengthBar || !accountStrengthLabel) return;
+            const p = accountPasswordInput.value || '';
+            let score = 0;
+            if (p.length >= 8) score++;
+            if (/[a-z]/.test(p) && /[A-Z]/.test(p)) score++;
+            if (/\d/.test(p)) score++;
+            if (/[^A-Za-z0-9]/.test(p)) score++;
+            const levels = [
+                { label: '—', color: '#334155', width: 0 },
+                { label: 'Fraca', color: '#f87171', width: 25 },
+                { label: 'Média', color: '#fbbf24', width: 50 },
+                { label: 'Boa', color: '#4ade80', width: 75 },
+                { label: 'Forte 💪', color: '#34d399', width: 100 }
+            ];
+            const lv = levels[p.length ? score : 0];
+            accountStrengthBar.style.width = lv.width + '%';
+            accountStrengthBar.style.background = lv.color;
+            accountStrengthLabel.textContent = 'Força da senha: ' + lv.label;
+            accountStrengthLabel.style.color = lv.color;
+        }
+        accountPasswordInput.addEventListener('input', updatePasswordStrength);
         accountCloseBtn.addEventListener('click', closeAccountModal);
         accountGuestBtn.addEventListener('click', () => {
             // Visitante: abre o MODAL de apelido dedicado POR CIMA do modal de
@@ -790,6 +922,25 @@
                 if (termsCheck && !termsCheck.checked) {
                     accountErrorMsg.textContent = '⚠️ Você precisa aceitar os Termos de Uso para criar a conta.';
                     return;
+                }
+                // Requisito de senha forte: mín. 6 + 1 letra maiúscula + 1 número
+                if (password.length < 6 || !/[A-Z]/.test(password) || !/\d/.test(password)) {
+                    accountErrorMsg.textContent = '⚠️ Senha precisa de mín. 6 caracteres, 1 letra maiúscula e 1 número.';
+                    accountPasswordInput.focus();
+                    return;
+                }
+                const p2Inp = document.getElementById('account-password2-input');
+                if (p2Inp) {
+                    if (!p2Inp.value) {
+                        accountErrorMsg.textContent = '⚠️ Confirme a senha no segundo campo.';
+                        p2Inp.focus();
+                        return;
+                    }
+                    if (password !== p2Inp.value) {
+                        accountErrorMsg.textContent = '⚠️ As senhas não coincidem. Verifique e tente de novo.';
+                        p2Inp.focus();
+                        return;
+                    }
                 }
             }
             accountSubmitBtn.disabled = true;
@@ -938,7 +1089,7 @@
         // Cobre painel GM, conta/perfil, apelido, entrar em sala e ranking:
         // quando qualquer um estiver visível, body.modal-open desativa os
         // pointer-events do canvas (ver style.css) — nada "vaza" pro jogo.
-        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'orientation-prompt'];
+        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'orientation-prompt'];
         const __overlayObserver = new MutationObserver(() => {
             const anyVisible = overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -1100,6 +1251,36 @@
         });
         if (rankingCloseBtn) rankingCloseBtn.addEventListener('click', closeRankingModal);
         if (rankingOverlay) rankingOverlay.addEventListener('click', (e) => { if (e.target === rankingOverlay) closeRankingModal(); });
+
+        // ===== Modal de Regras / Como Jogar (botão 📜 REGRAS da dock do lobby) =====
+        const rulesOverlay = document.getElementById('rules-overlay');
+        const rulesCloseBtn = document.getElementById('rules-close-btn');
+        const rulesCloseBtn2 = document.getElementById('rules-close-btn2');
+        function closeRulesModal() { if (rulesOverlay) rulesOverlay.style.display = 'none'; }
+        function renderRulesValues() {
+            // Os valores refletem os ajustes atuais do painel GM (localStorage),
+            // com os mesmos defaults usados pela MainScene/ranking.js.
+            const get = (key, def) => parseInt(localStorage.getItem(key), 10) || def;
+            const put = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+            put('rules-time', get('dev_question_limit', 15));
+            put('rules-dmg', get('dev_dmg_attack', 15));
+            put('rules-ultdmg', get('dev_dmg_special', 28));
+            put('rules-ultko', get('dev_ult_ko_hp', 33));
+            put('rules-modchance', get('dev_mod_chance', 30));
+            put('rules-heal', get('dev_mod_heal', 10));
+            put('rules-lpwin', get('dev_lp_win', 25));
+            put('rules-lpbonus', get('dev_lp_bonus', 5));
+            put('rules-lploss', get('dev_lp_loss', 10));
+        }
+        window.addEventListener('open-rules-modal', () => {
+            if (rulesOverlay) {
+                renderRulesValues();
+                rulesOverlay.style.display = 'flex';
+            }
+        });
+        if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', closeRulesModal);
+        if (rulesCloseBtn2) rulesCloseBtn2.addEventListener('click', closeRulesModal);
+        if (rulesOverlay) rulesOverlay.addEventListener('click', (e) => { if (e.target === rulesOverlay) closeRulesModal(); });
 
         function renderRankingRows() {
             if (!rankingBody) return;
@@ -2418,7 +2599,19 @@
                 }
                 joinOverlay.style.display = 'flex';
                 if (joinNicknameInput) {
+                    // Regra de apelido na entrada em sala:
+                    // - Conta logada: usa o apelido da conta, campo TRAVADO (muda só no Perfil)
+                    // - Visitante: campo livre para digitar
+                    const isLoggedAccount = !!localStorage.getItem('labcombat_account_uid')
+                        && sessionStorage.getItem('labcombat_access_mode') !== 'guest';
+                    const lockNote = document.getElementById('join-nick-lock-note');
                     joinNicknameInput.value = sessionStorage.getItem('labcombat_nickname') || 'Jogador 2';
+                    joinNicknameInput.readOnly = isLoggedAccount;
+                    joinNicknameInput.style.opacity = isLoggedAccount ? '0.7' : '1';
+                    joinNicknameInput.style.cursor = isLoggedAccount ? 'not-allowed' : 'text';
+                    joinNicknameInput.style.borderColor = isLoggedAccount ? '#475569' : '#3b82f6';
+                    joinNicknameInput.style.color = isLoggedAccount ? '#cbd5e1' : '#38bdf8';
+                    if (lockNote) lockNote.style.display = isLoggedAccount ? 'block' : 'none';
                 }
                 if (roomInput) {
                     roomInput.value = '';

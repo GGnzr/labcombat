@@ -75,10 +75,11 @@ export class MenuScene extends Phaser.Scene {
         // Overlay suave neutro para valorizar a arte do campus sem escurecer como modo noturno
         this.add.rectangle(centerX, 360, width, 720, 0x181e26, 0.20);
 
-        // 2. Cabeçalho / Branding Suave Arcade
-        const lobbyCenterX = (width - 320) / 2;  // centro da coluna de ações (ranking fica na lateral direita)
+        // 2. Cabeçalho / Branding Suave Arcade — lobby totalmente centralizado
+        // (o ranking virou um chip compacto expansível, não desloca mais o layout)
+        const lobbyCenterX = width / 2;
 
-        const topBadge = this.add.container(lobbyCenterX, 38);
+        const topBadge = this.add.container(lobbyCenterX, 118);
         const topBadgeGfx = this.add.graphics();
         drawRoundedRect(topBadgeGfx, -170, -14, 340, 28, 14, 0x242a35, 0.95, 0x475569, 1.2);
         const topBadgeTxt = this.add.text(0, 0, '⚔️ ARENA DE DUELO 1V1 • MULTIPLAYER ONLINE', { 
@@ -86,13 +87,13 @@ export class MenuScene extends Phaser.Scene {
         }).setOrigin(0.5);
         topBadge.add([topBadgeGfx, topBadgeTxt]);
 
-        const titleText = this.add.text(lobbyCenterX, 88, 'LABCOMBAT', { 
-            fontSize: '56px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6, resolution: 2,
+        const titleText = this.add.text(lobbyCenterX, 172, 'LABCOMBAT', { 
+            fontSize: '64px', fill: '#ffffff', fontStyle: 'bold', letterSpacing: 6, resolution: 2,
             fontFamily: '"Impact", "Arial Black", system-ui, sans-serif'
         }).setOrigin(0.5);
         titleText.setShadow(0, 0, '#d97706', 14, false, true);
 
-        this.add.text(lobbyCenterX, 132, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
+        this.add.text(lobbyCenterX, 226, 'Batalha de Conhecimento e Algoritmos em Tempo Real', { 
             fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0.5);
 
@@ -100,7 +101,7 @@ export class MenuScene extends Phaser.Scene {
         // Apelido atual vira o chip clicável no topo (👤 nick):
         // visitante → edita apelido; conta logada → abre o Perfil
         this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
-        this.btnProfileAccount = createSmoothButton(this, width - 160, 36, 190, 32, `👤 ${this.playerNickname.slice(0, 16)}`, {
+        this.btnProfileAccount = createSmoothButton(this, 114, 36, 190, 32, `👤 ${this.playerNickname.slice(0, 16)}`, {
             radius: 16,
             fillColor: 0x242a35,
             hoverFillColor: 0x334155,
@@ -137,17 +138,14 @@ export class MenuScene extends Phaser.Scene {
         // (Barra de apelido removida — o chip do topo cobre esse papel)
         this.playerNickname = sessionStorage.getItem('labcombat_nickname') || 'Jogador 1';
 
-        // 3. Card 1: Criar Sala (Host / P1)
-        this.createHostCard();
+        // 3. Dock inferior de ações: Criar / Entrar / Ranking / Regras
+        this.createDock();
 
-        // 4. Card 2: Entrar em Sala (Client / P2)
-        this.createJoinCard();
-
-        // 4.5. Painel de Ranking (Top 10) — sempre visível ao lado dos cards
+        // 4. Painel de Ranking expandido (oculto; abre pelo botão 🏆 da dock)
         this.createRankingPanel();
 
-        // 5. Mensagens de Status / Feedback (Suave e Arredondado)
-        this.statusText = createSmoothBanner(this, lobbyCenterX, 545, '', { 
+        // 4.5. Banner de status/feedback (mensagens de sala)
+        this.statusText = createSmoothBanner(this, lobbyCenterX, 500, '', { 
             radius: 14,
             fillColor: 0x242a35,
             strokeColor: 0x475569,
@@ -159,15 +157,7 @@ export class MenuScene extends Phaser.Scene {
             paddingY: 6
         }).setVisible(false);
 
-        // 6. Rodapé: Regras Rápidas da Partida
-        this.createRulesFooter();
-
-        // 7. Sub-rodapé informativo
-        this.add.text(lobbyCenterX, 684, 'LabCombat • Duelos de Computação • 6 Disciplinas Disponíveis', {
-            fontSize: '10px', fill: '#94a3b8', resolution: 2
-        }).setOrigin(0.5);
-
-        // 8. Botão discreto de Acesso Professor / GM (Suave)
+        // 7. Botão discreto de Acesso Professor / GM (Suave)
         this.adminAccessButton = createSmoothButton(this, width - 90, 680, 110, 28, '🛡️ Modo GM', {
             radius: 14,
             fillColor: 0x242a35,
@@ -237,107 +227,97 @@ export class MenuScene extends Phaser.Scene {
         else window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { register: true } }));
     }
 
-    createHostCard() {
-        const cardX = ((this.scale.width - 320) / 2) - 175;
-        const cardY = 360;
-        const card = this.add.container(cardX, cardY);
+    // Dock inferior de ações (layout "dock"): tela limpa com a arte do campus,
+    // ações concentradas numa doca no rodapé: Criar / Entrar / 🏆 Ranking / 📜 Regras
+    createDock() {
+        const width = this.scale.width;
+        const dockW = Math.min(width - 80, 920);
+        const dockH = 124;
+        const dockY = 720 - 24 - dockH / 2;   // 24px de respiro do rodapé
 
-        const bgGfx = this.add.graphics();
-        const renderBg = (fColor, sColor, sWidth = 1.5) => {
-            bgGfx.clear();
-            drawRoundedRect(bgGfx, -160, -125, 320, 250, 20, fColor, 0.96, sColor, sWidth);
-        };
-        renderBg(0x242a35, 0x2563eb, 1.5);
-
-        const glow = this.add.circle(0, -56, 26, 0x2563eb, 0.18);
-
-        const icon = this.add.text(0, -56, '⚔️', { 
-            fontSize: '38px'
-        }).setOrigin(0.5);
-        const title = this.add.text(0, -18, 'CRIAR SALA (1P)', { 
-            fontSize: '19px', fill: '#60a5fa', fontStyle: 'bold', letterSpacing: 2, resolution: 2 
-        }).setOrigin(0.5);
-
-        const desc = this.add.text(0, 20, 'Inicie como Jogador 1 (Host).\nCompartilhe o código da sala e\ndesafie seu colega em tempo real.', { 
-            fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
-        }).setOrigin(0.5);
-
-        card.add([bgGfx, glow, icon, title, desc]);
-
-        card.setSize(320, 250);
-        card.setInteractive({ useHandCursor: true });
-
-        card.on('pointerover', () => {
-            SoundManager.playHover();
-            this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
-            renderBg(0x2d3544, 0x60a5fa, 2);
+        const dock = createSmoothCard(this, width / 2, dockY, dockW, dockH, {
+            radius: 22,
+            fillColor: 0x161c26,
+            fillAlpha: 0.95,
+            strokeColor: 0x475569,
+            strokeWidth: 1.5
         });
-        card.on('pointerout', () => {
-            this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
-            renderBg(0x242a35, 0x2563eb, 1.5);
-        });
-        card.on('pointerdown', () => {
+
+        const guard = (fn) => () => {
             if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
-            SoundManager.playClick();
-            this.createRoom();
+            fn();
+        };
+
+        const btnW = 250, btnS = 150, btnH = 88, gap = 22;
+        let cx = -(btnW * 2 + btnS * 2 + gap * 3) / 2;
+        const addBtn = (w, text, opts) => {
+            const b = createSmoothButton(this, cx + w / 2, 0, w, btnH, text, opts);
+            cx += w + gap;
+            dock.add(b);
+            return b;
+        };
+
+        // 1. Criar Sala (Host / P1) — azul
+        addBtn(btnW, '⚔️ CRIAR SALA (1P)', {
+            fillColor: 0x1d3a6e,
+            hoverFillColor: 0x2563eb,
+            strokeColor: 0x3b82f6,
+            hoverStrokeColor: 0x93c5fd,
+            textColor: '#dbeafe',
+            fontSize: '16px',
+            onClick: guard(() => this.createRoom())
+        });
+
+        // 2. Entrar em Sala (Client / P2) — vermelho
+        addBtn(btnW, '📡 ENTRAR EM SALA (2P)', {
+            fillColor: 0x5f1d1d,
+            hoverFillColor: 0xdc2626,
+            strokeColor: 0xef4444,
+            hoverStrokeColor: 0xfca5a5,
+            textColor: '#fee2e2',
+            fontSize: '16px',
+            onClick: guard(() => {
+                const overlay = document.getElementById('join-overlay');
+                if (overlay && overlay.style.display === 'flex') return;
+                this.showJoinOverlay();
+            })
+        });
+
+        // 3. 🏆 Ranking — âmbar, abre o painel expandido (createRankingPanel)
+        const btnRank = addBtn(btnS, '🏆 RANKING', {
+            fillColor: 0x3a2f14,
+            hoverFillColor: 0x59461c,
+            strokeColor: 0xf59e0b,
+            hoverStrokeColor: 0xfbbf24,
+            textColor: '#fde68a',
+            fontSize: '13px',
+            onClick: guard(() => this.toggleRankingPanel())
+        });
+        btnRank.label.setY(-13);
+        this.rankingDockSub = this.add.text(btnRank.x, 16, 'carregando...', {
+            fontSize: '10.5px', fill: '#cbd5e1', resolution: 2
+        }).setOrigin(0.5);
+        dock.add(this.rankingDockSub);
+
+        // 4. 📜 Regras — abre o modal "Como Jogar" (DOM, #rules-overlay)
+        addBtn(btnS, '📜 REGRAS', {
+            fillColor: 0x242a35,
+            hoverFillColor: 0x334155,
+            strokeColor: 0x475569,
+            hoverStrokeColor: 0x94a3b8,
+            textColor: '#e2e8f0',
+            fontSize: '13px',
+            onClick: guard(() => window.dispatchEvent(new CustomEvent('open-rules-modal')))
         });
     }
 
-    createJoinCard() {
-        const cardX = ((this.scale.width - 320) / 2) + 175;
-        const cardY = 360;
-        const card = this.add.container(cardX, cardY);
-
-        const bgGfx = this.add.graphics();
-        const renderBg = (fColor, sColor, sWidth = 1.5) => {
-            bgGfx.clear();
-            drawRoundedRect(bgGfx, -160, -125, 320, 250, 20, fColor, 0.96, sColor, sWidth);
-        };
-        renderBg(0x242a35, 0xdc2626, 1.5);
-
-        const glow = this.add.circle(0, -56, 26, 0xdc2626, 0.18);
-
-        const icon = this.add.text(0, -56, '📡', { 
-            fontSize: '38px'
-        }).setOrigin(0.5);
-        const title = this.add.text(0, -18, 'ENTRAR EM SALA (2P)', { 
-            fontSize: '19px', fill: '#f87171', fontStyle: 'bold', letterSpacing: 2, resolution: 2 
-        }).setOrigin(0.5);
-
-        const desc = this.add.text(0, 20, 'Escolha uma sala aberta na lista\nou digite o código de 4 dígitos\npara disputar o combate.', { 
-            fontSize: '13px', fill: '#cbd5e1', align: 'center', lineSpacing: 5, resolution: 2 
-        }).setOrigin(0.5);
-
-        card.add([bgGfx, glow, icon, title, desc]);
-
-        card.setSize(320, 250);
-        card.setInteractive({ useHandCursor: true });
-
-        card.on('pointerover', () => {
-            SoundManager.playHover();
-            this.tweens.add({ targets: card, scale: 1.03, duration: 120, ease: 'Power1' });
-            renderBg(0x2d3544, 0xfca5a5, 2);
-        });
-        card.on('pointerout', () => {
-            this.tweens.add({ targets: card, scale: 1.0, duration: 120, ease: 'Power1' });
-            renderBg(0x242a35, 0xdc2626, 1.5);
-        });
-        card.on('pointerdown', () => {
-            if (document.body.classList.contains('modal-open')) return; // overlay aberto por cima
-            const overlay = document.getElementById('join-overlay');
-            if (overlay && overlay.style.display === 'flex') return;
-            SoundManager.playClick();
-            this.showJoinOverlay();
-        });
-    }
-
-    // Sidebar de Ranking (fixa no menu, lateral direita): Top 10 + seu elo.
-    // Dados vêm do RTDB leaderboard/{uid} (src/ranking.js); recarrega a cada
-    // entrada no menu (a cena é recriada a cada retorno).
+    // Painel de ranking expandido: Top 10 + SEU ELO, oculto por padrão; abre pelo
+    // botão 🏆 da dock inferior (layout dock). O resumo do seu elo fica no próprio
+    // botão (this.rankingDockSub). Dados: RTDB leaderboard/{uid} (src/ranking.js).
     createRankingPanel() {
         const W = 292;
-        const px = this.scale.width - (W / 2) - 16;   // coluna direita
-        const py = 415;
+        const px = this.scale.width - (W / 2) - 16;   // coluna direita, acima da dock
+        const py = 330;
         const H = 470;
 
         const card = createSmoothCard(this, px, py, W, H, {
@@ -347,6 +327,21 @@ export class MenuScene extends Phaser.Scene {
             strokeColor: 0xf59e0b,
             strokeWidth: 1.5
         });
+        card.setVisible(false);
+        this.rankingPanel = card;
+
+        // Botão fechar (✕) no canto do painel
+        card.add(this.add.text(W / 2 - 20, -H / 2 + 20, '✕', {
+            fontSize: '14px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5)
+            .setInteractive({ useHandCursor: true })
+            .on('pointerover', function () { this.setStyle({ fill: '#f1f5f9' }); })
+            .on('pointerout', function () { this.setStyle({ fill: '#94a3b8' }); })
+            .on('pointerdown', () => {
+                SoundManager.playClick();
+                this.toggleRankingPanel(false);
+            })
+        );
 
         card.add(this.add.text(0, -H / 2 + 22, 'RANKING DA ARENA', {
             fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 1, resolution: 2
@@ -430,23 +425,28 @@ export class MenuScene extends Phaser.Scene {
             if (isGuest) {
                 youMain.setText('🎮 Visitante');
                 youSub.setText('Entre com conta p/ pontuar');
+                this.rankingDockSub?.setText('🎮 Visitante');
             } else {
                 youMain.setText('...');
+                this.rankingDockSub?.setText('carregando...');
                 loadMyLeaderboardEntry(myUid).then(({ entry, position, total }) => {
                     if (!this.scene.isActive()) return;
                     if (!entry) {
                         youMain.setText('🐣 Sem elo ainda');
                         youSub.setText('Vença a 1ª partida p/ +25 LP');
+                        this.rankingDockSub?.setText('🐣 Sem elo ainda');
                         return;
                     }
                     const rank = getRankForPoints(entry.points || 0);
                     const winRate = entry.matches ? Math.round(((entry.wins || 0) / entry.matches) * 100) : 0;
                     youMain.setText(rank.label);
                     youSub.setText(`${entry.points || 0} LP${position ? ` · #${position} de ${total}` : ''} · ${winRate}% wins`);
+                    this.rankingDockSub?.setText(`${rank.icon} ${entry.points || 0} LP${position ? ` · #${position}` : ''}`);
                 }).catch(() => {
                     if (!this.scene.isActive()) return;
                     youMain.setText('');
                     youSub.setText('');
+                    this.rankingDockSub?.setText('toque p/ abrir');
                 });
             }
         };
@@ -455,33 +455,11 @@ export class MenuScene extends Phaser.Scene {
         this.refreshMyRankCard();
     }
 
-    createRulesFooter() {
-        const lobbyCenterX = (this.scale.width - 320) / 2;
-        const barWidth = Math.min(this.scale.width - 360 - 60, 780);
-        const bar = createSmoothCard(this, lobbyCenterX, 645, barWidth, 44, {
-            radius: 16,
-            fillColor: 0x242a35,
-            fillAlpha: 0.95,
-            strokeColor: 0x475569,
-            strokeWidth: 1.5
-        });
-
-        const getLimit = () => parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
-
-        this.rulesText = this.add.text(0, 0, `💚 100 HP  •  ⚡ 3 Cargas  •  💥 Super & Ultimate  •  ⏱️ ${getLimit()}s / Questão`, {
-            fontSize: '13px', fill: '#f1f5f9', fontStyle: 'bold', resolution: 2
-        }).setOrigin(0.5);
-
-        bar.add(this.rulesText);
-
-        this.handleDevTimersChanged = (e) => {
-            const limit = e?.detail?.questionTimeLimit || getLimit();
-            if (this.rulesText) {
-                this.rulesText.setText(`💚 100 HP  •  ⚡ 3 Cargas  •  💥 Super & Ultimate  •  ⏱️ ${limit}s / Questão`);
-            }
-        };
-        window.addEventListener('dev-set-timers', this.handleDevTimersChanged);
-        // (link do GitHub é DOM — #gh-footer-link em index.html)
+    // Abre/fecha o painel de ranking (botão 🏆 da dock)
+    toggleRankingPanel(force) {
+        const show = force !== undefined ? force : !(this.rankingPanel?.visible);
+        this.rankingPanel?.setVisible(show);
+        SoundManager.playClick();
     }
 
     async createRoom() {
