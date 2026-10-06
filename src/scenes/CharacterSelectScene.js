@@ -728,11 +728,18 @@ export class CharacterSelectScene extends Phaser.Scene {
             const p2Ready = data.p2 && data.p2.ready;
 
             if (p1Ready && p2Ready) {
+                // PRÉ-CARREGA o catálogo assim que os dois dão pronto (por
+                // professor — trocar personagem muda os ids e aquece outros
+                // bancos; o cache de questionBank.js é por banco, não por sala)
+                if (!this.catalogPreloadStarted) {
+                    this.catalogPreloadStarted = true;
+                    this.getQuestionPool().catch(() => {});
+                }
                 if (data.countdownStartTime) {
                     this.countdownTargetTime = data.countdownStartTime;
                     this.isCountingDown = true;
                 } else if (isHost) {
-                    const countdownDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 5;
+                    const countdownDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 10;
                     const targetTime = this.nowMs() + (countdownDelay * 1000);
                     this.countdownTargetTime = targetTime;
                     this.isCountingDown = true;
@@ -741,6 +748,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             } else {
                 this.isCountingDown = false;
                 this.countdownTargetTime = null;
+                this.catalogPreloadStarted = false;
 
                 if (data.countdownStartTime && isHost) {
                     update(roomRef, { countdownStartTime: null }).catch(() => {});
@@ -832,7 +840,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         const roomRef = ref(db, `rooms/${this.roomId}`);
         
         let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
-        if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
+        if (!devStartDelay || devStartDelay === 30) devStartDelay = 10;
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
         const randomArena = getRandomArena();
@@ -959,7 +967,7 @@ export class CharacterSelectScene extends Phaser.Scene {
                     const roomRef = ref(db, `rooms/${this.roomId}`);
 
                     let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
-                    if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
+                    if (!devStartDelay || devStartDelay === 30) devStartDelay = 10;
                     const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
                     update(roomRef, {

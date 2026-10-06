@@ -25,7 +25,17 @@ function isValidQuestion(question) {
         && question.correctIndex >= 0 && question.correctIndex < question.options.length;
 }
 
+// Cache em memória por professor (válido na sessão da guia): a tela de seleção
+// pré-carrega quando os 2 jogadores dão pronto, então a MainScene pega quente
+// no round 1. O GM invalida ao publicar/importar (invalidateQuestionBankCache).
+const bankCache = new Map();
+export function invalidateQuestionBankCache(professorId = null) {
+    if (professorId) bankCache.delete(professorId);
+    else bankCache.clear();
+}
+
 export async function loadQuestionBank(professorId) {
+    if (bankCache.has(professorId)) return bankCache.get(professorId);
     const startedAt = Date.now();
     try {
         const snapshot = await get(ref(db, `questionBanks/${professorId}`));
@@ -54,6 +64,7 @@ export async function loadQuestionBank(professorId) {
                 durationMs: Date.now() - startedAt
             });
         }
+        if (questions.length > 0) bankCache.set(professorId, questions); // só cacheia sucesso
         return questions;
     } catch (error) {
         logEvent('error', `[Questões] Falha ao carregar banco "${professorId}".`, {

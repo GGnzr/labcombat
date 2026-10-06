@@ -78,7 +78,7 @@ Não há servidor: **o cliente do Player 1 (P1) é a autoridade** da partida.
   "questionStartedAt": "<serverTimestamp ms>",
   "matchStartTime": null,          // ms absoluto do início (relógio do servidor)
   "countdownStartTime": null,      // countdown da tela de seleção
-  "matchStartDelay": 3,            // s (default localStorage dev_start_delay)
+  "matchStartDelay": 10,           // s (default localStorage dev_start_delay)
   "questionTimeLimit": 15,         // s (default localStorage dev_question_limit)
   "attackWinner": null,            // 'p1'|'p2'|null — animações reagem a mudanças
   "specialWinner": null,
@@ -171,7 +171,12 @@ Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
 ## 6. Questões
 
 - Fonte única em partida: **RTDB `questionBanks/{professorId}`**, carregado por
-  `loadQuestionBanks([charP1, charP2])` (união dos 2 bancos, com cache).
+  `loadQuestionBanks([charP1, charP2])` (união dos 2 bancos, com cache
+  **por professor em `questionBank.js`**: a CharacterSelectScene pré-carrega os
+  bancos assim que os 2 jogadores dão pronto, então a MainScene pega os dados
+  quentes no round 1; trocar de personagem muda a `catalogKey` e recarrega os
+  bancos do professor novo automaticamente; o GM invalida o cache ao
+  publicar/importar bancos via `invalidateQuestionBankCache`).
   **Regra do Coringa**: se um dos lutadores é `coringa`, o catálogo vira a
   união dos bancos de TODOS os outros professores (ele não tem banco próprio)
   — expansão em `questionBank.resolveMatchProfessorIds()`.

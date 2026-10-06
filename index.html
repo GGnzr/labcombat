@@ -183,7 +183,7 @@
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                       <label for="dev-start-delay" style="font-size: 12px;">Contagem Inicial:</label>
                       <div style="display: flex; align-items: center; gap: 5px;">
-                          <input id="dev-start-delay" type="number" min="1" max="120" value="3" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
+                          <input id="dev-start-delay" type="number" min="1" max="120" value="10" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                           <span style="font-size: 11px; color: #94a3b8;">seg</span>
                       </div>
                   </div>
@@ -596,6 +596,7 @@
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
         import { getProfessorById } from '/src/professors.js';
+        import { invalidateQuestionBankCache } from '/src/questionBank.js';
 
         const accountOverlay = document.getElementById('account-overlay');
         const accountTabLogin = document.getElementById('account-tab-login');
@@ -1585,13 +1586,13 @@
         if (savedStart && savedStart !== '30') {
             startDelayInput.value = savedStart;
         } else {
-            startDelayInput.value = '3';
-            localStorage.setItem('dev_start_delay', '3');
+            startDelayInput.value = '10';
+            localStorage.setItem('dev_start_delay', '10');
         }
         if (savedLimit) questionLimitInput.value = savedLimit;
 
         function emitTimers(showFeedback = true) {
-            const startDelay = parseInt(startDelayInput.value, 10) || 3;
+            const startDelay = parseInt(startDelayInput.value, 10) || 10;
             const questionLimit = parseInt(questionLimitInput.value, 10) || 15;
             localStorage.setItem('dev_start_delay', startDelay);
             localStorage.setItem('dev_question_limit', questionLimit);
@@ -1781,6 +1782,7 @@
                     gmUploadQuestions.disabled = true;
                     gmUploadQuestions.textContent = 'Publicando...';
                     await set(ref(db, `questionBanks/${professorId}`), parsed);
+                    invalidateQuestionBankCache(professorId); // jogadores recarregam o banco novo
                     if (gmQuestionStatus) {
                         gmQuestionStatus.textContent = `✓ ${parsed.length} questões publicadas.`;
                         gmQuestionStatus.style.color = '#34d399';
@@ -1846,6 +1848,7 @@
                     // Remove o banco legado do antigo id 'poo' (hoje o Coringa
                     // não tem banco próprio — puxa de todos os outros em jogo)
                     await remove(ref(db, 'questionBanks/poo')).catch(() => {});
+                    invalidateQuestionBankCache(); // todos recarregam os bancos novos
                     if (gmQuestionStatus) {
                         gmQuestionStatus.textContent = '✓ Bancos-base publicados para os 5 professores (Coringa usa todos).';
                         gmQuestionStatus.style.color = '#34d399';

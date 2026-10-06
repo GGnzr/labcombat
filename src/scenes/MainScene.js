@@ -13,7 +13,7 @@ export class MainScene extends Phaser.Scene {
     constructor() {
         super('MainScene');
         let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
-        if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
+        if (!devStartDelay || devStartDelay === 30) devStartDelay = 10;
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
         this.QUESTION_TIME_LIMIT = devQuestionLimit;
         this.MATCH_START_DELAY = devStartDelay;
@@ -1002,7 +1002,7 @@ export class MainScene extends Phaser.Scene {
             // (inclui isAdvancingQuestion, que travava o sorteio da 1ª questão)
             this.resetLocalMatchState();
 
-            const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 3;
+            const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 10;
             const newArena = getRandomArena();
             this.setArena(newArena.id);
             await update(ref(db, `rooms/${this.roomId}`), {

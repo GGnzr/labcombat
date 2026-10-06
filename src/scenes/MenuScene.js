@@ -502,7 +502,7 @@ export class MenuScene extends Phaser.Scene {
         const ownerUid = access.user.uid;
         
         let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
-        if (!devStartDelay || devStartDelay === 30) devStartDelay = 3;
+        if (!devStartDelay || devStartDelay === 30) devStartDelay = 10;
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
         logEvent('room', `[Criar Sala] Gerando nova sala "${roomId}" para o Host "${this.playerNickname}"...`);
