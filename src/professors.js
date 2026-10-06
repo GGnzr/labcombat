@@ -2,7 +2,7 @@ export const professors = [
     {
         id: 'so',
         name: 'Programação Orientada a Objetos',
-        shortName: 'Programação OO',
+        shortName: 'Prog. Orientada a Objetos',
         subject: 'Classes, Polimorfismo & Herança',
         quote: '"Tudo é objeto. Até o problema."',
         ultimateName: 'NULL POINTER EXCEPTION',
