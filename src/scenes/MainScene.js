@@ -2224,6 +2224,7 @@ export class MainScene extends Phaser.Scene {
         const catalogKey = [data.p1?.characterId, data.p2?.characterId].filter(Boolean).join('|');
         if (!this.questionCatalogPromise || this.questionCatalogKey !== catalogKey) {
             this.questionCatalogKey = catalogKey;
+            this.catalogReady = false; // (re)carregando — renderQuestion aguarda
             const cachedCatalog = this.questionCatalogCache.get(catalogKey);
             const catalogPromise = cachedCatalog
                 ? Promise.resolve(cachedCatalog)
@@ -2253,11 +2254,13 @@ export class MainScene extends Phaser.Scene {
                     questionCount: catalog.length,
                     round: data.round ?? 0
                 });
+                this.catalogReady = true; // só então renderQuestion para de aguardar
                 if (this.pendingQuestionPick && catalog.length > 0 && this.playerId === 'p1' && !this.isGameOver) {
                     this.pendingQuestionPick = false;
                     this.isAdvancingQuestion = false;
                     this.pickNextQuestion();
                 }
+                // Re-renderiza a questão em aberto se ela chegou antes do catálogo
                 if (data.currentQuestionId != null && this.currentQuestionData?.id !== data.currentQuestionId) {
                     this.renderQuestion(data.currentQuestionId);
                 }
@@ -2750,12 +2753,17 @@ export class MainScene extends Phaser.Scene {
     }
 
     renderQuestion(qId) {
-        const question = (this.questionCatalog || []).find(catalogQuestion => catalogQuestion.id == qId);
+        const catalog = this.questionCatalog || [];
+        const question = catalog.find(catalogQuestion => catalogQuestion.id == qId);
         if (!question) {
+            // Catálogo em (re)carregamento: aguarda em silêncio — o .then do
+            // buildQuestionCatalog re-renderiza ao finalizar (antes logava ERRO
+            // falso na 1ª rodada de cada parte, poluindo o console/GM).
+            if (!this.catalogReady) return;
             logEvent('error', `[Sala ${this.roomId}] Questão não encontrada no catálogo.`, {
                 playerId: this.playerId,
                 questionId: qId,
-                catalogSize: (this.questionCatalog || []).length,
+                catalogSize: catalog.length,
                 round: this.currentRound
             });
             return;
