@@ -9,6 +9,10 @@ import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBann
 import { SoundManager } from '../audio/SoundManager.js';
 import { logEvent } from '../logger.js';
 
+// Pós-partida: tempo máx (ms) para o oponente responder um pedido de
+// revanche/troca de professor; estourado, a sala é encerrada (state:'closed').
+const POST_MATCH_TIMEOUT_MS = 15000;
+
 export class MainScene extends Phaser.Scene {
     constructor() {
         super('MainScene');
@@ -951,7 +955,27 @@ export class MainScene extends Phaser.Scene {
 
     async handleChangeProfessor() {
         if (!this.roomId) return;
-        return this.executeChangeProfessorDirectly();
+        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
+        if (!hasP2) {
+            // Modo solo: volta para a seleção direto, sem pedir confirmação
+            return this.executeChangeProfessorDirectly();
+        }
+        // Se já há um pedido pendente do oponente, o painel de decisão cobre o clique
+        if (this.latestData?.postMatchRequest) return;
+        // Modo 1v1: envia solicitação de troca — o oponente aceita/recusa em até 15s;
+        // sem resposta, a sala é encerrada (ver startPostMatchCountdown/expirePostMatchRequest)
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                postMatchRequest: {
+                    type: 'change_prof',
+                    from: this.playerId,
+                    fromNick: this.nickname,
+                    timestamp: Date.now()
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao solicitar troca de professor:', err);
+        }
     }
 
     async acceptPostMatchRequest() {
@@ -992,6 +1016,67 @@ export class MainScene extends Phaser.Scene {
             });
         } catch (err) {
             console.error('Erro ao cancelar pedido:', err);
+        }
+    }
+
+    // Expiração por falta de resposta (15s): só quem ENVIOU o pedido exerce a
+    // expiração (o relógio dele é o mesmo que gravou o timestamp). Encerra a
+    // sala para ambos — a UI do fim-de-jogo mostra o aviso e volta ao menu.
+    async expirePostMatchRequest() {
+        const req = this.latestData?.postMatchRequest;
+        if (!req || !this.roomId || req.status) return;
+        try {
+            await update(ref(db, `rooms/${this.roomId}`), {
+                state: 'closed',
+                postMatchRequest: {
+                    status: 'expired',
+                    type: req.type || 'rematch',
+                    timestamp: Date.now()
+                }
+            });
+        } catch (err) {
+            console.error('Erro ao expirar pedido:', err);
+        }
+    }
+
+    // Contagem regressiva visível do pedido pós-partida (ambos os lados) +
+    // disparo da expiração pelo remetente. Roda a cada 250ms enquanto houver
+    // pedido pendente; o relógio das cenas é destruído no shutdown da cena.
+    startPostMatchCountdown() {
+        if (this.postMatchCountdownEvent) return;
+        this.postMatchCountdownEvent = this.time.addEvent({
+            delay: 250,
+            loop: true,
+            callback: () => {
+                const req = this.latestData?.postMatchRequest;
+                if (!req || req.status || !this.gameOverPanel?.visible) {
+                    this.stopPostMatchCountdown();
+                    return;
+                }
+                const elapsed = Date.now() - (req.timestamp || Date.now());
+                const remaining = Math.ceil((POST_MATCH_TIMEOUT_MS - elapsed) / 1000);
+                if (remaining <= 0) {
+                    this.stopPostMatchCountdown();
+                    if (req.from === this.playerId) this.expirePostMatchRequest();
+                    return;
+                }
+                const isChangeProf = req.type === 'change_prof';
+                if (req.from === this.playerId) {
+                    const data = this.latestData || {};
+                    const otherNick = (this.playerId === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'oponente';
+                    const label = isChangeProf ? 'troca de professor' : 'revanche';
+                    this.waitingText?.setText(`⏳ Solicitação de ${label} enviada!\nAguardando ${otherNick} responder... (${remaining}s)`);
+                } else {
+                    this.promptSub?.setText(`🚨 Responda em até ${remaining}s ou a sala será encerrada!`);
+                }
+            }
+        });
+    }
+
+    stopPostMatchCountdown() {
+        if (this.postMatchCountdownEvent) {
+            this.postMatchCountdownEvent.remove();
+            this.postMatchCountdownEvent = null;
         }
     }
 
@@ -1120,6 +1205,7 @@ export class MainScene extends Phaser.Scene {
 
         // Caso 1: Nenhuma solicitação ativa
         if (!req) {
+            this.stopPostMatchCountdown();
             if (this.waitingBox) this.waitingBox.setVisible(false);
             if (this.waitingText) this.waitingText.setVisible(false);
             if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
@@ -1142,8 +1228,9 @@ export class MainScene extends Phaser.Scene {
             return;
         }
 
-        // Caso 2: Solicitação foi RECUSADA -> A SALA É FINALIZADA!
-        if (req.status === 'declined' || data.state === 'closed') {
+        // Caso 2: Solicitação foi RECUSADA ou EXPIROU (15s sem resposta) -> A SALA É FINALIZADA!
+        if (req?.status === 'declined' || req?.status === 'expired' || data.state === 'closed') {
+            this.stopPostMatchCountdown();
             if (this.waitingBox) this.waitingBox.setVisible(false);
             if (this.waitingText) this.waitingText.setVisible(false);
             if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
@@ -1158,12 +1245,18 @@ export class MainScene extends Phaser.Scene {
             if (this.btnRematch) this.btnRematch.setVisible(false);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
 
-            const declinedNick = req.declinedNick || (req.declinedBy === 'p1' ? data.p1?.nickname : data.p2?.nickname) || 'O oponente';
-            const actionLabel = req.type === 'change_prof' ? 'a troca de professor' : 'a revanche';
+            const isExpired = req?.status === 'expired';
+            // No 'expired' quem não respondeu é quem RECEBEU o pedido (o outro lado do remetente)
+            const declinedNick = isExpired
+                ? ((req?.from === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'O oponente')
+                : (req?.declinedNick || (req?.declinedBy === 'p1' ? data.p1?.nickname : data.p2?.nickname) || 'O oponente');
+            const actionLabel = req?.type === 'change_prof' ? 'a troca de professor' : 'a revanche';
 
             if (this.requestDeclinedBanner) {
                 this.requestDeclinedBanner.setPosition(0, 58);
-                this.requestDeclinedBanner.setText(`❌ ${declinedNick} recusou ${actionLabel}.\n🚪 A sala foi finalizada. Retornando ao menu...`);
+                this.requestDeclinedBanner.setText(isExpired
+                    ? `⏱️ ${declinedNick} não respondeu ${actionLabel} em 15s.\n🚪 A sala foi finalizada. Retornando ao menu...`
+                    : `❌ ${declinedNick} recusou ${actionLabel}.\n🚪 A sala foi finalizada. Retornando ao menu...`);
                 this.requestDeclinedBanner.setStyle({
                     align: 'center',
                     fontSize: '13px',
@@ -1196,6 +1289,7 @@ export class MainScene extends Phaser.Scene {
 
         // Caso 3: Este jogador foi quem ENVIOU a solicitação
         if (req.from === this.playerId) {
+            this.startPostMatchCountdown();
             if (this.btnRematch) this.btnRematch.setVisible(false);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
             if (this.btnMainMenu) {
@@ -1213,10 +1307,11 @@ export class MainScene extends Phaser.Scene {
             if (this.btnDeclineRequest) this.btnDeclineRequest.setVisible(false);
 
             const otherNick = (this.playerId === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'oponente';
+            const waitLabel = req.type === 'change_prof' ? 'troca de professor' : 'revanche';
             
             if (this.waitingBox) this.waitingBox.setVisible(true);
             if (this.waitingText) {
-                this.waitingText.setText(`⏳ Solicitação de revanche enviada!\nAguardando ${otherNick} aceitar...`).setVisible(true);
+                this.waitingText.setText(`⏳ Solicitação de ${waitLabel} enviada!\nAguardando ${otherNick} responder... (15s)`).setVisible(true);
             }
             if (this.btnCancelRequest) this.btnCancelRequest.setVisible(true);
             return;
@@ -1224,6 +1319,7 @@ export class MainScene extends Phaser.Scene {
 
         // Caso 4: Este jogador foi quem RECEBEU a solicitação
         if (req.from !== this.playerId) {
+            this.startPostMatchCountdown();
             if (this.btnRematch) this.btnRematch.setVisible(false);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
             if (this.btnMainMenu) this.btnMainMenu.setVisible(false);
@@ -1233,16 +1329,21 @@ export class MainScene extends Phaser.Scene {
             if (this.btnCancelRequest) this.btnCancelRequest.setVisible(false);
 
             const senderNick = req.fromNick || (this.playerId === 'p1' ? data.p2?.nickname : data.p1?.nickname) || 'O oponente';
+            const isChangeProf = req.type === 'change_prof';
 
             if (this.promptBox) this.promptBox.setVisible(true);
             if (this.promptTitle) {
-                this.promptTitle.setText(`⚔️ ${senderNick} propôs uma REVANCHE!`).setVisible(true);
+                this.promptTitle.setText(isChangeProf
+                    ? `🔄 ${senderNick} quer TROCAR DE PROFESSOR!`
+                    : `⚔️ ${senderNick} propôs uma REVANCHE!`).setVisible(true);
             }
             if (this.promptSub) {
-                this.promptSub.setText('Deseja um novo duelo com os mesmos personagens? (Ou troque de professor)').setVisible(true);
+                this.promptSub.setText(isChangeProf
+                    ? 'Aceitando, os dois voltam juntos à seleção de personagens. Responda em até 15s!'
+                    : 'Deseja um novo duelo com os mesmos personagens? (Ou troque de professor) Responda em até 15s!').setVisible(true);
             }
             if (this.btnAcceptRequest) {
-                this.btnAcceptRequest.setText('✓ Aceitar Revanche').setVisible(true);
+                this.btnAcceptRequest.setText(isChangeProf ? '✓ Aceitar Troca' : '✓ Aceitar Revanche').setVisible(true);
             }
             if (this.btnPromptChangeProf) {
                 this.btnPromptChangeProf.setVisible(true);
@@ -1255,6 +1356,7 @@ export class MainScene extends Phaser.Scene {
 
     async leaveToMenu() {
         this.isLeaving = true;
+        this.stopPostMatchCountdown();
         if (this.autoLeaveTimeout) {
             clearTimeout(this.autoLeaveTimeout);
             this.autoLeaveTimeout = null;
