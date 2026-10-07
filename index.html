@@ -158,6 +158,9 @@
       /* ✕ de fechar do modal de conta: hover suave (inline style não suporta :hover) */
       #account-close-btn:hover { background: #7f1d1d !important; color: #ffffff !important; opacity: 1 !important; }
       #account-close-btn:active { transform: scale(0.92); }
+      /* Dropdown nativo do seletor de professor: fundo escuro nas opções
+         (sem isso o Windows/Chrome mostra uma área branca sobrando abaixo) */
+      #gm-question-professor option { background: #020617; color: #e2e8f0; padding: 8px; }
     </style>
   </head>
   <body>
@@ -186,6 +189,7 @@
               <button id="tab-btn-questions" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📝 Questões <span id="gm-questions-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-users" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">👥 Usuários <span id="gm-users-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
           </div>
 
           <!-- ABA 1: CONTROLES DA PARTIDA -->
@@ -264,6 +268,15 @@
                   <div id="gm-reset-season-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
               </div>
 
+              <!-- 🗑️ Excluir Usuário (LGPD): GM apaga os dados do jogo pelo apelido -->
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #450a0a; align-self: start;">
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #f87171;">🗑️ Excluir Usuário (LGPD)</div>
+                  <input id="gm-del-user-nick" type="text" maxlength="20" placeholder="Apelido exato do usuário" style="width: 100%; box-sizing: border-box; padding: 7px 9px; background: #020617; border: 1.5px solid #7f1d1d; border-radius: 6px; color: #fca5a5; outline: none; font-size: 12.5px; margin-bottom: 6px;">
+                  <button id="gm-del-user-btn" style="width: 100%; padding: 8px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;" title="Remove perfil (users), ranking (leaderboard) e reserva de apelido">Apagar dados do usuário</button>
+                  <div id="gm-del-user-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+                  <div style="font-size: 10px; color: #64748b; margin-top: 4px; line-height: 1.35;">⚠️ Apaga perfil+ranking+apelido no jogo. A conta de autenticação (Google/e-mail) só o próprio usuário exclui (Perfil) ou via painel do Firebase.</div>
+              </div>
+
               <!-- 🎯 Sessão da Arena (cargas GM ficam na barra rápida #gm-quickbar em batalha) -->
               <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; align-self: start;">
                   <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #38bdf8;">🎯 Sessão da Arena</div>
@@ -308,6 +321,7 @@
                           <!-- Coringa não tem banco próprio: em jogo puxa questões de todos os outros -->
                       </select>
                       <button id="gm-new-question-btn" style="padding: 7px 12px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">➕ Nova questão</button>
+                      <button id="gm-clear-bank-btn" style="padding: 7px 12px; background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;" title="Apaga TODAS as questões do banco do professor selecionado">🗑️ Limpar banco</button>
                   </div>
                   <div style="font-size: 10.5px; color: #64748b; margin-top: 6px;">🃏 O Coringa não aparece aqui de propósito: em jogo ele puxa questões de TODOS os professores.</div>
                   <input id="gm-q-search" class="qm-input" placeholder="🔍 Filtrar por texto..." style="margin-top: 8px;">
@@ -316,10 +330,37 @@
               <!-- Importar / Exportar (migrado da aba Controles) -->
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
                   <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">📦 Importar / Exportar Banco</div>
-                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px;">
+                  <div style="display: flex; gap: 14px; margin-bottom: 8px; font-size: 11.5px; color: #cbd5e1; flex-wrap: wrap;">
+                      <span style="color: #94a3b8; font-weight: bold;">Alvo:</span>
+                      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                          <input type="radio" name="gm-import-target" value="single" checked style="accent-color: #38bdf8;">
+                          Professor selecionado
+                      </label>
+                      <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
+                          <input type="radio" name="gm-import-target" value="all" style="accent-color: #f59e0b;">
+                          Todos os professores (pacote)
+                      </label>
+                  </div>
+                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;">
                   <div style="display: flex; gap: 6px;">
-                      <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Substitui TODO o banco do professor selecionado pelo arquivo JSON">⬆️ Publicar JSON (substitui)</button>
-                      <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">⬇️ Baixar JSON</button>
+                      <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Publica o arquivo JSON no alvo escolhido acima (substitui)">⬆️ Publicar</button>
+                      <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Baixa o(s) banco(s) do alvo escolhido acima">⬇️ Baixar</button>
+                  </div>
+                  <div id="gm-import-hint" style="font-size: 10.5px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+                      💡 Exemplos de formato (clique em 📋 para copiar):<br>
+                      <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
+                          <span style="color: #94a3b8; flex-shrink: 0;"><b>Professor selecionado</b> — array:</span>
+                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
+                      </div>
+                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin: 3px 0 6px 0; white-space: pre; overflow-x: auto; color: #94a3b8;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]</code>
+                      <div style="display: flex; align-items: center; gap: 6px;">
+                          <span style="color: #94a3b8; flex-shrink: 0;"><b>Todos os professores</b> — lista única (o id carrega o professor):</span>
+                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }, { "id": "so-1", "text": "O que é uma classe?", "options": ["Molde de objeto", "Variável global"], "correctIndex": 0 }, { "id": "bd-1", "text": "O que é SQL?", "options": ["Linguagem de consulta", "Sistema operacional"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
+                      </div>
+                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin-top: 3px; white-space: pre; overflow-x: auto; color: #94a3b8;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 },
+ { "id": "so-1", "text": "O que é uma classe?", "options": ["Molde de objeto", "Variável global"], "correctIndex": 0 },
+ { "id": "bd-1", "text": "O que é SQL?", "options": ["Linguagem de consulta", "Sistema operacional"], "correctIndex": 0 }]</code>
+                      <span style="color: #64748b;">Prefixos do id: <b>so</b> (POO), <b>eng_soft</b>, <b>web</b>, <b>bd</b>, <b>redes</b>. Baixar em "Todos" gera um único <b>questions-todos.json</b>.</span>
                   </div>
                   <button id="gm-publish-base-questions" style="width: 100%; padding: 8px; background: #047857; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px;" title="Envia os arquivos assets/questions/*.json para o RTDB">📦 Publicar Bancos-base</button>
               </div>
@@ -369,12 +410,28 @@
                   <div style="font-size: 12px; color: #facc15; font-weight: bold;">📜 Console de Eventos</div>
                   <div style="display: flex; gap: 6px;">
                       <button id="dev-copy-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;">📋 Copiar</button>
-                      <button id="dev-clear-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f87171; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;">🗑️ Limpar</button>
+                      <button id="dev-clear-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f87171; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;" title="Apaga só o histórico desta sessão (tela)">🗑️ Limpar local</button>
+                      <button id="dev-clear-logs-db-btn" style="background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;" title="Apaga o nó logs/ do Firebase (irreversível — some para todos os GMs)">🗑️ Limpar BD</button>
                   </div>
               </div>
 
               <!-- Terminal Ampliado e com Tipografia Clara (12px) -->
               <div id="dev-logs-terminal" style="font-family: 'Cascadia Code', Consolas, 'Courier New', monospace; font-size: 11.5px; flex: 1; height: calc(100vh - 190px); overflow-y: auto; background: #020617; border: 1.5px solid #1e293b; border-radius: 8px; padding: 10px; line-height: 1.5; color: #cbd5e1; white-space: pre-wrap; word-break: break-all;">
+              </div>
+          </div>
+
+          <!-- ABA 5: USUÁRIOS (listagem LGPD + exclusão por linha) -->
+          <div id="tab-content-users" class="gm-tab-content" style="display: none; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
+              <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; display: flex; gap: 8px; align-items: center;">
+                  <input id="gm-users-search" type="text" placeholder="🔍 Filtrar por apelido ou e-mail..." style="flex: 1; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #e2e8f0; padding: 7px 10px; font-size: 12.5px; outline: none;">
+                  <button id="gm-users-refresh" style="padding: 7px 12px; background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">🔄 Atualizar</button>
+              </div>
+              <div id="gm-users-status" style="min-height: 14px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+              <div id="gm-users-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 200px;">
+                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>
+              </div>
+              <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; font-size: 10.5px; color: #64748b; line-height: 1.4;">
+                  ⚠️ O botão 🗑️ apaga perfil, ranking e reserva de apelido <b>só no jogo</b>. A conta de login (Google/e-mail) só o próprio usuário exclui pelo Perfil ou pelo painel do Firebase (console).
               </div>
           </div>
       </aside>
@@ -480,7 +537,7 @@
                 </ul>
                 <strong style="color: #f8fafc;">🚫 O que NÃO coletamos:</strong> nome civil, CPF, foto, localização ou anúncios/rastreamento.<br><br>
                 <strong style="color: #f8fafc;">⏳ Retenção:</strong> salas e respostas são apagadas ao fim da partida/desconexão. O navegador guarda só preferências locais (volume, apelido).<br><br>
-                <strong style="color: #f8fafc;">🗑️ Exclusão de conta:</strong> peça ao professor (GM) para apagar seu usuário e sua linha do ranking, ou use "Sair da conta" no Perfil.<br><br>
+                <strong style="color: #f8fafc;">🗑️ Exclusão de conta:</strong> direto no Perfil (👤 → "Excluir minha conta", com confirmação por senha) ou peça ao professor (GM).<br><br>
                 <strong style="color: #f8fafc;">🍪 Cookies/armazenamento:</strong> apenas os estritamente técnicos da partida em tempo real (sessão).
             </div>
             <button id="terms-close-btn" type="button" style="width: 100%; margin-top: 12px; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
@@ -516,6 +573,22 @@
                 <div style="display: flex; flex-direction: column; gap: 6px;">
                     <button id="account-reset-logged-btn" type="button" style="padding: 8px; background: #1e293b; border: 1px solid #475569; color: #7dd3fc; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">🔑 Redefinir senha por e-mail</button>
                     <button id="account-logout-btn" type="button" style="padding: 8px; background: #9f1239; color: white; border: none; border-radius: 8px; font-size: 12.5px; font-weight: bold; cursor: pointer;">↪ Sair da conta</button>
+                </div>
+                <!-- Zona de perigo: exclusão de conta (LGPD), protegida por senha -->
+                <div style="border-top: 1px solid #450a0a; margin-top: 10px; padding-top: 8px;">
+                    <button id="account-delete-open-btn" type="button" style="width: 100%; padding: 7px; background: transparent; border: 1px dashed #7f1d1d; color: #f87171; border-radius: 8px; font-size: 11.5px; font-weight: bold; cursor: pointer;">🗑️ Excluir minha conta</button>
+                    <div id="account-delete-box" style="display: none; margin-top: 8px; background: #1a0505; border: 1px solid #7f1d1d; border-radius: 8px; padding: 10px; text-align: left;">
+                        <div style="color: #fca5a5; font-size: 11.5px; font-weight: bold; margin-bottom: 4px;">⚠️ Exclusão definitiva</div>
+                        <div style="color: #94a3b8; font-size: 10.5px; line-height: 1.4; margin-bottom: 8px;">Apaga sua conta, seus pontos do ranking e a reserva de apelido. <b>Não dá para desfazer.</b></div>
+                        <div id="account-delete-pass-row">
+                            <input id="account-delete-password" type="password" autocomplete="current-password" placeholder="🔒 Digite sua senha para confirmar" style="width: 100%; box-sizing: border-box; padding: 8px 10px; background: #020617; border: 1.5px solid #7f1d1d; border-radius: 7px; color: #fca5a5; outline: none; font-size: 12.5px; margin-bottom: 6px;">
+                        </div>
+                        <div id="account-delete-msg" style="min-height: 14px; font-size: 11px; color: #f87171; margin-bottom: 6px;"></div>
+                        <div style="display: flex; gap: 6px;">
+                            <button id="account-delete-confirm-btn" type="button" style="flex: 1; padding: 8px; background: #991b1b; color: #fecaca; border: none; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer;">Excluir definitivamente</button>
+                            <button id="account-delete-cancel-btn" type="button" style="flex: 1; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer;">Cancelar</button>
+                        </div>
+                    </div>
                 </div>
             </div>
             <button id="profile-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 7px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
@@ -686,14 +759,14 @@
     </div>
 
     <script type="module">
-        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname } from '/src/auth.js';
+        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, deleteAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname } from '/src/auth.js';
         import { professors } from '/src/professors.js';
         import { RANK_TIERS, getRankForPoints, loadMyLeaderboardEntry, loadTopLeaderboard } from '/src/ranking.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
         import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
         import { getProfessorById } from '/src/professors.js';
-        import { invalidateQuestionBankCache } from '/src/questionBank.js';
+        import { invalidateQuestionBankCache, validateQuestionBank } from '/src/questionBank.js';
 
         const accountOverlay = document.getElementById('account-overlay');
         const accountTabLogin = document.getElementById('account-tab-login');
@@ -707,6 +780,13 @@
         const accountResetBtn = document.getElementById('account-reset-btn');
         const accountGoogleBtn = document.getElementById('account-google-btn');
         const accountLogoutBtn = document.getElementById('account-logout-btn');
+        const accountDeleteOpenBtn = document.getElementById('account-delete-open-btn');
+        const accountDeleteBox = document.getElementById('account-delete-box');
+        const accountDeletePassword = document.getElementById('account-delete-password');
+        const accountDeletePassRow = document.getElementById('account-delete-pass-row');
+        const accountDeleteConfirmBtn = document.getElementById('account-delete-confirm-btn');
+        const accountDeleteCancelBtn = document.getElementById('account-delete-cancel-btn');
+        const accountDeleteMsg = document.getElementById('account-delete-msg');
         const accountGuestBtn = document.getElementById('account-guest-btn');
         const accountCloseBtn = document.getElementById('account-close-btn');
         const accountFormView = document.getElementById('account-form-view');
@@ -898,6 +978,54 @@
             accountRequired = false; // apelido define o acesso; fechar conta no save
             window.dispatchEvent(new CustomEvent('open-nickname-modal'));
         });
+        // Zona de perigo do Perfil: exclusão de conta com confirmação por senha
+        if (accountDeleteOpenBtn) {
+            accountDeleteOpenBtn.addEventListener('click', () => {
+                const willShow = accountDeleteBox.style.display !== 'block';
+                accountDeleteBox.style.display = willShow ? 'block' : 'none';
+                if (willShow) {
+                    // Conta Google não tem senha — confirma pelo popup do Google
+                    const isGoogle = authenticatedUser?.providerData?.[0]?.providerId === 'google.com';
+                    if (accountDeletePassRow) accountDeletePassRow.style.display = isGoogle ? 'none' : 'block';
+                    if (accountDeleteMsg) accountDeleteMsg.textContent = isGoogle
+                        ? 'Sua conta é do Google: ao confirmar, uma janela do Google vai pedir para você se autenticar.'
+                        : '';
+                    if (accountDeletePassword) accountDeletePassword.value = '';
+                }
+            });
+        }
+        if (accountDeleteCancelBtn) {
+            accountDeleteCancelBtn.addEventListener('click', () => {
+                if (accountDeleteBox) accountDeleteBox.style.display = 'none';
+                if (accountDeleteMsg) accountDeleteMsg.textContent = '';
+                if (accountDeletePassword) accountDeletePassword.value = '';
+            });
+        }
+        if (accountDeleteConfirmBtn) {
+            accountDeleteConfirmBtn.addEventListener('click', async () => {
+                if (!authenticatedUser || authenticatedUser.isAnonymous) return;
+                accountDeleteConfirmBtn.disabled = true;
+                accountDeleteConfirmBtn.textContent = '⏳ Excluindo...';
+                if (accountDeleteMsg) accountDeleteMsg.textContent = '';
+                const result = await deleteAccount({ password: accountDeletePassword?.value || '' });
+                accountDeleteConfirmBtn.disabled = false;
+                accountDeleteConfirmBtn.textContent = 'Excluir definitivamente';
+                if (!result.success) {
+                    if (accountDeleteMsg) accountDeleteMsg.textContent = result.message;
+                    return;
+                }
+                // Sucesso: volta para a tela de login (modo obrigatório — como 1ª entrada)
+                authenticatedUser = null;
+                sessionStorage.removeItem('labcombat_access_mode');
+                closeProfileModal();
+                logEvent('admin', '[Conta] Usuário excluiu a própria conta pelo Perfil (LGPD).');
+                window.dispatchEvent(new CustomEvent('account-state-changed', { detail: null }));
+                setTimeout(() => {
+                    window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { required: true } }));
+                }, 250);
+            });
+        }
+
         accountLogoutBtn.addEventListener('click', async () => {
             accountLogoutBtn.disabled = true;
             try {
@@ -1017,6 +1145,13 @@
         const tabContentQuestions = document.getElementById('tab-content-questions');
         const tabContentRooms = document.getElementById('tab-content-rooms');
         const tabContentLogs = document.getElementById('tab-content-logs');
+        const tabBtnUsers = document.getElementById('tab-btn-users');
+        const tabContentUsers = document.getElementById('tab-content-users');
+        const gmUsersList = document.getElementById('gm-users-list');
+        const gmUsersSearch = document.getElementById('gm-users-search');
+        const gmUsersRefresh = document.getElementById('gm-users-refresh');
+        const gmUsersCount = document.getElementById('gm-users-count');
+        const gmUsersStatus = document.getElementById('gm-users-status');
         const gmRoomsCount = document.getElementById('gm-rooms-count');
         const gmLogsCount = document.getElementById('gm-logs-count');
         const gmQuestionsCount = document.getElementById('gm-questions-count');
@@ -1050,8 +1185,11 @@
         const clearLogsBtn = document.getElementById('dev-clear-logs-btn');
 
         // Estado do Modo GM e Sidebar
+        // sidebarOpen NÃO segue gmActive: o painel só abre por ação do usuário
+        // (botão 🛡️ / F2); refreshAdminAccess apenas FECHA se perder o acesso —
+        // senão o painel abria sozinho a cada refresh/login.
         let gmActive = false;
-        let sidebarOpen = gmActive;
+        let sidebarOpen = false;
         let lastAdminLogUid = null;
         const logSessionStartedAt = Date.now();
         const MAX_PERSISTED_LOGS = 2000;
@@ -1076,7 +1214,9 @@
                 gmActive = false;
                 logEvent('warn', `[Admin] Não foi possível verificar a conta administradora: ${error.message}`);
             }
-            sidebarOpen = gmActive;
+            // Só corrige a sidebar para FECHADA quando o acesso GM some;
+            // nunca abre automaticamente (abertura é sempre ação do usuário)
+            if (!gmActive) sidebarOpen = false;
             updateLayoutClasses();
             window.dispatchEvent(new CustomEvent('admin-access-changed', { detail: gmActive }));
             if (gmActive) loadPersistentLogs();
@@ -1372,12 +1512,12 @@
 
         // Gerenciamento de Troca de Abas
         function switchTab(target) {
-            [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs].forEach(b => {
+            [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs, tabBtnUsers].forEach(b => {
                 if (!b) return;
                 b.style.background = 'transparent';
                 b.style.color = '#94a3b8';
             });
-            [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs].forEach(c => {
+            [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs, tabContentUsers].forEach(c => {
                 if (c) c.style.display = 'none';
             });
 
@@ -1400,6 +1540,11 @@
                 tabBtnLogs.style.color = '#38bdf8';
                 tabContentLogs.style.display = 'flex';
                 if (logsTerminalEl) logsTerminalEl.scrollTop = logsTerminalEl.scrollHeight;
+            } else if (target === 'users' && tabBtnUsers && tabContentUsers) {
+                tabBtnUsers.style.background = '#1e293b';
+                tabBtnUsers.style.color = '#38bdf8';
+                tabContentUsers.style.display = 'flex';
+                loadGmUsers();
             }
         }
 
@@ -1407,6 +1552,7 @@
         if (tabBtnQuestions) tabBtnQuestions.addEventListener('click', () => switchTab('questions'));
         if (tabBtnRooms) tabBtnRooms.addEventListener('click', () => switchTab('rooms'));
         if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => switchTab('logs'));
+        if (tabBtnUsers) tabBtnUsers.addEventListener('click', () => switchTab('users'));
 
         function updateLayoutClasses() {
             if (gmActive) {
@@ -1536,6 +1682,26 @@
         if (clearLogsBtn) {
             clearLogsBtn.addEventListener('click', () => {
                 clearLogsHistory();
+            });
+        }
+
+        // Limpar o BD: remove o nó logs/ do Firebase (irreversível, some p/ tod@s)
+        const clearLogsDbBtn = document.getElementById('dev-clear-logs-db-btn');
+        if (clearLogsDbBtn) {
+            clearLogsDbBtn.addEventListener('click', async () => {
+                if (!gmActive) return;
+                if (!confirm('Apagar TODO o histórico de logs no Firebase?\n\nIsso remove os logs persistidos (admin/error/warn) para todos e não pode ser desfeito.')) return;
+                clearLogsDbBtn.disabled = true;
+                try {
+                    await remove(ref(db, 'logs'));
+                    clearLogsHistory(); // espelha localmente também
+                    setTimeout(() => loadPersistentLogs(), 300);
+                    logEvent('admin', '🗑️ [Admin] Histórico de logs do Firebase apagado pelo GM.');
+                } catch (error) {
+                    alert('Falha ao limpar logs do BD: ' + error.message);
+                } finally {
+                    clearLogsDbBtn.disabled = false;
+                }
             });
         }
 
@@ -1938,44 +2104,110 @@
             });
         }
 
+        const gmImportTarget = () => document.querySelector('input[name="gm-import-target"]:checked')?.value || 'single';
+        const validIdsAll = ['so', 'eng_soft', 'web', 'bd', 'redes'];
+
+        // Botões 📋 na dica de formato: copiam o JSON de exemplo
+        document.querySelectorAll('.gm-copy-hint').forEach((btn) => {
+            btn.addEventListener('click', async () => {
+                try {
+                    await navigator.clipboard.writeText(btn.dataset.copy || '');
+                    btn.textContent = '✓';
+                    setTimeout(() => { btn.textContent = '📋'; }, 1200);
+                } catch {
+                    btn.textContent = '⚠️';
+                    setTimeout(() => { btn.textContent = '📋'; }, 1200);
+                }
+            });
+        });
+
         if (gmUploadQuestions) {
             gmUploadQuestions.addEventListener('click', async () => {
                 if (!gmActive) return;
                 const file = gmQuestionFile?.files?.[0];
-                const professorId = gmQuestionProfessor?.value;
-                if (!file || !professorId) {
-                    if (gmQuestionStatus) gmQuestionStatus.textContent = 'Selecione o professor e um arquivo JSON.';
+                const mode = gmImportTarget();
+                if (!file) {
+                    if (gmQuestionStatus) gmQuestionStatus.textContent = 'Selecione um arquivo JSON.';
                     return;
                 }
 
+                const setStatus = (msg, color) => {
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = msg;
+                        gmQuestionStatus.style.color = color;
+                    }
+                };
+
+                gmUploadQuestions.disabled = true;
+                gmUploadQuestions.textContent = 'Publicando...';
                 try {
                     const parsed = JSON.parse(await file.text());
-                    const isValid = Array.isArray(parsed) && parsed.length > 0 && parsed.every((question) => {
-                        return question && question.id != null && typeof question.text === 'string'
-                            && Array.isArray(question.options) && question.options.length >= 2
-                            && Number.isInteger(question.correctIndex)
-                            && question.correctIndex >= 0 && question.correctIndex < question.options.length;
-                    });
-                    if (!isValid) {
-                        throw new Error('Formato inválido. Use id, text, options e correctIndex.');
+                    const validIds = ['so', 'eng_soft', 'web', 'bd', 'redes'];
+
+                    if (mode === 'all') {
+                        // LISTA ÚNICA: cada questão carrega o professor no próprio id
+                        // (prefixo antes do '-': "so-1" → so, "web-3" → web,
+                        // "eng_soft-2" → eng_soft, "bd-1" → bd, "redes-9" → redes).
+                        // O sistema agrupa pelo prefixo e publica em cada banco.
+                        if (!Array.isArray(parsed)) {
+                            throw new Error('Para "Todos os professores" o arquivo precisa ser uma lista única: [ { "id": "web-1", "text": "...", "options": [...], "correctIndex": 0 }, ... ]');
+                        }
+                        if (!parsed.length) throw new Error('A lista está vazia.');
+                        // Prefixos aceitos no id da questão e respectivo professor:
+                        // inclui aliases comuns usados em arquivos legados
+                        const professorAliases = {
+                            'so': 'so',
+                            'poo': 'so',              // arquivos antigos usavam poo-X
+                            'eng_soft': 'eng_soft',
+                            'eng': 'eng_soft',        // arquivos antigos usavam eng-X
+                            'web': 'web',
+                            'bd': 'bd',
+                            'redes': 'redes'
+                        };
+                        const professorDe = (q) => {
+                            if (!q || typeof q.id !== 'string') return null;
+                            const prefix = String(q.id).split('-')[0];
+                            return professorAliases[prefix] || null;
+                        };
+                        const grupos = {};
+                        for (const q of parsed) {
+                            const profId = professorDe(q);
+                            if (!profId) {
+                                throw new Error(`Questão com id "${q?.id}" não pertence a nenhum professor (use prefixos: ${validIds.join(', ')}).`);
+                            }
+                            (grupos[profId] ||= []).push(q);
+                        }
+                        for (const profId of Object.keys(grupos)) {
+                            const validation = validateQuestionBank(grupos[profId]);
+                            if (!validation.valid) {
+                                throw new Error(`Questões de "${profId}" inválidas: ${validation.message}`);
+                            }
+                        }
+                        for (const profId of Object.keys(grupos)) {
+                            await set(ref(db, `questionBanks/${profId}`), grupos[profId]);
+                            invalidateQuestionBankCache(profId);
+                        }
+                        const resumo = Object.entries(grupos).map(([p, list]) => `${getProfessorById(p)?.name || p}: ${list.length}`).join(', ');
+                        setStatus(`✓ Distribuídas ${parsed.length} questões em ${Object.keys(grupos).length} bancos (${resumo}).`, '#34d399');
+                        return;
                     }
 
-                    gmUploadQuestions.disabled = true;
-                    gmUploadQuestions.textContent = 'Publicando...';
+                    // SINGLE: array puro no professor selecionado
+                    const professorId = gmQuestionProfessor?.value;
+                    if (!professorId) throw new Error('Selecione o professor.');
+                    if (!Array.isArray(parsed)) {
+                        throw new Error('Para "Professor selecionado" o arquivo precisa ser um array [ {id, text, options, correctIndex}, ... ]. Para um pacote, marque "Todos os professores".');
+                    }
+                    const validation = validateQuestionBank(parsed);
+                    if (!validation.valid) throw new Error(validation.message);
                     await set(ref(db, `questionBanks/${professorId}`), parsed);
                     invalidateQuestionBankCache(professorId); // jogadores recarregam o banco novo
-                    if (gmQuestionStatus) {
-                        gmQuestionStatus.textContent = `✓ ${parsed.length} questões publicadas.`;
-                        gmQuestionStatus.style.color = '#34d399';
-                    }
+                    setStatus(`✓ ${parsed.length} questões publicadas em "${getProfessorById(professorId)?.name || professorId}".`, '#34d399');
                 } catch (error) {
-                    if (gmQuestionStatus) {
-                        gmQuestionStatus.textContent = `❌ ${error.message}`;
-                        gmQuestionStatus.style.color = '#f87171';
-                    }
+                    setStatus(`❌ ${error.message}`, '#f87171');
                 } finally {
                     gmUploadQuestions.disabled = false;
-                    gmUploadQuestions.textContent = '⬆️ Publicar Banco JSON';
+                    gmUploadQuestions.textContent = '⬆️ Publicar';
                 }
             });
         }
@@ -1983,35 +2215,58 @@
         if (gmDownloadQuestions) {
             gmDownloadQuestions.addEventListener('click', async () => {
                 if (!gmActive) return;
-                const professorId = gmQuestionProfessor?.value;
-                if (!professorId) return;
+                const mode = gmImportTarget();
+
+                const setStatus = (msg, color) => {
+                    if (gmQuestionStatus) {
+                        gmQuestionStatus.textContent = msg;
+                        gmQuestionStatus.style.color = color;
+                    }
+                };
+                const downloadJson = (data, filename) => {
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.download = filename;
+                    link.click();
+                    URL.revokeObjectURL(url);
+                };
 
                 try {
+                    if (mode === 'all') {
+                        // Baixa TODOS os bancos como LISTA ÚNICA (id carrega o professor —
+                        // mesmo formato aceito na publicação em "Todos os professores")
+                        const snapshot = await get(ref(db, 'questionBanks'));
+                        const all = snapshot.val() || {};
+                        const flat = [];
+                        for (const id of validIdsAll) {
+                            const bank = all[id];
+                            if (bank) flat.push(...(Array.isArray(bank) ? bank : Object.values(bank)));
+                        }
+                        if (!flat.length) throw new Error('Nenhum banco publicado ainda — publique os bancos-base primeiro.');
+                        downloadJson(flat, 'questions-todos.json');
+                        setStatus(`✓ Lista baixada: ${flat.length} questões de todos os bancos.`, '#34d399');
+                        return;
+                    }
+
+                    const professorId = gmQuestionProfessor?.value;
+                    if (!professorId) return;
                     const snapshot = await get(ref(db, `questionBanks/${professorId}`));
                     if (!snapshot.exists()) {
                         throw new Error('Nenhum banco publicado para este professor.');
                     }
                     const bank = snapshot.val();
                     const entries = Array.isArray(bank) ? bank : Object.values(bank || {});
-                    const blob = new Blob([JSON.stringify(entries, null, 2)], { type: 'application/json' });
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    link.href = url;
-                    link.download = `questions-${professorId}.json`;
-                    link.click();
-                    URL.revokeObjectURL(url);
-                    if (gmQuestionStatus) {
-                        gmQuestionStatus.textContent = '✓ Banco baixado.';
-                        gmQuestionStatus.style.color = '#34d399';
-                    }
+                    downloadJson(entries, `questions-${professorId}.json`);
+                    setStatus('✓ Banco baixado.', '#34d399');
                 } catch (error) {
-                    if (gmQuestionStatus) {
-                        gmQuestionStatus.textContent = `❌ ${error.message}`;
-                        gmQuestionStatus.style.color = '#f87171';
-                    }
+                    setStatus(`❌ ${error.message}`, '#f87171');
                 }
             });
         }
+
+        // ===== CRUD de Questões (aba Questões) =====
 
         if (gmPublishBaseQuestions) {
             gmPublishBaseQuestions.addEventListener('click', async () => {
@@ -2172,7 +2427,8 @@
         async function persistCrudBank(okMessage) {
             await set(ref(db, `questionBanks/${gmQuestionProfessor.value}`), crudBank);
             setCrudStatus(okMessage);
-            logEvent('admin', `[Questões] Banco "${gmQuestionProfessor.value}" editado via CRUD (${crudBank.length} questões).`);
+            const profLabel = getProfessorById(gmQuestionProfessor.value)?.name || gmQuestionProfessor.value;
+            logEvent('admin', `[Questões] Banco "${profLabel}" editado via CRUD (${crudBank.length} questões).`);
             renderQuestionsList();
         }
 
@@ -2215,6 +2471,32 @@
         }
 
         if (gmNewQuestionBtn) gmNewQuestionBtn.addEventListener('click', () => openQuestionEditor(null));
+
+        // Limpar banco inteiro do professor selecionado (com confirmação)
+        const gmClearBankBtn = document.getElementById('gm-clear-bank-btn');
+        if (gmClearBankBtn) {
+            gmClearBankBtn.addEventListener('click', async () => {
+                if (!gmActive) return;
+                const professorId = gmQuestionProfessor?.value;
+                if (!professorId) return;
+                const profName = getProfessorById(professorId)?.name || professorId;
+                const ok = window.confirm(`Apagar TODAS as questões do banco "${profName}"?\n\nEsta ação não pode ser desfeita.`);
+                if (!ok) return;
+                gmClearBankBtn.disabled = true;
+                try {
+                    await remove(ref(db, `questionBanks/${professorId}`));
+                    invalidateQuestionBankCache(professorId);
+                    crudBank = [];
+                    renderQuestionsList();
+                    logEvent('admin', `[Questões] Banco "${profName}" zerado (limpar banco).`);
+                    setCrudStatus('✓ Banco limpo (0 questões).', true);
+                } catch (error) {
+                    setCrudStatus(`❌ ${error.message}`, false);
+                } finally {
+                    gmClearBankBtn.disabled = false;
+                }
+            });
+        }
         if (gmQSave) gmQSave.addEventListener('click', saveQuestionEditor);
         if (gmQCancel) gmQCancel.addEventListener('click', closeQuestionEditor);
         if (gmQAddOption) gmQAddOption.addEventListener('click', () => {
@@ -2253,6 +2535,127 @@
             });
         }
 
+        // Excluir usuário pelo GM (LGPD): apaga dados do jogo pelo apelido exato
+        // (users + leaderboard + reserva de apelido). A conta de autenticação
+        // (Google/e-mail) não é apagada aqui — cliente SDK não deleta Auth de
+        // terceiros; exclusão completa = Perfil do usuário ou Firebase Console.
+        const gmDelUserBtn = document.getElementById('gm-del-user-btn');
+        const gmDelUserNick = document.getElementById('gm-del-user-nick');
+        const gmDelUserStatus = document.getElementById('gm-del-user-status');
+        function setDelUserStatus(msg, ok = true) {
+            if (gmDelUserStatus) {
+                gmDelUserStatus.textContent = msg;
+                gmDelUserStatus.style.color = ok ? '#34d399' : '#f87171';
+            }
+        }
+        // Exclusão compartilhada: remove perfil, ranking, admin e apelido no RTDB
+        async function gmDeleteUserData(uid, nickname) {
+            const key = (nickname || '').trim().toLowerCase();
+            await remove(ref(db, `users/${uid}`)).catch(() => {});
+            await remove(ref(db, `leaderboard/${uid}`)).catch(() => {});
+            await remove(ref(db, `adminUsers/${uid}`)).catch(() => {});
+            if (key) await remove(ref(db, `nicknames/${key}`)).catch(() => {});
+            logEvent('admin', `🗑️ [Admin] Dados do jogo do usuário "${nickname}" (${uid.slice(0, 8)}…) excluídos pelo GM (LGPD).`);
+        }
+        if (gmDelUserBtn) {
+            gmDelUserBtn.addEventListener('click', async () => {
+                if (!gmActive) return;
+                const nick = (gmDelUserNick?.value || '').trim();
+                if (!nick) {
+                    setDelUserStatus('Digite o apelido exato do usuário.', false);
+                    return;
+                }
+                const key = nick.toLowerCase();
+                try {
+                    const nickSnap = await get(ref(db, `nicknames/${key}`));
+                    if (!nickSnap.exists()) {
+                        setDelUserStatus(`Apelido "${nick}" não encontrado.`, false);
+                        return;
+                    }
+                    const uid = nickSnap.val();
+                    if (!confirm(`Apagar TODOS os dados do jogo de "${nick}"?\n\nRemove: perfil, ranking e reserva de apelido.\n(a conta de login segue existindo no Auth)`)) return;
+                    gmDelUserBtn.disabled = true;
+                    gmDelUserBtn.textContent = 'Apagando...';
+                    await gmDeleteUserData(uid, nick);
+                    setDelUserStatus(`✓ Dados de "${nick}" apagados.`);
+                    if (gmDelUserNick) gmDelUserNick.value = '';
+                } catch (error) {
+                    setDelUserStatus(`❌ ${error.message}`, false);
+                } finally {
+                    gmDelUserBtn.disabled = false;
+                    gmDelUserBtn.textContent = 'Apagar dados do usuário';
+                }
+            });
+        }
+
+        // ===== Aba 👥 Usuários: lista completa (users + leaderboard) com exclusão por linha =====
+        let gmUsersCache = [];
+        function setUsersStatus(msg, ok = true) {
+            if (gmUsersStatus) {
+                gmUsersStatus.textContent = msg;
+                gmUsersStatus.style.color = ok ? '#34d399' : '#f87171';
+            }
+        }
+        function renderGmUsers() {
+            if (!gmUsersList) return;
+            const filtro = (gmUsersSearch?.value || '').trim().toLowerCase();
+            const visiveis = gmUsersCache.filter(u => !filtro
+                || String(u.nickname || '').toLowerCase().includes(filtro)
+                || String(u.email || '').toLowerCase().includes(filtro));
+            if (gmUsersCount) gmUsersCount.textContent = gmUsersCache.length ? `${gmUsersCache.length}` : '';
+            if (!visiveis.length) {
+                gmUsersList.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">${gmUsersCache.length ? 'Ninguém bate com o filtro.' : 'Nenhum usuário cadastrado.'}</div>`;
+                return;
+            }
+            gmUsersList.innerHTML = '';
+            visiveis.forEach((u) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; gap: 10px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px;';
+                const dataCadastro = u.registeredAt ? new Date(u.registeredAt).toLocaleDateString('pt-BR') : '—';
+                const lp = u.points != null ? `${u.points} LP · ${u.wins || 0}V/${(u.matches || 0) - (u.wins || 0)}D` : 'sem ranking';
+                row.innerHTML = `
+                    <div style="flex: 1; min-width: 0;">
+                        <div style="font-size: 12.5px; font-weight: bold; color: #f8fafc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${u.nickname || '(sem apelido)'}</div>
+                        <div style="font-size: 10.5px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${u.email || '—'}</div>
+                        <div style="font-size: 10px; color: #64748b;">${lp} · cadastro ${dataCadastro}${u.authProvider === 'google' ? ' · Google' : ''}</div>
+                    </div>
+                    <button class="gm-user-del" style="flex-shrink: 0; padding: 6px 10px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;" title="Apagar dados do jogo (perfil, ranking, apelido)">🗑️</button>`;
+                row.querySelector('.gm-user-del').addEventListener('click', async () => {
+                    if (!gmActive) return;
+                    if (!confirm(`Apagar TODOS os dados do jogo de "${u.nickname}"?\n\nRemove: perfil, ranking e reserva de apelido.\n(a conta de login segue existindo no Auth)`)) return;
+                    try {
+                        await gmDeleteUserData(u.uid, u.nickname);
+                        gmUsersCache = gmUsersCache.filter(x => x.uid !== u.uid);
+                        renderGmUsers();
+                        setUsersStatus(`✓ Dados de "${u.nickname}" apagados.`);
+                    } catch (error) {
+                        setUsersStatus(`❌ ${error.message}`, false);
+                    }
+                });
+                gmUsersList.appendChild(row);
+            });
+        }
+        async function loadGmUsers() {
+            if (!gmActive || !gmUsersList) return;
+            setUsersStatus('Carregando...', true);
+            gmUsersList.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>';
+            try {
+                const [usersSnap, lbSnap] = await Promise.all([get(ref(db, 'users')), get(ref(db, 'leaderboard'))]);
+                const users = usersSnap.val() || {};
+                const lb = lbSnap.val() || {};
+                gmUsersCache = Object.values(users)
+                    .filter(u => u && u.uid)
+                    .map(u => ({ ...u, ...(lb[u.uid] || {}) }))
+                    .sort((a, b) => String(a.nickname || '').localeCompare(String(b.nickname || ''), 'pt-BR'));
+                renderGmUsers();
+                setUsersStatus(`${gmUsersCache.length} usuário(s) cadastrado(s).`, true);
+            } catch (error) {
+                gmUsersList.innerHTML = `<div style="color: #f87171; text-align: center; padding: 14px;">❌ ${error.message} — confira se as regras atualizadas (database.rules.json) estão publicadas no Firebase.</div>`;
+                setUsersStatus('Falha ao carregar.', false);
+            }
+        }
+        if (gmUsersRefresh) gmUsersRefresh.addEventListener('click', loadGmUsers);
+        if (gmUsersSearch) gmUsersSearch.addEventListener('input', renderGmUsers);
         // Listener para dispensar aviso de rotação em mobile
         const orientationPrompt = document.getElementById('orientation-prompt');
         const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');
@@ -2456,7 +2859,7 @@
 
                     const hostNick = room.p1.nickname || 'Host';
                     const prof = getProfessorById(room.p1.characterId || 'so');
-                    const profName = prof ? prof.shortName : 'Sistemas Op.';
+                    const profName = prof ? prof.shortName : 'Professor';
                     const badgeTxt = '🟢 1 VAGA LIVRE';
                     const badgeBg = '#064e3b';
                     const badgeColor = '#34d399';

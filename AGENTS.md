@@ -304,14 +304,25 @@ O contexto de áudio só desbloqueia após o 1º gesto do usuário (autoplay pol
   na luta e na AnimationTestScene), cheat de golpe/carga/pular questão/reset,
   gerenciar salas (listar, limpar vazias, limpar todas, **👀 assistir partida
   ao vivo como espectador somente-leitura**), terminal de logs
-  (retenção 30 dias / máx 2000). AnimationTestScene existe, mas NÃO tem botão
+  (retenção 30 dias / máx 2000) e **aba 👥 Usuários (LGPD)**: lista todos os
+  cadastrados (apelido, e-mail, LP/V/D, data de cadastro) com filtro e
+  exclusão por linha — remove `users`/`leaderboard`/`adminUsers`/`nicknames`
+  (a conta Auth fica no Firebase: exclusão completa pelo Perfil do próprio
+  usuário, com senha, ou pelo console). Exige regras atualizadas do
+  `database.rules.json` (admin lê/escreve `users` e `nicknames`). AnimationTestScene existe, mas NÃO tem botão
   no painel (aba Controles limpa: Tempos, Combate (dano/vida/modificadores),
   LabPoints & Temporada, Sessão da Arena e Velocidade das Animações) — abra por
   código/console se precisar depurar sprites.
 - **Aba Questões (CRUD)**: lista as questões de `questionBanks/{id}` com filtro;
   criar/editar/excluir questão individual (editor com 2–6 opções + gabarito por
-  rádio; validação espelha `validateQuestionBank`); importar JSON (substitui o
-  banco inteiro), exportar e publicar bancos-base. O Coringa NÃO aparece no
+  rádio; validação espelha `validateQuestionBank`); importar/exportar com
+  **alvo escolhido por rádio** — "Professor selecionado" (array único no banco
+  do seletor) ou "Todos os professores" (**lista única**: cada questão carrega
+  o professor no prefixo do `id` — `so-1`, `eng_soft-2`, `web-3`, `bd-1`,
+  `redes-9` — e a publicação agrupa/distribui automaticamente, validando cada
+  grupo, tudo-ou-nada; Baixar gera um único `questions-todos.json` na mesma
+  lista única); 🗑️ Limpar banco apaga o banco do seletor com confirmação;
+  publicar bancos-base. O Coringa NÃO aparece no
   seletor (sem banco próprio — ver regra em §6).
 
 ## 11. Testes (`npm test`)
