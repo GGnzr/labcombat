@@ -70,7 +70,7 @@ Este documento detalha o planejamento técnico completo para a evolução do **L
     });
     ```
   * Criar projéteis temáticos com partículas ou sprites pequenos viajando entre os dois lados da arena:
-    * *Sistemas Operacionais:* Ícone de processo / terminal.
+    * *Programação Orientada a Objetos:* Ícone de processo / terminal.
     * *Redes:* Pacote TCP azul / raios de conexão.
     * *Banco de Dados:* Cilindro de tabela SQL / raio roxo.
     * *Web & Mobile:* Tag `</>` ou engrenagem reativa.

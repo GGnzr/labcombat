@@ -136,7 +136,7 @@ Text elements, all in the same plain black pixel font, no colored text: title at
 
 ---
 
-# 6. Sistemas Operacionais
+# 6. Programação Orientada a Objetos
 
 ```
 STYLE LOCK, identical for every professor sheet: authentic 2D pixel art in the look of 90s arcade fighting games (Street Fighter Alpha, King of Fighters '98), semi-realistic proportions with a normal-sized head (about 7 heads tall, not chibi, not cartoon), every sprite drawn on a native pixel grid about 96 px tall and upscaled with nearest-neighbor so the square pixels are visible, 1px near-black outline, hard-edged cel shading with exactly 3 tones per material plus one highlight, muted natural colors, no gradients, no blur, no anti-aliasing, no dithering, no smooth vector look, same pixel size in every frame

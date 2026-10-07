@@ -7,8 +7,11 @@ import { auth, db } from './firebase.js';
 import { ref, get, set, update, remove, runTransaction, child } from "firebase/database";
 import {
     createUserWithEmailAndPassword,
+    EmailAuthProvider,
     GoogleAuthProvider,
     onAuthStateChanged,
+    reauthenticateWithCredential,
+    reauthenticateWithPopup,
     sendPasswordResetEmail,
     signInAnonymously,
     signInWithPopup,
@@ -243,6 +246,59 @@ export async function requestPasswordReset(email) {
 export async function logoutAccount() {
     await signOut(auth);
     localStorage.removeItem('labcombat_account_uid');
+}
+
+// ── Exclusão de conta (LGPD, direito de eliminação) ─────────────────────────
+// Perfil → "🗑️ Excluir minha conta": exige SENHA para contas de e-mail
+// (re-autenticação) ou popup do Google para contas Google. Apaga TODOS os
+// dados do usuário: users/{uid}, leaderboard/{uid} e a reserva de apelido
+// em nicknames/{apelido} — só então deleta a conta do Firebase Auth.
+export async function deleteAccount({ password = '' } = {}) {
+    try {
+        const user = await waitForAuthReady();
+        if (!user || user.isAnonymous) {
+            return { success: false, message: 'Entre com uma conta para excluí-la.' };
+        }
+        const uid = user.uid;
+        const isGoogle = user.providerData?.[0]?.providerId === 'google.com';
+        if (isGoogle) {
+            // Conta Google não tem senha: confirma identidade pelo popup
+            await reauthenticateWithPopup(user, new GoogleAuthProvider());
+        } else {
+            if (!password) {
+                return { success: false, message: 'Digite sua senha para confirmar a exclusão.' };
+            }
+            const credential = EmailAuthProvider.credential(user.email || '', password);
+            await reauthenticateWithCredential(user, credential);
+        }
+
+        // Recolhe o apelido antes de apagar (para liberar nicknames/{apelido})
+        const nickSnap = await get(ref(db, `users/${uid}/nickname`)).catch(() => null);
+        const nickname = nickSnap?.val() || user.displayName || '';
+
+        // Dados públicos/privados: perfil, ranking e índice de apelido
+        await remove(ref(db, `users/${uid}`)).catch(() => {});
+        await remove(ref(db, `leaderboard/${uid}`)).catch(() => {});
+        await remove(ref(db, `adminUsers/${uid}`)).catch(() => {});
+        if (nickname) {
+            await remove(ref(db, `nicknames/${nickname.trim().toLowerCase()}`)).catch(() => {});
+        }
+
+        await user.delete();
+        localStorage.removeItem('labcombat_account_uid');
+        sessionStorage.removeItem('labcombat_nickname');
+        sessionStorage.removeItem('labcombat_access_mode');
+        return { success: true };
+    } catch (error) {
+        const messages = {
+            'auth/wrong-password': 'Senha incorreta.',
+            'auth/invalid-credential': 'Senha incorreta.',
+            'auth/requires-recent-login': 'Por segurança, entre na conta de novo e repita a exclusão.',
+            'auth/popup-closed-by-user': 'Janela do Google fechada — a conta NÃO foi excluída.',
+            'auth/too-many-requests': 'Muitas tentativas. Aguarde alguns instantes.'
+        };
+        return { success: false, message: messages[error?.code] || getAuthErrorMessage(error), error };
+    }
 }
 
 /**

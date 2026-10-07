@@ -49,13 +49,14 @@
     "nicknames": {
       ".read": true,
       "$nick": {
-        ".write": "auth != null && (!data.exists() ? newData.val() === auth.uid : data.val() === auth.uid)"
+        ".write": "auth != null && ((!data.exists() ? newData.val() === auth.uid : data.val() === auth.uid) || root.child('adminUsers').child(auth.uid).val() === true)"
       }
     },
     "users": {
+      ".read": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
       "$uid": {
         ".read": "auth != null && (auth.uid === $uid || root.child('adminUsers').child(auth.uid).val() === true)",
-        ".write": "auth != null && auth.uid === $uid"
+        ".write": "auth != null && (auth.uid === $uid || root.child('adminUsers').child(auth.uid).val() === true)"
       }
     },
     "students": {
