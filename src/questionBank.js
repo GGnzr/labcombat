@@ -1,9 +1,12 @@
 import { get, ref } from 'firebase/database';
 import { db } from './firebase.js';
 import { logEvent } from './logger.js';
-import { professors } from './professors.js';
+import { professors, getProfessorById } from './professors.js';
 
 const CORINGA_ID = 'coringa';
+
+// Nome amigável da disciplina para logs (o id cru, ex.: "so", confunde nos logs)
+const profLabel = (id) => getProfessorById(id)?.name || id;
 
 /**
  * Regra do Coringa: se um dos lutadores da partida for o 'coringa', o catálogo
@@ -45,20 +48,20 @@ export async function loadQuestionBank(professorId) {
         const invalidCount = entries.length - questions.length;
 
         if (questions.length === 0) {
-            logEvent('error', `[Questões] Banco vazio ou ausente para "${professorId}".`, {
+            logEvent('error', `[Questões] Banco vazio ou ausente para "${profLabel(professorId)}".`, {
                 professorId,
                 rawEntries: entries.length,
                 durationMs: Date.now() - startedAt
             });
         } else if (invalidCount > 0) {
-            logEvent('warn', `[Questões] Banco "${professorId}" possui questões inválidas.`, {
+            logEvent('warn', `[Questões] Banco "${profLabel(professorId)}" possui questões inválidas.`, {
                 professorId,
                 loaded: questions.length,
                 invalid: invalidCount,
                 durationMs: Date.now() - startedAt
             });
         } else {
-            logEvent('info', `[Questões] Banco "${professorId}" carregado.`, {
+            logEvent('info', `[Questões] Banco "${profLabel(professorId)}" carregado.`, {
                 professorId,
                 loaded: questions.length,
                 durationMs: Date.now() - startedAt
@@ -67,7 +70,7 @@ export async function loadQuestionBank(professorId) {
         if (questions.length > 0) bankCache.set(professorId, questions); // só cacheia sucesso
         return questions;
     } catch (error) {
-        logEvent('error', `[Questões] Falha ao carregar banco "${professorId}".`, {
+        logEvent('error', `[Questões] Falha ao carregar banco "${profLabel(professorId)}".`, {
             professorId,
             durationMs: Date.now() - startedAt,
             error
@@ -79,13 +82,15 @@ export async function loadQuestionBank(professorId) {
 export async function loadQuestionBanks(professorIds) {
     const uniqueIds = resolveMatchProfessorIds(professorIds);
     logEvent('info', '[Questões] Iniciando carregamento dos bancos da partida.', {
-        professorIds: uniqueIds
+        professorIds: uniqueIds,
+        disciplinas: uniqueIds.map(profLabel)
     });
     const banks = await Promise.all(uniqueIds.map(loadQuestionBank));
     const questions = banks.flat();
     if (questions.length === 0) {
         logEvent('error', '[Questões] Nenhuma questão disponível para a partida.', {
-            professorIds: uniqueIds
+            professorIds: uniqueIds,
+            disciplinas: uniqueIds.map(profLabel)
         });
     }
     return questions;
