@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import { db } from '../firebase.js';
 import { ref, get, set, update, remove, onValue, serverTimestamp } from "firebase/database";
 import { professors, getProfessorById } from '../professors.js';
+import { getAuthenticatedUser } from '../auth.js';
 import { logEvent } from '../logger.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton } from '../ui/smoothUI.js';
 import { getRandomArena } from '../arenas.js';
@@ -646,7 +647,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.countdownBanner.add(this.countdownTxt);
 
         // Botão Dev Solo (Canto Inferior Direito)
-        this.btnSolo = createSmoothButton(this, width - 95, 665, 115, 32, '⚡ Iniciar Solo', {
+        this.btnSolo = createSmoothButton(this, width - 95, 608, 115, 32, '⚡ Iniciar Solo', {
             radius: 16,
             fillColor: 0x323a48,
             hoverFillColor: 0x3e4758,
@@ -830,7 +831,8 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         logEvent('game', `[Sala ${this.roomId}] Forçando início de partida solo.`);
 
-        const questionPool = await this.getQuestionPool();
+        // Solo: o oponente é sempre o Coringa → catálogo = todos os bancos
+        const questionPool = await loadQuestionBanks([this.selectedProfessorId, 'coringa']);
         if (questionPool.length === 0) {
             this.isStartingMatch = false;
             this.statusText?.setText('❌ O GM ainda não publicou questões para estes professores.').setVisible(true);
@@ -844,10 +846,18 @@ export class CharacterSelectScene extends Phaser.Scene {
         const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
 
         const randomArena = getRandomArena();
+        const oppKey = this.playerId === 'p1' ? 'p2' : 'p1'; // sempre o outro lado
+        // Sé as regras da sala exigem uid ao criar o slot do oponente
+        const myUid = getAuthenticatedUser()?.uid || null;
+        const coringaNick = '🃏 Professor Coringa';
         update(roomRef, {
             arenaId: randomArena.id,
             [`${this.playerId}/characterId`]: this.selectedProfessorId,
             [`${this.playerId}/nickname`]: this.nickname,
+            // Solo: oponente é SEMPRE o Coringa (mistura de todas as disciplinas)
+            [`${oppKey}/characterId`]: 'coringa',
+            [`${oppKey}/nickname`]: coringaNick,
+            [`${oppKey}/uid`]: myUid,
             'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false,
             'p1/answered': false, 'p1/answeredAt': null, 'p1/answerCorrect': null,
             'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false,

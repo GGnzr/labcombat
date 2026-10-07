@@ -38,6 +38,7 @@ const EVENT_CONTRACT = [
     { event: 'open-profile-modal',      producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-ranking-modal',      producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-rules-modal',        producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
+    { event: 'open-bug-modal',          producers: ['index.html'], consumers: ['index.html'] },
     { event: 'submit-room-code',        producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'nickname-changed',        producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'account-state-changed',   producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },

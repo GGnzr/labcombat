@@ -70,6 +70,13 @@
     "logs": {
       ".read": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
       ".write": "auth != null"
+    },
+    "bugReports": {
+      ".read": "auth != null && root.child('adminUsers').child(auth.uid).val() === true",
+      "$reportId": {
+        ".write": "auth != null && (!data.exists() || root.child('adminUsers').child(auth.uid).val() === true)",
+        ".validate": "newData.child('message').isString() && newData.child('message').val().length >= 10 && newData.child('message').val().length <= 1000"
+      }
     }
   }
 }

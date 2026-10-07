@@ -190,6 +190,7 @@
               <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
               <button id="tab-btn-users" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">👥 Usuários <span id="gm-users-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-bugs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🐛 Bugs <span id="gm-bugs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
           </div>
 
           <!-- ABA 1: CONTROLES DA PARTIDA -->
@@ -434,6 +435,37 @@
                   ⚠️ O botão 🗑️ apaga perfil, ranking e reserva de apelido <b>só no jogo</b>. A conta de login (Google/e-mail) só o próprio usuário exclui pelo Perfil ou pelo painel do Firebase (console).
               </div>
           </div>
+          <!-- ABA 6: BUGS / TICKETS (relatos dos jogadores) -->
+          <div id="tab-content-bugs" class="gm-tab-content" style="display: none; flex-direction: column; gap: 10px; overflow-y: auto; flex: 1;">
+              <!-- Visão 1: Lista de tickets -->
+              <div id="gm-bugs-list-view" style="display: flex; flex-direction: column; gap: 8px; flex: 1;">
+                  <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155; display: flex; gap: 8px; align-items: center;">
+                      <input id="gm-bugs-search" type="text" placeholder="🔍 Filtrar por apelido ou texto do bug..." style="flex: 1; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #e2e8f0; padding: 7px 10px; font-size: 12.5px; outline: none;">
+                      <button id="gm-bugs-refresh" style="padding: 7px 12px; background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">🔄 Atualizar</button>
+                  </div>
+                  <div id="gm-bugs-status" style="min-height: 14px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+                  <div id="gm-bugs-tickets" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 200px;">
+                      <div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>
+                  </div>
+              </div>
+              <!-- Visão 2: Detalhe do ticket (abre ao clicar num ticket) -->
+              <div id="gm-bug-detail" style="display: none; flex-direction: column; gap: 8px; flex: 1;">
+                  <div style="background: #1e293b; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #f59e0b;">
+                      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                          <div id="gm-bug-detail-title" style="font-size: 13px; font-weight: bold; color: #fbbf24;"></div>
+                          <div id="gm-bug-detail-when" style="font-size: 10.5px; color: #64748b;"></div>
+                      </div>
+                      <div id="gm-bug-detail-meta" style="font-size: 10.5px; color: #94a3b8; margin-bottom: 8px; line-height: 1.5;"></div>
+                      <div id="gm-bug-detail-message" style="font-size: 12.5px; color: #e2e8f0; line-height: 1.5; white-space: pre-wrap; word-break: break-word; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 10px;"></div>
+                      <div style="font-size: 10px; color: #64748b; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Últimos logs do jogador</div>
+                      <div id="gm-bug-detail-logs" style="font-family: 'Cascadia Code', Consolas, monospace; font-size: 10px; color: #94a3b8; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 8px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;"></div>
+                  </div>
+                  <div style="display: flex; gap: 8px;">
+                      <button id="gm-bug-resolve-btn" style="flex: 1; padding: 9px; background: #16a34a; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: bold;">✓ Resolver (apagar ticket)</button>
+                      <button id="gm-bug-back-btn" style="flex: 1; padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: bold;">← Voltar à lista</button>
+                  </div>
+              </div>
+          </div>
       </aside>
     </div>
 
@@ -521,6 +553,7 @@
         <span>GGnzr</span>
     </a>
     <button id="terms-footer-link" type="button" title="Termos de Uso e Aviso de Privacidade (LGPD)">🔒 Termos de Uso</button>
+    <button id="bug-footer-link" type="button" title="Relatar um problema ao professor/GM">🐛 Bug Report</button>
 
     <!-- Modal de Termos de Uso e Privacidade (LGPD — PLANO §5) -->
     <div id="terms-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
@@ -758,13 +791,30 @@
         </div>
     </div>
 
+    <!-- Modal de Relatar Bug (jogador → GM) -->
+    <div id="bug-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 18px 20px; border-radius: 14px; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.22); width: 430px; max-width: 94vw;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                <div style="color: #f8fafc; font-weight: bold; font-size: 16px;">🐛 Relatar um bug</div>
+                <button id="bug-close-btn" type="button" title="Fechar" style="background: transparent; border: none; color: #ef4444; font-size: 16px; font-weight: bold; cursor: pointer;">✕</button>
+            </div>
+            <div id="bug-nick-line" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
+            <textarea id="bug-message-input" rows="5" maxlength="1000" placeholder="Descreva o que aconteceu: onde você estava (menu, seleção, luta), o que esperava e o que houve. Mínimo 10 caracteres." style="width: 100%; box-sizing: border-box; resize: vertical; background: #020617; border: 1.5px solid #475569; border-radius: 8px; color: #e2e8f0; padding: 10px; font-size: 12.5px; outline: none; font-family: inherit;"></textarea>
+            <div id="bug-error-msg" style="min-height: 16px; font-size: 11px; color: #f87171; font-weight: bold; margin: 4px 0;"></div>
+            <div style="display: flex; gap: 8px;">
+                <button id="bug-send-btn" type="button" style="flex: 1; padding: 9px; background: linear-gradient(90deg, #b45309, #d97706); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">📨 Enviar relato</button>
+                <button id="bug-cancel-btn" type="button" style="padding: 9px 14px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
     <script type="module">
         import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, deleteAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname } from '/src/auth.js';
         import { professors } from '/src/professors.js';
         import { RANK_TIERS, getRankForPoints, loadMyLeaderboardEntry, loadTopLeaderboard } from '/src/ranking.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
         import { db } from '/src/firebase.js';
-        import { ref, get, set, update, remove, onValue, onDisconnect } from 'firebase/database';
+        import { ref, get, set, push, update, remove, onValue, onDisconnect, serverTimestamp } from 'firebase/database';
         import { getProfessorById } from '/src/professors.js';
         import { invalidateQuestionBankCache, validateQuestionBank } from '/src/questionBank.js';
 
@@ -1147,6 +1197,8 @@
         const tabContentLogs = document.getElementById('tab-content-logs');
         const tabBtnUsers = document.getElementById('tab-btn-users');
         const tabContentUsers = document.getElementById('tab-content-users');
+        const tabBtnBugs = document.getElementById('tab-btn-bugs');
+        const tabContentBugs = document.getElementById('tab-content-bugs');
         const gmUsersList = document.getElementById('gm-users-list');
         const gmUsersSearch = document.getElementById('gm-users-search');
         const gmUsersRefresh = document.getElementById('gm-users-refresh');
@@ -1229,7 +1281,7 @@
         // Cobre painel GM, conta/perfil, apelido, entrar em sala e ranking:
         // quando qualquer um estiver visível, body.modal-open desativa os
         // pointer-events do canvas (ver style.css) — nada "vaza" pro jogo.
-        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'orientation-prompt'];
+        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'bug-overlay', 'orientation-prompt'];
         const __overlayObserver = new MutationObserver(() => {
             const anyVisible = overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -1422,6 +1474,96 @@
         if (rulesCloseBtn2) rulesCloseBtn2.addEventListener('click', closeRulesModal);
         if (rulesOverlay) rulesOverlay.addEventListener('click', (e) => { if (e.target === rulesOverlay) closeRulesModal(); });
 
+        // ===== Relatar Bug (jogador → GM): modal simples que grava em bugReports/ =====
+        const bugOverlay = document.getElementById('bug-overlay');
+        const bugCloseBtn = document.getElementById('bug-close-btn');
+        const bugCancelBtn = document.getElementById('bug-cancel-btn');
+        const bugSendBtn = document.getElementById('bug-send-btn');
+        const bugMessageInput = document.getElementById('bug-message-input');
+        const bugErrorMsg = document.getElementById('bug-error-msg');
+        const bugNickLine = document.getElementById('bug-nick-line');
+        function closeBugModal() { if (bugOverlay) bugOverlay.style.display = 'none'; }
+        window.addEventListener('open-bug-modal', () => {
+            if (!bugOverlay) return;
+            bugOverlay.style.display = 'flex';
+            const nick = sessionStorage.getItem('labcombat_nickname') || 'Visitante';
+            if (bugNickLine) bugNickLine.textContent = `Reportando como: ${nick}`;
+            if (bugMessageInput) { bugMessageInput.value = ''; }
+            if (bugErrorMsg) bugErrorMsg.textContent = '';
+            setTimeout(() => bugMessageInput?.focus(), 60);
+        });
+        if (bugCloseBtn) bugCloseBtn.addEventListener('click', closeBugModal);
+        if (bugCancelBtn) bugCancelBtn.addEventListener('click', closeBugModal);
+        if (bugOverlay) bugOverlay.addEventListener('click', (e) => { if (e.target === bugOverlay) closeBugModal(); });
+        // Botão persistente no rodapé esquerdo (todas as telas, some em batalha)
+        const bugFooterLink = document.getElementById('bug-footer-link');
+        if (bugFooterLink) {
+            bugFooterLink.addEventListener('click', () => {
+                if (document.body.classList.contains('modal-open')) return;
+                window.dispatchEvent(new CustomEvent('open-bug-modal'));
+            });
+        }
+        if (bugSendBtn) {
+            bugSendBtn.addEventListener('click', async () => {
+                const message = (bugMessageInput?.value || '').trim();
+                if (message.length < 10) {
+                    if (bugErrorMsg) bugErrorMsg.textContent = 'Descreva o bug com pelo menos 10 caracteres.';
+                    return;
+                }
+                bugSendBtn.disabled = true;
+                bugSendBtn.textContent = 'Enviando...';
+                if (bugErrorMsg) bugErrorMsg.textContent = '';
+                try {
+                    const access = await ensureGuestAuth();
+                    if (!access.success) throw new Error(access.message);
+                    // Contexto de debug que vai junto no ticket (muito útil pro GM:
+                    // últimos logs locais do jogador, resolução, modo de acesso...)
+                    const recentLogs = getLogsHistory()
+                        .slice(-10)
+                        .map(l => `[${l.timestamp}] [${l.type.toUpperCase()}] ${String(l.message || '').slice(0, 200)}`);
+                    // Navegador amigável: a string userAgent lista todos os engines
+                    // (Mozilla/AppleWebKit/Safari...) — aqui vira "Chrome 141 · Windows"
+                    const ua = navigator.userAgent || '';
+                    const detectBrowser = () => {
+                        const m = ua.match(/(Edg|OPR|Chrome|Firefox|Version)\/([\d.]+)/) || [];
+                        const nome = { Edg: 'Edge', OPR: 'Opera', Chrome: 'Chrome', Firefox: 'Firefox', Version: 'Safari' }[m[1]] || 'Navegador';
+                        const ver = (m[2] || '').split('.')[0];
+                        const os = /Windows NT 10/.test(ua) ? 'Windows 10/11'
+                                 : /Windows/.test(ua) ? 'Windows'
+                                 : /Android/.test(ua) ? 'Android'
+                                 : /iPhone|iPad/.test(ua) ? 'iOS'
+                                 : /Mac OS X/.test(ua) ? 'macOS'
+                                 : /Linux/.test(ua) ? 'Linux' : 'SO?';
+                        return `${nome}${ver ? ' ' + ver : ''} · ${os}`;
+                    };
+                    await push(ref(db, 'bugReports'), {
+                        message: message.slice(0, 1000),
+                        nickname: sessionStorage.getItem('labcombat_nickname') || 'Visitante',
+                        uid: access.user.uid,
+                        accountUid: localStorage.getItem('labcombat_account_uid') || null,
+                        accessMode: sessionStorage.getItem('labcombat_access_mode') || null,
+                        roomId: sessionStorage.getItem('labcombat_room_id') || null,
+                        playerId: sessionStorage.getItem('labcombat_player_id') || null,
+                        scene: (window.game?.scene?.getScenes(true)[0]?.scene?.key) || null,
+                        screenRes: `${screen.width}x${screen.height}`,
+                        viewport: `${window.innerWidth}x${window.innerHeight}`,
+                        lang: navigator.language || null,
+                        browserInfo: detectBrowser(),
+                        userAgent: navigator.userAgent || null,
+                        recentLogs,
+                        createdAt: serverTimestamp()
+                    });
+                    logEvent('admin', `🐛 Relato de bug de "${sessionStorage.getItem('labcombat_nickname') || 'Visitante'}".`);
+                    closeBugModal();
+                } catch (error) {
+                    if (bugErrorMsg) bugErrorMsg.textContent = `❌ ${error.message}`;
+                } finally {
+                    bugSendBtn.disabled = false;
+                    bugSendBtn.textContent = '📨 Enviar relato';
+                }
+            });
+        }
+
         function renderRankingRows() {
             if (!rankingBody) return;
             const myUid = localStorage.getItem('labcombat_account_uid');
@@ -1512,12 +1654,12 @@
 
         // Gerenciamento de Troca de Abas
         function switchTab(target) {
-            [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs, tabBtnUsers].forEach(b => {
+            [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs, tabBtnUsers, tabBtnBugs].forEach(b => {
                 if (!b) return;
                 b.style.background = 'transparent';
                 b.style.color = '#94a3b8';
             });
-            [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs, tabContentUsers].forEach(c => {
+            [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs, tabContentUsers, tabContentBugs].forEach(c => {
                 if (c) c.style.display = 'none';
             });
 
@@ -1545,6 +1687,12 @@
                 tabBtnUsers.style.color = '#38bdf8';
                 tabContentUsers.style.display = 'flex';
                 loadGmUsers();
+            } else if (target === 'bugs' && tabBtnBugs && tabContentBugs) {
+                tabBtnBugs.style.background = '#1e293b';
+                tabBtnBugs.style.color = '#38bdf8';
+                tabContentBugs.style.display = 'flex';
+                showBugListView();
+                loadBugReports();
             }
         }
 
@@ -1553,6 +1701,7 @@
         if (tabBtnRooms) tabBtnRooms.addEventListener('click', () => switchTab('rooms'));
         if (tabBtnLogs) tabBtnLogs.addEventListener('click', () => switchTab('logs'));
         if (tabBtnUsers) tabBtnUsers.addEventListener('click', () => switchTab('users'));
+        if (tabBtnBugs) tabBtnBugs.addEventListener('click', () => switchTab('bugs'));
 
         function updateLayoutClasses() {
             if (gmActive) {
@@ -2198,6 +2347,19 @@
                     if (!Array.isArray(parsed)) {
                         throw new Error('Para "Professor selecionado" o arquivo precisa ser um array [ {id, text, options, correctIndex}, ... ]. Para um pacote, marque "Todos os professores".');
                     }
+                    // Trava de propriedade: se QUALQUER questão carregar prefixo de
+                    // outro professor, o arquivo está em modo errado (evita despejar
+                    // questões de POO no banco de Web, por exemplo)
+                    const aliasesDono = { so:'so', poo:'so', eng_soft:'eng_soft', eng:'eng_soft', web:'web', bd:'bd', redes:'redes' };
+                    const outra = parsed.find(q => {
+                        const prefix = String(q?.id ?? '').split('-')[0];
+                        const dono = aliasesDono[prefix];
+                        return dono && dono !== professorId;
+                    });
+                    if (outra) {
+                        const prefix = String(outra.id).split('-')[0];
+                        throw new Error(`O arquivo tem questões de OUTRO banco (id "${outra.id}" → ${aliasesDono[prefix]}). Se quiser distribuir por professor, marque "Todos os professores".`);
+                    }
                     const validation = validateQuestionBank(parsed);
                     if (!validation.valid) throw new Error(validation.message);
                     await set(ref(db, `questionBanks/${professorId}`), parsed);
@@ -2656,6 +2818,142 @@
         }
         if (gmUsersRefresh) gmUsersRefresh.addEventListener('click', loadGmUsers);
         if (gmUsersSearch) gmUsersSearch.addEventListener('input', renderGmUsers);
+
+        // ===== Aba 🐛 Bugs: lista de tickets clicáveis (detalhe abre ao clicar) =====
+        const gmBugsTickets = document.getElementById('gm-bugs-tickets');
+        const gmBugsStatus = document.getElementById('gm-bugs-status');
+        const gmBugsRefresh = document.getElementById('gm-bugs-refresh');
+        const gmBugsSearch = document.getElementById('gm-bugs-search');
+        const gmBugListView = document.getElementById('gm-bugs-list-view');
+        const gmBugDetailView = document.getElementById('gm-bug-detail');
+        const gmBugDetailTitle = document.getElementById('gm-bug-detail-title');
+        const gmBugDetailWhen = document.getElementById('gm-bug-detail-when');
+        const gmBugDetailMeta = document.getElementById('gm-bug-detail-meta');
+        const gmBugDetailMessage = document.getElementById('gm-bug-detail-message');
+        const gmBugResolveBtn = document.getElementById('gm-bug-resolve-btn');
+        const gmBugBackBtn = document.getElementById('gm-bug-back-btn');
+        const gmBugsCount = document.getElementById('gm-bugs-count');
+        let gmBugsCache = [];
+        let gmBugOpenId = null;
+
+        function showBugListView() {
+            gmBugOpenId = null;
+            if (gmBugDetailView) gmBugDetailView.style.display = 'none';
+            if (gmBugListView) gmBugListView.style.display = 'flex';
+        }
+        function showBugDetail(ticket) {
+            gmBugOpenId = ticket.id;
+            if (gmBugDetailTitle) gmBugDetailTitle.textContent = `🐛 ${ticket.nickname || 'Visitante'}`;
+            if (gmBugDetailWhen) gmBugDetailWhen.textContent = ticket.createdAt ? new Date(ticket.createdAt).toLocaleString('pt-BR') : '';
+            if (gmBugDetailMeta) {
+                const linhas = [
+                    ['Acesso', ticket.accessMode === 'account' ? 'Conta' : (ticket.accessMode === 'guest' ? 'Visitante' : '—')],
+                    ['Sala', ticket.roomId ? `${ticket.roomId}${ticket.playerId ? ' (' + ticket.playerId.toUpperCase() + ')' : ''}` : null],
+                    ['Tela', ticket.scene],
+                    ['Resolução', ticket.screenRes ? `${ticket.screenRes}${ticket.viewport ? ' (janela ' + ticket.viewport + ')' : ''}` : null],
+                    ['Idioma', ticket.lang],
+                    ['UID', ticket.accountUid || ticket.uid],
+                    ['Navegador', ticket.browserInfo || ticket.userAgent]
+                ].filter(([, v]) => v);
+                gmBugDetailMeta.textContent = '';
+                linhas.forEach(([k, v]) => {
+                    const linha = document.createElement('div');
+                    const key = document.createElement('span');
+                    key.style.cssText = 'color: #64748b; font-weight: bold; margin-right: 6px;';
+                    key.textContent = k + ':';
+                    const val = document.createElement('span');
+                    val.style.cssText = 'color: #94a3b8; word-break: break-all;';
+                    val.textContent = String(v);
+                    linha.append(key, val);
+                    gmBugDetailMeta.appendChild(linha);
+                });
+            }
+            if (gmBugDetailMessage) gmBugDetailMessage.textContent = String(ticket.message || '');
+            const logsBox = document.getElementById('gm-bug-detail-logs');
+            if (logsBox) {
+                const logs = Array.isArray(ticket.recentLogs) ? ticket.recentLogs : [];
+                logsBox.textContent = logs.length ? logs.join('\n') : '(sem logs locais enviados)';
+            }
+            if (gmBugListView) gmBugListView.style.display = 'none';
+            if (gmBugDetailView) gmBugDetailView.style.display = 'flex';
+        }
+        function renderBugTickets() {
+            if (!gmBugsTickets) return;
+            const filtro = (gmBugsSearch?.value || '').trim().toLowerCase();
+            const visiveis = gmBugsCache.filter(t => !filtro
+                || String(t.nickname || '').toLowerCase().includes(filtro)
+                || String(t.message || '').toLowerCase().includes(filtro));
+            if (gmBugsCount) gmBugsCount.textContent = gmBugsCache.length ? `${gmBugsCache.length}` : '';
+            if (!visiveis.length) {
+                gmBugsTickets.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">${gmBugsCache.length ? 'Nenhum ticket bate com o filtro.' : 'Nenhum relato ainda. 🎉'}</div>`;
+                return;
+            }
+            gmBugsTickets.innerHTML = '';
+            visiveis.forEach((t) => {
+                const row = document.createElement('div');
+                row.style.cssText = 'display: flex; align-items: center; gap: 10px; background: #0b1120; border: 1px solid #1e293b; border-radius: 8px; padding: 9px 12px; cursor: pointer; transition: border-color 0.15s ease, background 0.15s ease;';
+                const quando = t.createdAt ? new Date(t.createdAt).toLocaleString('pt-BR') : '';
+                const info = document.createElement('div');
+                info.style.cssText = 'flex: 1; min-width: 0;';
+                const topo = document.createElement('div');
+                topo.style.cssText = 'display: flex; justify-content: space-between; gap: 8px; margin-bottom: 2px;';
+                const who = document.createElement('span');
+                who.style.cssText = 'font-size: 12px; font-weight: bold; color: #fbbf24;';
+                who.textContent = t.nickname || 'Visitante';
+                const when = document.createElement('span');
+                when.style.cssText = 'font-size: 9.5px; color: #64748b; white-space: nowrap;';
+                when.textContent = `${quando}${t.scene ? ' · ' + t.scene : ''}`;
+                topo.append(who, when);
+                const previa = document.createElement('div');
+                previa.style.cssText = 'font-size: 11px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                previa.textContent = String(t.message || '').slice(0, 90);
+                info.append(topo, previa);
+                const seta = document.createElement('span');
+                seta.style.cssText = 'color: #475569; font-size: 14px; flex-shrink: 0;';
+                seta.textContent = '›';
+                row.append(info, seta);
+                row.addEventListener('pointerover', () => { row.style.borderColor = '#f59e0b'; row.style.background = '#0f172a'; });
+                row.addEventListener('pointerout', () => { row.style.borderColor = '#1e293b'; row.style.background = '#0b1120'; });
+                row.addEventListener('click', () => showBugDetail(t));
+                gmBugsTickets.appendChild(row);
+            });
+        }
+        async function loadBugReports() {
+            if (!gmActive || !gmBugsTickets) return;
+            gmBugsTickets.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>';
+            try {
+                const snap = await get(ref(db, 'bugReports'));
+                const data = snap.val() || {};
+                gmBugsCache = Object.entries(data)
+                    .map(([id, r]) => ({ id, ...r }))
+                    .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                if (gmBugsStatus) {
+                    gmBugsStatus.textContent = gmBugsCache.length ? `${gmBugsCache.length} ticket(s) aberto(s)` : '';
+                    gmBugsStatus.style.color = '#94a3b8';
+                }
+                renderBugTickets();
+            } catch (error) {
+                gmBugsTickets.innerHTML = '<div style="color: #f87171; text-align: center; padding: 14px; font-size: 11px;">❌ Erro ao carregar tickets — confira se as regras novas estão publicadas.</div>';
+            }
+        }
+        if (gmBugsRefresh) gmBugsRefresh.addEventListener('click', loadBugReports);
+        if (gmBugsSearch) gmBugsSearch.addEventListener('input', renderBugTickets);
+        if (gmBugBackBtn) gmBugBackBtn.addEventListener('click', showBugListView);
+        if (gmBugResolveBtn) {
+            gmBugResolveBtn.addEventListener('click', async () => {
+                if (!gmActive || !gmBugOpenId) return;
+                gmBugResolveBtn.disabled = true;
+                try {
+                    await remove(ref(db, `bugReports/${gmBugOpenId}`)).catch(() => {});
+                    logEvent('admin', `🐛 [Admin] Ticket de bug ${gmBugOpenId.slice(0, 6)}… resolvido/apagado.`);
+                    gmBugsCache = gmBugsCache.filter(t => t.id !== gmBugOpenId);
+                    showBugListView();
+                    renderBugTickets();
+                } finally {
+                    gmBugResolveBtn.disabled = false;
+                }
+            });
+        }
         // Listener para dispensar aviso de rotação em mobile
         const orientationPrompt = document.getElementById('orientation-prompt');
         const btnDismissOrientation = document.getElementById('btn-dismiss-orientation');

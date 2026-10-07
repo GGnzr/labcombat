@@ -186,7 +186,10 @@ Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
   publicar/importar bancos via `invalidateQuestionBankCache`).
   **Regra do Coringa**: se um dos lutadores é `coringa`, o catálogo vira a
   união dos bancos de TODOS os outros professores (ele não tem banco próprio)
-  — expansão em `questionBank.resolveMatchProfessorIds()`.
+  — expansão em `questionBank.resolveMatchProfessorIds()`. **Modo solo
+  (`forceStartMatch` da CharacterSelectScene): o oponente é sempre o Coringa**
+  (o script escreve `characterId:'coringa'` + apelido '🃏 Professor Coringa' no
+  slot do outro jogador e o pool de questões já nasce misturado).
   Catálogo vazio bloqueia o início (P1 loga erro e não sorteia).
 - Formato por questão: `{ id, text: string, options: string[≥2],
   correctIndex: int dentro do range }` — validado por `validateQuestionBank()`
@@ -249,6 +252,7 @@ index.html; as cenas se comunicam por **CustomEvents** (contrato testado em
 |---|---|---|
 | `open-account-modal`, `open-gm-modal`, `open-join-modal`, `open-profile-modal`, `open-ranking-modal`, `open-rules-modal` | MenuScene | index.html |
 | `open-nickname-modal` | index.html (fluxo visitante) | index.html |
+| `open-bug-modal` | index.html (botão rodapé "🐛 Bug Report") | index.html |
 | `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | MenuScene |
 | `dev-set-timers` | index.html | MainScene + MenuScene |
 | `dev-set-combat` (detail: `{dmgAttack, dmgSpecial, ultKoHp, maxHp, modChance, modHeal, lpWin, lpBonus, lpLoss}`) | index.html | MainScene |
@@ -308,7 +312,11 @@ O contexto de áudio só desbloqueia após o 1º gesto do usuário (autoplay pol
   cadastrados (apelido, e-mail, LP/V/D, data de cadastro) com filtro e
   exclusão por linha — remove `users`/`leaderboard`/`adminUsers`/`nicknames`
   (a conta Auth fica no Firebase: exclusão completa pelo Perfil do próprio
-  usuário, com senha, ou pelo console). Exige regras atualizadas do
+  usuário, com senha, ou pelo console) e **aba 🐛 Bugs (tickets)**: relatos dos
+  jogadores (nó `bugReports/`; botão rodapé "🐛 Bug Report" fixo no canto
+  inferior direito, visível em todas as telas, inclusive na arena) em lista de
+  tickets clicáveis — clicar abre o detalhe completo (apelido, data, sala,
+  cena, uid) e o botão "✓ Resolver" apaga o ticket. Exige regras atualizadas do
   `database.rules.json` (admin lê/escreve `users` e `nicknames`). AnimationTestScene existe, mas NÃO tem botão
   no painel (aba Controles limpa: Tempos, Combate (dano/vida/modificadores),
   LabPoints & Temporada, Sessão da Arena e Velocidade das Animações) — abra por

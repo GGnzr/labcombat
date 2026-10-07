@@ -267,3 +267,28 @@ body.in-battle #terms-footer-link {
   display: none !important;
 }
 
+/* Botão persistente "🐛 Bug Report": canto INFERIOR DIREITO (canto do Modo GM —
+   quando o GM abre o painel, o botão do painel fica logo acima deste).
+   Aparece em todas as telas, inclusive na arena. */
+#bug-footer-link {
+  position: fixed;
+  right: 14px;
+  bottom: 12px;
+  z-index: 150;
+  background: #0d1117;
+  border: 1.5px solid #30363d;
+  color: #8b949e;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+  transition: all 0.15s ease;
+}
+#bug-footer-link:hover {
+  border-color: #f59e0b;
+  color: #f59e0b;
+  transform: translateY(-1px);
+}
+

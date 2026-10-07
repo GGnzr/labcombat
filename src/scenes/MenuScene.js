@@ -158,7 +158,7 @@ export class MenuScene extends Phaser.Scene {
         }).setVisible(false);
 
         // 7. Botão discreto de Acesso Professor / GM (Suave)
-        this.adminAccessButton = createSmoothButton(this, width - 90, 680, 110, 28, '🛡️ Modo GM', {
+        this.adminAccessButton = createSmoothButton(this, width - 90, 620, 110, 28, '🛡️ Modo GM', {
             radius: 14,
             fillColor: 0x242a35,
             hoverFillColor: 0x323a48,
@@ -512,7 +512,12 @@ export class MenuScene extends Phaser.Scene {
                 questionTimeLimit: devQuestionLimit,
                 createdAt: Date.now()
             });
-            try { onDisconnect(roomRef).remove(); } catch(e) {}
+            // onDisconnect: NÃO remover a sala inteira aqui — senão, se o P1
+            // cair/atualizar (F5), a sala some de uma vez e o P2 vai direto
+            // pro menu sem o aviso de "oponente desconectou". Cada cena
+            // registra onDisconnect apenas no NÓ DO PRÓPRIO JOGADOR
+            // (rooms/{id}/p1|p2), mantendo o fluxo de reconexão + W.O. por
+            // graça de 15s que o oponente exibe.
 
             logEvent('room', `[Sala Criada] Sucesso! Código oficial: "${roomId}". Aguardando P2.`);
 
