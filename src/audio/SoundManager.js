@@ -20,10 +20,10 @@ class SoundManagerClass {
         this._bgmRequestedTrack = null;
         this._bgmPlaying = false;
 
-        // Tentar inicializar o AudioContext
-        this.initContext();
-
-        // Desbloquear AudioContext com a primeira interação do usuário (política de autoplay)
+        // Desbloquear AudioContext APÓS a primeira interação do usuário
+        // (política de autoplay). O contexto NÃO é criado no load: além de
+        // seguir a política, evita o "bip" de abertura/fechamento do grafo
+        // de áudio ao recarregar a página — mesmo com tudo mutado.
         this.setupUnlockListeners();
     }
 
@@ -44,7 +44,14 @@ class SoundManagerClass {
     setupUnlockListeners() {
         if (typeof window === 'undefined') return;
 
-        const unlock = () => {
+        const unlock = (event) => {
+            // Teclas de sistema/atalhos (F5, Ctrl+R, F12, combos com Ctrl/Alt/Meta)
+            // NÃO desbloqueiam áudio: impedem o resume() numa página que está
+            // sendo recarregada — era aí que "escapava" o bip no refresh.
+            if (event && event.type === 'keydown') {
+                if (event.ctrlKey || event.altKey || event.metaKey) return;
+                if (event.key === 'F5' || event.key === 'F12') return;
+            }
             if (!this.ctx) this.initContext();
             if (this.ctx && this.ctx.state === 'suspended') {
                 this.ctx.resume().then(() => {
