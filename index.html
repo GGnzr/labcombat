@@ -628,15 +628,23 @@
         </div>
     </div>
 
-    <!-- Modal de Ranking Geral (todas as posições + filtro por elo) -->
+    <!-- Modal de Ranking Geral (busca, minha posição, filtros e paginação) -->
     <div id="ranking-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 460px; max-width: 94vw;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 560px; max-width: 94vw;">
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 19px; font-weight: bold;">🏆 Ranking da Arena</h2>
             <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por LabPoints (LP)</div>
+            <!-- Linha: busca + botão ir para mim -->
+            <div style="display: flex; gap: 8px; margin-bottom: 8px;">
+                <input id="ranking-search" type="text" placeholder="🔍 Buscar por apelido..." style="flex: 1; min-width: 0; background: #020617; border: 1.5px solid #334155; border-radius: 8px; color: #e2e8f0; padding: 7px 10px; font-size: 12px; font-weight: bold; outline: none;">
+                <button id="ranking-goto-me" type="button" title="Ir para minha posição" style="padding: 7px 10px; background: #1a1230; border: 1px solid #a855f7; color: #e9d5ff; border-radius: 8px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">🎯 Eu</button>
+            </div>
+            <!-- Resumo: minha posição / faltam X LP -->
+            <div id="ranking-my-summary" style="display: none; background: #1a1230; border: 1px solid #a855f7; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 11.5px; color: #e9d5f5; line-height: 1.5;"></div>
             <div id="ranking-tier-tabs" style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;"></div>
             <div id="ranking-div-tabs" style="display: none; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;"></div>
             <div id="ranking-body" style="max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 120px;"></div>
-            <button id="ranking-close-btn" type="button" style="width: 100%; margin-top: 10px; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
+            <button id="ranking-load-more" type="button" style="display: none; margin-top: 8px; width: 100%; padding: 8px; background: #0b1120; border: 1px solid #38bdf8; color: #7dd3fc; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">⬇ Carregar mais</button>
+            <button id="ranking-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
         </div>
     </div>
 
@@ -1430,9 +1438,15 @@
         const rankingCloseBtn = document.getElementById('ranking-close-btn');
         const rankingTierTabs = document.getElementById('ranking-tier-tabs');
         const rankingDivTabs = document.getElementById('ranking-div-tabs');
-        let rankingAll = [];        // cache da leitura atual
-        let rankingFilter = 'all';  // tier ativo no filtro
-        let rankingDivision = null; // divisão ativa (IV/III/II/I) ou null = todas
+        const rankingSearch = document.getElementById('ranking-search');
+        const rankingGotoMe = document.getElementById('ranking-goto-me');
+        const rankingMySummary = document.getElementById('ranking-my-summary');
+        const rankingLoadMore = document.getElementById('ranking-load-more');
+        let rankingAll = [];           // cache da leitura atual
+        let rankingFilter = 'all';     // tier ativo no filtro
+        let rankingDivision = null;    // divisão ativa (IV/III/II/I) ou null = todas
+        let rankingPageSize = 50;      // quantas linhas exibidas agora (paginação client-side)
+        let rankingSearchTerm = '';    // termo da busca por apelido
 
         function closeRankingModal() { if (rankingOverlay) rankingOverlay.style.display = 'none'; }
 
@@ -1573,28 +1587,100 @@
             if (rankingDivision) {
                 filtrados = filtrados.filter(e => getRankForPoints(e.points || 0).division === rankingDivision);
             }
+            if (rankingSearchTerm) {
+                filtrados = filtrados.filter(e => String(e.nickname || '').toLowerCase().includes(rankingSearchTerm));
+            }
+
             if (!filtrados.length) {
-                rankingBody.innerHTML = '<div style="color:#94a3b8; padding:18px; font-size:12px; text-align:center;">Ninguém nesse elo/divisão ainda. 🎯</div>';
+                rankingBody.innerHTML = `<div style="color:#94a3b8; padding:18px; font-size:12px; text-align:center;">${rankingSearchTerm ? `Ninguém com apelido contendo "${rankingSearchTerm}".` : 'Ninguém nesse elo/divisão ainda. 🎯'}</div>`;
+                if (rankingLoadMore) rankingLoadMore.style.display = 'none';
                 return;
             }
-            rankingBody.innerHTML = filtrados.map((e) => {
+
+            // Paginação client-side: 50 primeiros; "Carregar mais" expande
+            const total = filtrados.length;
+            const visiveis = filtrados.slice(0, rankingPageSize);
+            if (rankingLoadMore) {
+                rankingLoadMore.style.display = total > rankingPageSize ? 'block' : 'none';
+                rankingLoadMore.textContent = `⬇ Carregar mais (${total - rankingPageSize} restantes)`;
+            }
+
+            rankingBody.innerHTML = visiveis.map((e) => {
                 const points = e.points || 0;
                 const rank = getRankForPoints(points);
                 const posGeral = rankingAll.indexOf(e) + 1;
-                const wl = `${e.wins || 0}V/${(e.matches || 0) - (e.wins || 0)}D`;
+                const wins = e.wins || 0;
+                const losses = (e.matches || 0) - wins;
+                const winRate = e.matches ? Math.round(wins / e.matches * 100) : 0;
                 const highlight = e.uid === myUid ? 'border-color:#a855f7; background:#1a1230;' : '';
-                return `<div style="display:flex; align-items:center; gap:8px; background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:7px 10px; ${highlight}">
+                return `<div data-rank-row="${e.uid}" style="display:flex; align-items:center; gap:8px; background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:7px 10px; ${highlight}">
                     <span style="width:30px; font-size:12px; color:#f59e0b; font-weight:bold;">${posGeral}º</span>
-                    <span style="flex:1; color:#f8fafc; font-size:12.5px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}</span>
+                    <span style="flex:1; color:#f8fafc; font-size:12.5px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}${e.uid === myUid ? ' <span style="color:#a855f7; font-size:10px;">(você)</span>' : ''}</span>
                     <span style="font-size:11px; color:#cbd5e1; white-space:nowrap;">${rank.label}</span>
-                    <span style="font-size:10.5px; color:#64748b; white-space:nowrap;">${wl}</span>
+                    <span style="font-size:10.5px; color:#64748b; white-space:nowrap;">${wins}V/${losses}D · ${winRate}%</span>
                     <span style="font-size:11.5px; color:#c084fc; font-weight:bold; white-space:nowrap;">${points} LP</span>
                 </div>`;
             }).join('');
         }
 
+        // Resumo do topo: posição do jogador logado + quantos LP faltam p/ subir
+        function renderMySummary() {
+            if (!rankingMySummary) return;
+            const myUid = localStorage.getItem('labcombat_account_uid');
+            const me = rankingAll.find(e => e.uid === myUid);
+            if (!me) {
+                rankingMySummary.style.display = 'none';
+                return;
+            }
+            const pos = rankingAll.indexOf(me) + 1;
+            const rank = getRankForPoints(me.points || 0);
+            const faltam = rank.nextMin != null ? Math.max(0, rank.nextMin - (me.points || 0)) : null;
+            rankingMySummary.style.display = 'block';
+            rankingMySummary.innerHTML = `Você está em <b style="color:#a855f7;">#${pos} de ${rankingAll.length}</b> — ${rank.label} (${me.points || 0} LP)` +
+                (faltam != null ? `<br><span style="color:#94a3b8;">Faltam <b style="color:#fbbf24;">${faltam} LP</b> para o próximo elo (${faltam <= 0 ? 'já bateu!' : 'próxima divisão/elos acima'})</span>` : '<br><span style="color:#94a3b8;">Elo máximo alcançado 👑</span>');
+        }
+
+        // Botão 🎯 Eu: limpa filtros, expande até me ver e rola até minha linha
+        function gotoMeInRanking() {
+            const myUid = localStorage.getItem('labcombat_account_uid');
+            if (!myUid) return;
+            const me = rankingAll.find(e => e.uid === myUid);
+            if (!me) return;
+            rankingFilter = 'all';
+            rankingDivision = null;
+            rankingSearchTerm = '';
+            if (rankingSearch) rankingSearch.value = '';
+            rankingPageSize = Math.max(50, rankingAll.indexOf(me) + 1);
+            renderRankingModalChips();
+            renderDivisionTabs();
+            renderRankingRows();
+            setTimeout(() => {
+                const row = rankingBody?.querySelector(`[data-rank-row="${myUid}"]`);
+                if (row) row.scrollIntoView({ block: 'center', behavior: 'smooth' });
+            }, 40);
+        }
+
+        if (rankingSearch) {
+            rankingSearch.addEventListener('input', () => {
+                rankingSearchTerm = rankingSearch.value.trim().toLowerCase();
+                rankingPageSize = 50;
+                renderRankingRows();
+            });
+        }
+        if (rankingGotoMe) rankingGotoMe.addEventListener('click', gotoMeInRanking);
+        if (rankingLoadMore) {
+            rankingLoadMore.addEventListener('click', () => {
+                rankingPageSize += 50;
+                renderRankingRows();
+            });
+        }
+
         async function renderRankingModal() {
             if (rankingBody) rankingBody.innerHTML = '<div style="color:#64748b; padding:18px; font-size:12px;">Carregando ranking...</div>';
+            // Estado limpo a cada abertura
+            rankingPageSize = 50;
+            rankingSearchTerm = '';
+            if (rankingSearch) rankingSearch.value = '';
             // Chips de filtro por elo
             if (rankingTierTabs) {
                 const tiers = [['all', 'Todos'], ...RANK_TIERS.map(t => [t.id, `${t.icon} ${t.name.split(' /')[0]}`])];
@@ -1602,15 +1688,17 @@
                     `<button data-tier="${id}" style="padding:6px 10px; font-size:11px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${rankingFilter === id ? '#f59e0b' : '#334155'}; background:${rankingFilter === id ? '#78350f' : '#0b1120'}; color:${rankingFilter === id ? '#fde68a' : '#94a3b8'};">${label}</button>`
                 ).join('');
                 rankingTierTabs.querySelectorAll('button').forEach(btn => {
-                    btn.addEventListener('click', () => { rankingFilter = btn.dataset.tier; rankingDivision = null; renderRankingModalChips(); renderDivisionTabs(); renderRankingRows(); });
+                    btn.addEventListener('click', () => { rankingFilter = btn.dataset.tier; rankingDivision = null; rankingPageSize = 50; renderRankingModalChips(); renderDivisionTabs(); renderRankingRows(); });
                 });
             }
             try {
                 rankingAll = await loadTopLeaderboard(999);
                 if (!rankingAll.length) {
                     rankingBody.innerHTML = '<div style="color:#94a3b8; padding:18px; font-size:12.5px; text-align:center;">Ninguém pontuou ainda.<br>Vença partidas com conta para aparecer aqui! 🏆</div>';
+                    if (rankingMySummary) rankingMySummary.style.display = 'none';
                     return;
                 }
+                renderMySummary();
                 renderRankingRows();
             } catch (error) {
                 rankingBody.innerHTML = `<div style="color:#f87171; padding:14px; font-size:12px;">❌ Falha ao carregar ranking: ${error.message}</div>`;
@@ -1646,6 +1734,7 @@
             rankingDivTabs.querySelectorAll('button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     rankingDivision = btn.dataset.div || null;
+                    rankingPageSize = 50;
                     renderDivisionTabs();
                     renderRankingRows();
                 });
