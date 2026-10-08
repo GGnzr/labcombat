@@ -190,6 +190,9 @@ Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
   (`forceStartMatch` da CharacterSelectScene): o oponente é sempre o Coringa**
   (o script escreve `characterId:'coringa'` + apelido '🃏 Professor Coringa' no
   slot do outro jogador e o pool de questões já nasce misturado).
+  **Solo não pontua:** o slot leva `isBot: true` e a MainScene pula
+  `recordMatchResult` (zero LP/vitórias no leaderboard; o painel mostra
+  "🃏 Modo Treino — não conta LP").
   Catálogo vazio bloqueia o início (P1 loga erro e não sorteia).
 - Formato por questão: `{ id, text: string, options: string[≥2],
   correctIndex: int dentro do range }` — validado por `validateQuestionBank()`

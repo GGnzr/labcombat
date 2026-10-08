@@ -855,9 +855,11 @@ export class CharacterSelectScene extends Phaser.Scene {
             [`${this.playerId}/characterId`]: this.selectedProfessorId,
             [`${this.playerId}/nickname`]: this.nickname,
             // Solo: oponente é SEMPRE o Coringa (mistura de todas as disciplinas)
+            // isBot marca a partida como treino: SEM LP no ranking
             [`${oppKey}/characterId`]: 'coringa',
             [`${oppKey}/nickname`]: coringaNick,
             [`${oppKey}/uid`]: myUid,
+            [`${oppKey}/isBot`]: true,
             'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false,
             'p1/answered': false, 'p1/answeredAt': null, 'p1/answerCorrect': null,
             'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false,

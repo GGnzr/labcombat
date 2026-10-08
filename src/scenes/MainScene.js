@@ -2989,6 +2989,14 @@ export class MainScene extends Phaser.Scene {
     // Exibe o delta de LP no painel de fim de jogo (showRankDeltaOnGameOver).
     recordMyRanking(isWinner, isTie, roomData) {
         if (this.isSpectator || this.rankingRecorded) return;
+        // Modo solo (oponente = Professor Coringa bot): NÃO pontua LP —
+        // é treino, não vale no ranking (anti-farm).
+        const oppKey = this.playerId === 'p1' ? 'p2' : 'p1';
+        if (roomData?.[oppKey]?.isBot) {
+            this.rankingRecorded = true;
+            this.showRankDeltaOnGameOver('bot');
+            return;
+        }
         this.rankingRecorded = true;
         const uid = localStorage.getItem('labcombat_account_uid');
         if (!uid) {
@@ -3024,6 +3032,14 @@ export class MainScene extends Phaser.Scene {
         // Visitante: só avisa — "se quiser pontuar, crie uma conta" (clicável:
         // a zona invisível goRankClickZone abre o modal de conta sem forçar nada).
         this.isGuestRankInvite = !summary;
+        if (summary === 'bot') {
+            // Modo solo (vs Professor Coringa): treino, não vale LP nem conta no ranking
+            this.goRankText
+                .setText('🃏 Modo Treino (vs Coringa) — não conta LP no ranking')
+                .setStyle({ fill: '#94a3b8' })
+                .setVisible(true);
+            return;
+        }
         if (!summary) {
             this.goRankText
                 .setText('🎮 Se quiser pontuar no ranking, crie uma conta! (toque aqui)')
