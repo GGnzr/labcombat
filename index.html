@@ -630,7 +630,7 @@
 
     <!-- Modal de Ranking Geral (busca, minha posição, filtros e paginação) -->
     <div id="ranking-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 20px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 560px; max-width: 94vw;">
+        <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 680px; max-width: 96vw; box-sizing: border-box;">
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 19px; font-weight: bold;">🏆 Ranking da Arena</h2>
             <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por LabPoints (LP)</div>
             <!-- Linha: busca + botão ir para mim -->
@@ -642,7 +642,7 @@
             <div id="ranking-my-summary" style="display: none; background: #1a1230; border: 1px solid #a855f7; border-radius: 8px; padding: 8px 10px; margin-bottom: 8px; font-size: 11.5px; color: #e9d5f5; line-height: 1.5;"></div>
             <div id="ranking-tier-tabs" style="display: flex; gap: 5px; margin-bottom: 8px; flex-wrap: wrap; justify-content: center;"></div>
             <div id="ranking-div-tabs" style="display: none; gap: 5px; margin-bottom: 10px; flex-wrap: wrap; justify-content: center;"></div>
-            <div id="ranking-body" style="max-height: 46vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 120px;"></div>
+            <div id="ranking-body" style="max-height: 56vh; overflow-y: auto; display: flex; flex-direction: column; gap: 5px; text-align: left; min-height: 200px;"></div>
             <button id="ranking-load-more" type="button" style="display: none; margin-top: 8px; width: 100%; padding: 8px; background: #0b1120; border: 1px solid #38bdf8; color: #7dd3fc; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">⬇ Carregar mais</button>
             <button id="ranking-close-btn" type="button" style="width: 100%; margin-top: 8px; padding: 8px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Fechar</button>
         </div>
@@ -1613,12 +1613,12 @@
                 const losses = (e.matches || 0) - wins;
                 const winRate = e.matches ? Math.round(wins / e.matches * 100) : 0;
                 const highlight = e.uid === myUid ? 'border-color:#a855f7; background:#1a1230;' : '';
-                return `<div data-rank-row="${e.uid}" style="display:flex; align-items:center; gap:8px; background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:7px 10px; ${highlight}">
-                    <span style="width:30px; font-size:12px; color:#f59e0b; font-weight:bold;">${posGeral}º</span>
-                    <span style="flex:1; color:#f8fafc; font-size:12.5px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}${e.uid === myUid ? ' <span style="color:#a855f7; font-size:10px;">(você)</span>' : ''}</span>
-                    <span style="font-size:11px; color:#cbd5e1; white-space:nowrap;">${rank.label}</span>
-                    <span style="font-size:10.5px; color:#64748b; white-space:nowrap;">${wins}V/${losses}D · ${winRate}%</span>
-                    <span style="font-size:11.5px; color:#c084fc; font-weight:bold; white-space:nowrap;">${points} LP</span>
+                return `<div data-rank-row="${e.uid}" style="display:flex; align-items:center; gap:10px; background:#0b1120; border:1px solid #1e293b; border-radius:8px; padding:8px 12px; ${highlight}">
+                    <span style="width:36px; flex-shrink:0; font-size:13px; color:#f59e0b; font-weight:bold;">${posGeral}º</span>
+                    <span style="flex:1; min-width:0; color:#f8fafc; font-size:13px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}${e.uid === myUid ? ' <span style="color:#a855f7; font-size:10px;">(você)</span>' : ''}</span>
+                    <span style="width:118px; flex-shrink:0; font-size:11.5px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rank.label}</span>
+                    <span style="width:104px; flex-shrink:0; font-size:11px; color:#64748b; white-space:nowrap;">${wins}V/${losses}D · ${winRate}%</span>
+                    <span style="width:64px; flex-shrink:0; font-size:12.5px; color:#c084fc; font-weight:bold; white-space:nowrap; text-align:right;">${points} LP</span>
                 </div>`;
             }).join('');
         }
