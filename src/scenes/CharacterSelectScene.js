@@ -20,7 +20,10 @@ export class CharacterSelectScene extends Phaser.Scene {
         this.playerId = data.playerId;
         this.nickname = data.nickname || sessionStorage.getItem('labcombat_nickname') || (this.playerId === 'p1' ? 'Jogador 1' : 'Jogador 2');
         this.selectedProfessorId = data.previousCharacterId || (this.playerId === 'p1' ? 'so' : 'web');
-        this.oppProfessorId = this.playerId === 'p1' ? 'web' : 'so';
+        // Modo Treino: oponente é o bot Coringa desde o 1º frame (sem flash Web→Coringa).
+        // O flag vem da MenuScene.createTrainingRoom(); sem ele, o fallback de P2 é 'web'.
+        this.opponentIsBot = !!data.opponentBot;
+        this.oppProfessorId = this.opponentIsBot ? 'coringa' : (this.playerId === 'p1' ? 'web' : 'so');
         this.isLockedIn = false;
         this.hasStarted = false;
         this.isStartingMatch = false;
@@ -120,7 +123,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         // Inicializa visuais dos dois lutadores
         this.refreshFighterDisplay('p1', isHost ? this.selectedProfessorId : this.oppProfessorId, isHost ? this.nickname : 'Jogador 1', false);
-        this.refreshFighterDisplay('p2', !isHost ? this.selectedProfessorId : this.oppProfessorId, !isHost ? this.nickname : 'Aguardando...', false);
+        this.refreshFighterDisplay('p2', !isHost ? this.selectedProfessorId : this.oppProfessorId, !isHost ? this.nickname : (this.opponentIsBot ? '🃏 Professor Coringa (Treino)' : 'Aguardando...'), false);
         this.updateRosterCursors();
     }
 
@@ -645,17 +648,6 @@ export class CharacterSelectScene extends Phaser.Scene {
             fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
         this.countdownBanner.add(this.countdownTxt);
-
-        // Botão Dev Solo (Canto Inferior Direito)
-        this.btnSolo = createSmoothButton(this, width - 95, 608, 115, 32, '⚡ Iniciar Solo', {
-            radius: 16,
-            fillColor: 0x323a48,
-            hoverFillColor: 0x3e4758,
-            strokeColor: 0x526075,
-            textColor: '#cbd5e1',
-            fontSize: '11px',
-            onClick: () => this.forceStartMatch()
-        });
     }
 
     setupFirebaseSync() {
@@ -695,6 +687,8 @@ export class CharacterSelectScene extends Phaser.Scene {
                 }
                 sessionStorage.removeItem('labcombat_room_id');
                 sessionStorage.removeItem('labcombat_player_id');
+                // Sala sumiu/encerrou com o jogador dentro (dono saiu ou GM limpou)
+                sessionStorage.setItem('labcombat_room_notice', '⚠️ A sala foi encerrada pelo organizador.');
                 this.scene.start('MenuScene');
                 return;
             }
@@ -714,7 +708,9 @@ export class CharacterSelectScene extends Phaser.Scene {
                 const oppNick = oppData.nickname || (oppKey === 'p1' ? 'Jogador 1' : 'Jogador 2');
                 this.refreshFighterDisplay(oppKey, this.oppProfessorId, oppNick, !!oppData.ready);
             } else {
-                this.refreshFighterDisplay(oppKey, oppKey === 'p1' ? 'so' : 'web', 'Aguardando...', false);
+                // Sala de treino: o slot P2 é o bot Coringa desde o início — mostra
+                // o nome dele, nunca o flash de 'web'/'Aguardando...'
+                this.refreshFighterDisplay(oppKey, this.opponentIsBot ? 'coringa' : (oppKey === 'p1' ? 'so' : 'web'), this.opponentIsBot ? '🃏 Professor Coringa' : 'Aguardando...', false);
             }
 
             if (myData) {
@@ -726,7 +722,8 @@ export class CharacterSelectScene extends Phaser.Scene {
 
             // Gerenciamento de Contagem Regressiva Sincronizada
             const p1Ready = data.p1 && data.p1.ready;
-            const p2Ready = data.p2 && data.p2.ready;
+            // Bot Coringa do treino é sempre pronto: o countdown depende só do jogador
+            const p2Ready = data.p2 && (data.p2.ready || data.p2.isBot === true);
 
             if (p1Ready && p2Ready) {
                 // PRÉ-CARREGA o catálogo assim que os dois dão pronto (por
@@ -823,62 +820,6 @@ export class CharacterSelectScene extends Phaser.Scene {
     async getQuestionPool() {
         const professorIds = [this.selectedProfessorId, this.oppProfessorId].filter(Boolean);
         return loadQuestionBanks(professorIds);
-    }
-
-    async forceStartMatch() {
-        if (this.hasStarted || this.isStartingMatch) return;
-        this.isStartingMatch = true;
-
-        logEvent('game', `[Sala ${this.roomId}] Forçando início de partida solo.`);
-
-        // Solo: o oponente é sempre o Coringa → catálogo = todos os bancos
-        const questionPool = await loadQuestionBanks([this.selectedProfessorId, 'coringa']);
-        if (questionPool.length === 0) {
-            this.isStartingMatch = false;
-            this.statusText?.setText('❌ O GM ainda não publicou questões para estes professores.').setVisible(true);
-            return;
-        }
-        const randomQ = questionPool[Math.floor(Math.random() * questionPool.length)];
-        const roomRef = ref(db, `rooms/${this.roomId}`);
-        
-        let devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10);
-        if (!devStartDelay || devStartDelay === 30) devStartDelay = 10;
-        const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
-
-        const randomArena = getRandomArena();
-        const oppKey = this.playerId === 'p1' ? 'p2' : 'p1'; // sempre o outro lado
-        // Sé as regras da sala exigem uid ao criar o slot do oponente
-        const myUid = getAuthenticatedUser()?.uid || null;
-        const coringaNick = '🃏 Professor Coringa';
-        update(roomRef, {
-            arenaId: randomArena.id,
-            [`${this.playerId}/characterId`]: this.selectedProfessorId,
-            [`${this.playerId}/nickname`]: this.nickname,
-            // Solo: oponente é SEMPRE o Coringa (mistura de todas as disciplinas)
-            // isBot marca a partida como treino: SEM LP no ranking
-            [`${oppKey}/characterId`]: 'coringa',
-            [`${oppKey}/nickname`]: coringaNick,
-            [`${oppKey}/uid`]: myUid,
-            [`${oppKey}/isBot`]: true,
-            'p1/hp': 100, 'p1/charges': 0, 'p1/hasShield': false, 'p1/hasTryCatch': false,
-            'p1/answered': false, 'p1/answeredAt': null, 'p1/answerCorrect': null,
-            'p2/hp': 100, 'p2/charges': 0, 'p2/hasShield': false, 'p2/hasTryCatch': false,
-            'p2/answered': false, 'p2/answeredAt': null, 'p2/answerCorrect': null,
-            state: 'in_match',
-            round: 1,
-            roundModifier: 'normal',
-            roundResolved: false,
-            matchStartDelay: devStartDelay,
-            questionTimeLimit: devQuestionLimit,
-            currentQuestionId: randomQ.id,
-            questionStartedAt: serverTimestamp(),
-            countdownStartTime: null,
-            matchStartTime: null
-        }).then(() => {
-            this.startGame(randomArena.id);
-        }).catch(() => {
-            this.startGame(randomArena.id);
-        });
     }
 
     startGame(arenaId = null) {

@@ -144,8 +144,8 @@ export class MenuScene extends Phaser.Scene {
         // 4. Painel de Ranking expandido (oculto; abre pelo botão 🏆 da dock)
         this.createRankingPanel();
 
-        // 4.5. Banner de status/feedback (mensagens de sala)
-        this.statusText = createSmoothBanner(this, lobbyCenterX, 500, '', { 
+        // 4.5. Banner de status/feedback (abaixo dos botões flutuantes)
+        this.statusText = createSmoothBanner(this, lobbyCenterX, 656, '', { 
             radius: 14,
             fillColor: 0x242a35,
             strokeColor: 0x475569,
@@ -157,6 +157,14 @@ export class MenuScene extends Phaser.Scene {
             paddingY: 6
         }).setVisible(false);
 
+        // Aviso de sala encerrada (MainScene/CharacterSelectScene gravam a chave
+        // quando a sala some com o jogador dentro — ex.: GM limpou salas).
+        const roomNotice = sessionStorage.getItem('labcombat_room_notice');
+        if (roomNotice) {
+            sessionStorage.removeItem('labcombat_room_notice');
+            this.statusText.setText(roomNotice).setStyle({ fill: '#f87171' }).setVisible(true);
+            this.time.delayedCall(8000, () => this.statusText?.setVisible(false));
+        }
         // 7. Botão discreto de Acesso Professor / GM (Suave)
         this.adminAccessButton = createSmoothButton(this, width - 90, 620, 110, 28, '🛡️ Modo GM', {
             radius: 14,
@@ -185,6 +193,13 @@ export class MenuScene extends Phaser.Scene {
         this.handleSubmitRoomCode = this.handleJoinSubmit.bind(this);
         window.addEventListener('submit-room-code', this.handleSubmitRoomCode);
 
+        // Fluxo do modal Multiplayer: o modal DOM já se fechou antes de
+        // disparar o evento — aqui só chama a rota certa, sem guardas.
+        this.handleMultiplayerCreate = () => this.createRoom();
+        this.handleMultiplayerJoin = () => this.showJoinOverlay();
+        window.addEventListener('mp-create-room', this.handleMultiplayerCreate);
+        window.addEventListener('mp-join-room', this.handleMultiplayerJoin);
+
         // Listener para Dev Reset de qualquer lugar
         this.handleDevReset = () => {
             sessionStorage.clear();
@@ -195,6 +210,8 @@ export class MenuScene extends Phaser.Scene {
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
             window.removeEventListener('submit-room-code', this.handleSubmitRoomCode);
             window.removeEventListener('dev-reset', this.handleDevReset);
+            window.removeEventListener('mp-create-room', this.handleMultiplayerCreate);
+            window.removeEventListener('mp-join-room', this.handleMultiplayerJoin);
             window.removeEventListener('admin-access-changed', this.handleAdminAccessChanged);
             if (this.handleNicknameChanged) {
                 window.removeEventListener('nickname-changed', this.handleNicknameChanged);
@@ -227,20 +244,19 @@ export class MenuScene extends Phaser.Scene {
         else window.dispatchEvent(new CustomEvent('open-account-modal', { detail: { register: true } }));
     }
 
-    // Dock inferior de ações (layout "dock"): tela limpa com a arte do campus,
-    // ações concentradas numa doca no rodapé: Criar / Entrar / 🏆 Ranking / 📜 Regras
+    // Ações do lobby: botões livres NO CANVAS (sem dock de fundo), um pouco acima da base.
     createDock() {
         const width = this.scale.width;
-        const dockW = Math.min(width - 80, 920);
-        const dockH = 124;
-        const dockY = 720 - 24 - dockH / 2;   // 24px de respiro do rodapé
+        const dockW = Math.min(width - 60, 1010);
+        const dockH = 100;
+        const dockY = 720 - 150 - dockH / 2;   // sobe os botões (eram 24px — agora 150px)
 
+        // Container posicionador SEM fundo visível (fillAlpha 0, sem borda)
         const dock = createSmoothCard(this, width / 2, dockY, dockW, dockH, {
             radius: 22,
             fillColor: 0x161c26,
-            fillAlpha: 0.95,
-            strokeColor: 0x475569,
-            strokeWidth: 1.5
+            fillAlpha: 0,
+            strokeWidth: 0
         });
 
         const guard = (fn) => () => {
@@ -249,7 +265,7 @@ export class MenuScene extends Phaser.Scene {
         };
 
         const btnW = 250, btnS = 150, btnH = 88, gap = 22;
-        let cx = -(btnW * 2 + btnS * 2 + gap * 3) / 2;
+        let cx = -(btnW + btnS * 3 + gap * 3) / 2;
         const addBtn = (w, text, opts) => {
             const b = createSmoothButton(this, cx + w / 2, 0, w, btnH, text, opts);
             cx += w + gap;
@@ -257,30 +273,26 @@ export class MenuScene extends Phaser.Scene {
             return b;
         };
 
-        // 1. Criar Sala (Host / P1) — azul
-        addBtn(btnW, '⚔️ CRIAR SALA (1P)', {
+        // 1. Jogar Multiplayer — azul (abre o modal Criar/Entrar, #multiplayer-overlay)
+        addBtn(btnW, '⚔️ MULTIPLAYER (2P)', {
             fillColor: 0x1d3a6e,
             hoverFillColor: 0x2563eb,
             strokeColor: 0x3b82f6,
             hoverStrokeColor: 0x93c5fd,
             textColor: '#dbeafe',
             fontSize: '16px',
-            onClick: guard(() => this.createRoom())
+            onClick: guard(() => window.dispatchEvent(new CustomEvent('open-multiplayer-modal')))
         });
 
-        // 2. Entrar em Sala (Client / P2) — vermelho
-        addBtn(btnW, '📡 ENTRAR EM SALA (2P)', {
-            fillColor: 0x5f1d1d,
-            hoverFillColor: 0xdc2626,
-            strokeColor: 0xef4444,
-            hoverStrokeColor: 0xfca5a5,
-            textColor: '#fee2e2',
-            fontSize: '16px',
-            onClick: guard(() => {
-                const overlay = document.getElementById('join-overlay');
-                if (overlay && overlay.style.display === 'flex') return;
-                this.showJoinOverlay();
-            })
+        // 2. 🎯 Modo Treino (solo vs Coringa) — âmbar
+        addBtn(btnS, '🎯 TREINO', {
+            fillColor: 0x422006,
+            hoverFillColor: 0x713f12,
+            strokeColor: 0xd97706,
+            hoverStrokeColor: 0xfbbf24,
+            textColor: '#fde68a',
+            fontSize: '13px',
+            onClick: guard(() => this.createTrainingRoom())
         });
 
         // 3. 🏆 Ranking — âmbar, abre o painel expandido (createRankingPanel)
@@ -539,6 +551,85 @@ export class MenuScene extends Phaser.Scene {
                 ownerUid,
                 authProvider: access.user.isAnonymous ? 'anonymous' : 'account'
             });
+            this.statusText.setText('❌ Erro de conexão com o banco de dados.').setStyle({ fill: '#ef4444' }).setVisible(true);
+        }
+    }
+
+    // Modo Treino: cria uma sala já com o bot Coringa no slot P2
+    // (não entra na lista pública — o isBot não é listável por padrão).
+    // A CharacterSelectScene recebe opponentBot pra já exibir o Coringa.
+    async createTrainingRoom() {
+        const access = await ensureGuestAuth();
+        if (!access.success) {
+            this.statusText?.setText(`❌ ${access.message}`).setVisible(true);
+            return;
+        }
+        this.statusText.setText('⏳ Preparando sala de treino...').setStyle({ fill: '#facc15' }).setVisible(true);
+
+        const roomId = this.generateRoomCode();
+        const roomRef = ref(db, `rooms/${roomId}`);
+        const ownerUid = access.user.uid;
+        const devStartDelay = parseInt(localStorage.getItem('dev_start_delay'), 10) || 10;
+        const devQuestionLimit = parseInt(localStorage.getItem('dev_question_limit'), 10) || 15;
+        const maxHp = parseInt(localStorage.getItem('dev_max_hp'), 10) || 100;
+
+        logEvent('room', `[Treino] Sala de treino "${roomId}" para "${this.playerNickname}" (vs Coringa).`);
+
+        try {
+            await set(roomRef, {
+                ownerUid,
+                maxHp,
+                isTraining: true,
+                p1: {
+                    nickname: this.playerNickname,
+                    clientId: tabInstanceId,
+                    uid: ownerUid,
+                    hp: maxHp,
+                    charges: 0, hasShield: false, hasTryCatch: false,
+                    lives: 3, streak: 0, answered: false,
+                    characterId: 'so', ready: false
+                },
+                p2: {
+                    nickname: '🃏 Professor Coringa',
+                    clientId: 'bot-coringa',
+                    uid: ownerUid,
+                    hp: maxHp,
+                    charges: 0, hasShield: false, hasTryCatch: false,
+                    lives: 3, streak: 0, answered: false,
+                    characterId: 'coringa', ready: false,
+                    isBot: true
+                },
+                round: 0,
+                roundModifier: 'normal',
+                roundResolved: false,
+                currentQuestionId: null,
+                questionStartTime: null,
+                matchStartDelay: devStartDelay,
+                questionTimeLimit: devQuestionLimit,
+                createdAt: Date.now()
+            });
+
+            // Treino: o bot Coringa não reconecta — se o host (único humano) cair
+            // ou der F5, a sala deixa de fazer sentido e é removida de vez pelo
+            // onDisconnect da sala inteira (multiplayer NÃO faz isso — a sala
+            // sobrevive porque o oponente humano pode ainda estar nela).
+            try { await onDisconnect(roomRef).remove(); } catch (e) {}
+
+            sessionStorage.setItem('labcombat_room_id', roomId);
+            sessionStorage.setItem('labcombat_player_id', 'p1');
+            sessionStorage.setItem('labcombat_nickname', this.playerNickname);
+            this.registerPlayerSession(roomId, 'p1', this.playerNickname);
+            this.registerPlayerSession(roomId, 'p1', this.playerNickname);
+
+            this.scene.start('CharacterSelectScene', {
+                roomId,
+                playerId: 'p1',
+                nickname: this.playerNickname,
+                opponentBot: true
+            });
+        } catch (err) {
+            console.error('Erro ao criar sala de treino:', err);
+            logEvent('error', `[Erro Treino] Falha ao criar sala "${roomId}": ${err.message}`);
             this.statusText.setText('❌ Erro de conexão com o banco de dados.').setStyle({ fill: '#ef4444' }).setVisible(true);
         }
     }

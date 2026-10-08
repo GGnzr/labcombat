@@ -695,10 +695,12 @@
             <div id="join-left-col" style="width: 100%; flex-shrink: 0; display: flex; flex-direction: row; flex-wrap: wrap; gap: 12px; align-items: flex-end;">
             <!-- Campo Apelido -->
             <div style="flex: 1; min-width: 180px; text-align: left;">
-                <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">SEU APELIDO:</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                    <label style="color: #94a3b8; font-size: 11px; font-weight: bold;">SEU APELIDO:</label>
+                    <span id="join-nick-lock-note" style="display: none; font-size: 10px; color: #94a3b8;" title="Apelido da conta — mude pelo Perfil (👤) no menu">🔒 conta</span>
+                </div>
                 <input id="join-nickname-input" type="text" maxlength="20" placeholder="Ex: Jogador 2" 
-                       style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
-                <div id="join-nick-lock-note" style="display: none; margin-top: 4px; font-size: 10px; color: #94a3b8;">🔒 Apelido da sua conta — altere em Perfil (👤) no menu.</div>
+                       style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; height: 44px; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
             </div>
 
             <!-- Opção A: Inserir Código -->
@@ -706,7 +708,7 @@
                 <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">CÓDIGO DA SALA (4 CARACTERES):</label>
                 <div style="display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: stretch;">
                     <input id="room-input" type="text" placeholder="ABCD" maxlength="4"
-                           style="font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: bold; flex: 1; min-width: 0; box-sizing: border-box; padding: 8px 10px; text-align: center; text-transform: uppercase; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #facc15; outline: none;">
+                           style="font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: bold; flex: 1; min-width: 0; box-sizing: border-box; height: 44px; padding: 8px 10px; text-align: center; text-transform: uppercase; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #facc15; outline: none;">
                     <button id="btn-paste-code" type="button" style="flex-shrink: 0; width: 80px; padding: 0 8px; background: #1e293b; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; font-weight: bold; cursor: pointer; white-space: nowrap; font-size: 12px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
                         📋 Colar
                     </button>
@@ -812,6 +814,34 @@
             <div style="display: flex; gap: 8px;">
                 <button id="bug-send-btn" type="button" style="flex: 1; padding: 9px; background: linear-gradient(90deg, #b45309, #d97706); color: white; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">📨 Enviar relato</button>
                 <button id="bug-cancel-btn" type="button" style="padding: 9px 14px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 12px; font-weight: bold; cursor: pointer;">Cancelar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Multiplayer: Criar Sala ou Entrar em Sala (aberto pelo botão ⚔️ MULTIPLAYER da dock) -->
+    <div id="multiplayer-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
+        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.22); width: 640px; max-width: 96vw; box-sizing: border-box;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
+                <div style="text-align: left;">
+                    <h2 style="color: #f8fafc; margin: 0; font-size: 18px; font-weight: bold;">⚔️ Multiplayer Online</h2>
+                    <div style="color: #94a3b8; font-size: 11px;">Duelo 1v1 em tempo real — crie uma sala como host ou entre na de um amigo</div>
+                </div>
+                <button id="mp-close-x" type="button" title="Fechar" style="background: transparent; border: none; color: #ef4444; font-size: 15px; font-weight: bold; cursor: pointer;">✕</button>
+            </div>
+            <div style="display: flex; gap: 14px;">
+                <button id="mp-create-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #0d1f3c, #1e293b); border: 1.5px solid #2563eb; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
+                    <div style="font-size: 30px; margin-bottom: 6px;">⚔️</div>
+                    <div style="color: #60a5fa; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">CRIAR SALA (1P)</div>
+                    <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Você é o host. Compartilha o código de 4 letras e desafia um colega.</div>
+                </button>
+                <button id="mp-join-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #261616, #1e293b); border: 1.5px solid #dc2626; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
+                    <div style="font-size: 30px; margin-bottom: 6px;">📡</div>
+                    <div style="color: #f87171; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">ENTRAR EM SALA (2P)</div>
+                    <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Tens o código de um amigo? Entre para competir.</div>
+                </button>
+            </div>
+            <div style="margin-top: 12px; text-align: right;">
+                <button id="mp-cancel-btn" type="button" style="padding: 8px 14px; background: #334155; color: #cbd5e1; border: none; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Voltar ao Lobby</button>
             </div>
         </div>
     </div>
@@ -1289,7 +1319,7 @@
         // Cobre painel GM, conta/perfil, apelido, entrar em sala e ranking:
         // quando qualquer um estiver visível, body.modal-open desativa os
         // pointer-events do canvas (ver style.css) — nada "vaza" pro jogo.
-        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'bug-overlay', 'orientation-prompt'];
+        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'bug-overlay', 'multiplayer-overlay', 'orientation-prompt'];
         const __overlayObserver = new MutationObserver(() => {
             const anyVisible = overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -1487,6 +1517,32 @@
         if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', closeRulesModal);
         if (rulesCloseBtn2) rulesCloseBtn2.addEventListener('click', closeRulesModal);
         if (rulesOverlay) rulesOverlay.addEventListener('click', (e) => { if (e.target === rulesOverlay) closeRulesModal(); });
+
+        // ===== Modal Multiplayer: Criar / Entrar em Sala (botão ⚔️ MULTIPLAYER da dock) =====
+        const mpOverlay = document.getElementById('multiplayer-overlay');
+        const mpCloseX = document.getElementById('mp-close-x');
+        const mpCancelBtn = document.getElementById('mp-cancel-btn');
+        const mpCreateBtn = document.getElementById('mp-create-btn');
+        const mpJoinBtn = document.getElementById('mp-join-btn');
+        function closeMpModal() { if (mpOverlay) mpOverlay.style.display = 'none'; }
+        window.addEventListener('open-multiplayer-modal', () => {
+            if (mpOverlay) mpOverlay.style.display = 'flex';
+        });
+        if (mpCloseX) mpCloseX.addEventListener('click', closeMpModal);
+        if (mpCancelBtn) mpCancelBtn.addEventListener('click', closeMpModal);
+        if (mpOverlay) mpOverlay.addEventListener('click', (e) => { if (e.target === mpOverlay) closeMpModal(); });
+        if (mpCreateBtn) {
+            mpCreateBtn.addEventListener('click', () => {
+                closeMpModal();
+                window.dispatchEvent(new CustomEvent('mp-create-room'));
+            });
+        }
+        if (mpJoinBtn) {
+            mpJoinBtn.addEventListener('click', () => {
+                closeMpModal();
+                window.dispatchEvent(new CustomEvent('mp-join-room'));
+            });
+        }
 
         // ===== Relatar Bug (jogador → GM): modal simples que grava em bugReports/ =====
         const bugOverlay = document.getElementById('bug-overlay');

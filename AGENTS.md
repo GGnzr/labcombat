@@ -101,7 +101,11 @@ Outros nós: `questionBanks/{professorId}` (única fonte de questões em partida
 reserva atômica por `claimNickname` no registro/troca, em auth.js)**, **`leaderboard/{uid}`
 (ranking: `{ nickname, points, wins, matches, subjects: {characterId: n},
 updatedAt }` — gravado por cada cliente no `showGameOver` da própria partida via
-`src/ranking.js`; visitantes sem conta não pontuam)**.
+`src/ranking.js`; visitantes sem conta não pontuam, e **partidas mistas (um dos
+lados é visitante) não pontuam para NINGUÉM — anti-farm: cada cliente só grava
+se o nó do oponente tiver `rankLabel`** (jogadores com conta gravam `rankLabel`
+na CharacterSelectScene; visitantes/anônimos não), e solo vs Coringa também não
+pontua (`isBot`)**.**
 Não existem `seasons` — "zerar temporada" = apagar o nó `leaderboard`.
 
 ### 4.2 Regras de ouro da sincronização (NÃO QUEBRAR)
@@ -117,10 +121,19 @@ Não existem `seasons` — "zerar temporada" = apagar o nó `leaderboard`.
 3. **onDisconnect**: cada jogador registra `rooms/{id}/{playerId}.remove()`; a
    desconexão do oponente dispara a contagem de **W.O. (15 s de graça)** →
    vitória por walkover.
-4. **Saída**: ao sair, **P1 remove a sala inteira**; **P2 remove só
-   `rooms/{id}/p2`**. O **espectador** (GM "👀 Assistir", entra com
+4. **Saída**: regra base — **P1 remove a sala inteira**; **P2 remove só
+   `rooms/{id}/p2`**. Exceções (MainScene.leaveToMenu): a) P1 saindo pelo botão
+   com a partida **em andamento** e oponente humano presente remove **só o
+   próprio nó `p1`** (abandono = mesmo efeito de fechar a aba: o P2 recebe a
+   vitória por W.O.; remover a sala seria rage-quit sem custo); b) P2 saindo de
+   sala **sem P1** (zumbi, pós-W.O.) herda a limpeza e remove a sala inteira.
+   Se o sobrevivente do W.O. for o P2, o painel não oferece "Aguardar Novo
+   Desafiante" (só o host recebe desafiante) — só o botão de voltar ao menu.
+   Sala que some/fecha com o jogador dentro (GM limpou, dono encerrou na
+   seleção) grava `sessionStorage labcombat_room_notice`, exibido 1x no lobby
+   pela MenuScene. O **espectador** (GM "👀 Assistir", entra com
    `playerId: 'spectator'`) **não remove nem escreve nada** — sem onDisconnect,
-   sem resposta, sem W.O., sem revanche. Inverter isso quebra reconexão e W.O.
+   sem resposta, sem W.O., sem revanche.
 5. **Sessão por aba**: `sessionStorage labcombat_tab_instance_id` (UUID) +
    `BroadcastChannel('labcombat-tab-presence')` evitam roubo de identidade entre
    abas; reconexão usa `clientId`/`labcombat_room_id`/`labcombat_player_id`.
@@ -142,6 +155,7 @@ jogador. Timeout conta como erro (`answeredChoice: -1`).
 | Ambos erram | −1 carga cada (mín. 0); quem tem `hasTryCatch` só consome o buff |
 | Ambos acertam | Disputa de velocidade (menor `answeredAt`; empate → P1). Mais rápido: +1 carga + bônus do modificador. **Sem dano** |
 | Só um acerta, loser tem try-catch | Consome o buff, **0 dano**, winner +1 carga |
+| **Treino vs Coringa**: jogador errou e bot não jogou | O bot entra como "acertou atrasado" e **contra-ataca** (resolveRound vira "só o bot acertou" → dano no jogador); o bot nunca ganha o speed-boost (answeredAt jogador + 1) |
 | Só um acerta, winner tinha 3 cargas (ULTIMATE) | Loser com escudo: escudo absorve (cargas zeram) · loser ≤33 HP: **K.O. (finisher)** · senão **−28 HP** e cargas zeram |
 | Só um acerta, sem ultimate | Ataque normal: loser com escudo bloqueia · senão **−15 HP**; winner +1 carga |
 
@@ -166,6 +180,13 @@ vagas na sala herdam o
 
 **Pós-partida**: `postMatchRequest` coordena revanche/troca de professor
 (ver MainScene §1.7 da exploração); recusar fecha a sala (`state:'closed'`).
+Se o oponente **sai da sala depois do resultado** (remove o próprio nó com a
+partida já encerrada), não há W.O. — o cliente que ficou mostra 1x o aviso
+"⚠️ \<NICK\> SAIU DA SALA" no painel de fim de jogo
+(`notifyOpponentLeftPostMatch` na MainScene), esconde os fluxos de revanche/
+troca pendentes e deixa só o botão de voltar ao menu; exceção: após vitória
+por W.O. (`isWalkoverWin`) o painel já informa o abandono e a sala continua
+aberta para novo desafiante.
 **Pedidos expiram em 15s sem resposta** (`POST_MATCH_TIMEOUT_MS` em
 MainScene): só o remetente exerce a expiração (grava `status:'expired'` +
 `state:'closed'`), e ambos veem o aviso e retornam ao menu (o countdown é
@@ -187,12 +208,18 @@ Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
   **Regra do Coringa**: se um dos lutadores é `coringa`, o catálogo vira a
   união dos bancos de TODOS os outros professores (ele não tem banco próprio)
   — expansão em `questionBank.resolveMatchProfessorIds()`. **Modo solo
-  (`forceStartMatch` da CharacterSelectScene): o oponente é sempre o Coringa**
-  (o script escreve `characterId:'coringa'` + apelido '🃏 Professor Coringa' no
-  slot do outro jogador e o pool de questões já nasce misturado).
+  (botão 🎯 TREINO do lobby): o oponente é sempre o Coringa** — a sala é
+  criada com o bot já no slot P2 (`isBot: true`), o countdown dispara só com
+  o pronto do jogador (o bot é sempre "pronto"), sem botão "Iniciar Solo".
+  (a CharacterSelectScene recebe a flag `opponentBot` e já renderiza o
+  Coringa de cara, sem flash Web→Coringa).
   **Solo não pontua:** o slot leva `isBot: true` e a MainScene pula
   `recordMatchResult` (zero LP/vitórias no leaderboard; o painel mostra
   "🃏 Modo Treino — não conta LP").
+  **Botão 🎯 TREINO da dock** (`createTrainingRoom` na MenuScene): cria a sala
+  já com o bot Coringa no slot P2 + flag `isTraining: true`, então a
+  CharacterSelectScene recebe `opponentBot` e exibe o Coringa desde o primeiro
+  frame — sem flash Web→Coringa.
   Catálogo vazio bloqueia o início (P1 loga erro e não sorteia).
 - Formato por questão: `{ id, text: string, options: string[≥2],
   correctIndex: int dentro do range }` — validado por `validateQuestionBank()`
@@ -256,6 +283,7 @@ index.html; as cenas se comunicam por **CustomEvents** (contrato testado em
 | `open-account-modal`, `open-gm-modal`, `open-join-modal`, `open-profile-modal`, `open-ranking-modal`, `open-rules-modal` | MenuScene | index.html |
 | `open-nickname-modal` | index.html (fluxo visitante) | index.html |
 | `open-bug-modal` | index.html (botão rodapé "🐛 Bug Report") | index.html |
+| `open-multiplayer-modal`, `mp-create-room`, `mp-join-room` | MenuScene ↔ index.html | modal ⚔️ MULTIPLAYER (Criar/Entrar) |
 | `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | MenuScene |
 | `dev-set-timers` | index.html | MainScene + MenuScene |
 | `dev-set-combat` (detail: `{dmgAttack, dmgSpecial, ultKoHp, maxHp, modChance, modHeal, lpWin, lpBonus, lpLoss}`) | index.html | MainScene |
@@ -278,7 +306,8 @@ localStorage: `dev_start_delay`, `dev_question_limit`, `dev_anim_walk_fps`,
 `labcombat_effects_volume`, `labcombat_music_volume`, `labcombat_muted`,
 `labcombat_effects_muted`, `labcombat_music_muted`, `labcombat_account_uid`.
 sessionStorage: `labcombat_nickname`, `labcombat_access_mode` ('guest'|'account'),
-`labcombat_room_id`, `labcombat_player_id`, `labcombat_tab_instance_id`.
+`labcombat_room_id`, `labcombat_player_id`, `labcombat_tab_instance_id`,
+`labcombat_room_notice` (aviso 1x no lobby quando a sala some com o jogador dentro).
 
 ## 9. Áudio (`SoundManager`, singleton exportado)
 
@@ -360,7 +389,9 @@ na mesma entrega**.
    `nowMs()` (offset do servidor).
 3. Não mude o shape de `rooms/{id}/p1|p2` sem atualizar: CharacterSelectScene,
    MainScene, index.html (join) e este doc, na mesma entrega.
-4. Não inverta a saída: P1 apaga a sala, P2 apaga só `rooms/{id}/p2`.
+4. Não inverta a saída: P1 apaga a sala, P2 apaga só `rooms/{id}/p2` —
+   **respeitando as exceções documentadas na §4.2 regra 4** (abandono
+   mid-match do P1 remove só `p1`; P2 limpa sala zumbi sem P1).
 5. Não torne o shuffle de respostas aleatório (seed determinística por sala/rodada).
 6. Não remova/renomeie frames de atlas usados: `idle`, `walk1..4`, `attack1`,
    `attack2`, `attack4`, `ult1..3`, `projetil`, `impacto`, `hit`, `defense` —

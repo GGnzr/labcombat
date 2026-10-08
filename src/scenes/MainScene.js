@@ -78,6 +78,8 @@ export class MainScene extends Phaser.Scene {
         this.woTimeout = null;
         this.woInterval = null;
         this.isWalkoverWin = false;
+        // Pós-jogo: aviso "oponente saiu da sala" exibido 1x no painel de fim de jogo
+        this.opponentLeftNotified = false;
 
         // Diferença entre o relógio local e o relógio do servidor Firebase (.info/serverTimeOffset).
         // Usada para sincronizar cronômetros entre os dois jogadores.
@@ -202,8 +204,8 @@ export class MainScene extends Phaser.Scene {
         // Largura adaptativa: garante que em telas 4:3, 16:9 ou ultrawide os cards NUNCA se sobreponham
         const maxCardWidth = Math.min(540, Math.floor((width - 40) / 2));
         const cardWidth = Math.max(360, maxCardWidth);
-        const p1CardX = Math.min(centerX - cardWidth / 2 - 10, Math.max(16 + cardWidth / 2, centerX - 345));
-        const p2CardX = Math.max(centerX + cardWidth / 2 + 10, Math.min(width - 16 - cardWidth / 2, centerX + 345));
+        const p1CardX = Math.min(centerX - cardWidth / 2 - 10, Math.max(16 + cardWidth / 2, centerX - 430));
+        const p2CardX = Math.max(centerX + cardWidth / 2 + 10, Math.min(width - 16 - cardWidth / 2, centerX + 430));
 
         const p1Left = p1CardX - cardWidth / 2;
         const p1Right = p1CardX + cardWidth / 2;
@@ -372,84 +374,97 @@ export class MainScene extends Phaser.Scene {
         this.add.rectangle(centerX, 575, width, 290, 0x1a202c);
 
         // Moldura interna do Terminal Arcade Neutro com cantos arredondados suaves
+        // ===== CONSOLE DE COMBATE (um painel só, estilo terminal) =====
+        // Painel principal É o próprio console — fundo escuro/verde, não
+        // um "fundo cinza com console por cima" (esse vício gerava 2 painéis).
         const termWidth = width - 32;
         const termGfx = this.add.graphics();
-        drawRoundedRect(termGfx, centerX - termWidth / 2, 437, termWidth, 276, 18, 0x242a35, 0.98, 0x475569, 1.5);
+        drawRoundedRect(termGfx, centerX - termWidth / 2, 437, termWidth, 276, 10, 0x050a08, 0.98, 0x14532d, 1.5);
 
-        // Faixa de cabeçalho do terminal
+        // Faixa de cabeçalho do console: mesma cor do corpo (sem "badge" verde) —
+        // fica só a linha divisória separando prompt/modificador/timer do conteúdo
         const termHeaderGfx = this.add.graphics();
-        drawRoundedRect(termHeaderGfx, centerX - termWidth / 2, 437, termWidth, 34, 14, 0x2d3544, 0.95, 0x475569, 1);
+        termHeaderGfx.lineStyle(1, 0x14532d, 1);
+        termHeaderGfx.lineBetween(centerX - termWidth / 2 + 10, 471, centerX + termWidth / 2 - 10, 471);
 
-        this.add.text(35, 454, '💻 TERMINAL DE COMBATE', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2,
-            padding: { top: 4, bottom: 4, left: 6, right: 6 }
+        // Prompt dinâmico da linha de comando — troca conforme a questão carregada:
+        // root@labcombat:~$ ./QUESTÃO-bd-45.SH
+        this.terminalCmdLine = this.add.text(35, 454, 'root@labcombat:~$ ./responder.sh', {
+            fontSize: '12px', fill: '#4ade80', fontStyle: 'bold', resolution: 2,
+            fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0.5);
 
-        // Cronômetro integrado perfeitamente ao cabeçalho (Cápsula Suave)
-        const timerContainer = createSmoothCard(this, centerX, 454, 160, 26, {
-            radius: 13,
-            fillColor: 0x1e2430,
-            strokeColor: 0xf59e0b,
-            strokeWidth: 1.2
-        });
-        this.timerText = this.add.text(0, 0, '⏱️ Tempo: --', { 
-            fontSize: '12px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
+        // Cronômetro: texto puro no TOPO central, entre os cards dos lutadores
+        this.timerText = this.add.text(centerX, 110, '⏱️ Tempo: --', {
+            fontSize: '20px', fill: '#fbbf24', fontStyle: '900', resolution: 2,
+            fontFamily: '"Cascadia Code", "Consolas", monospace',
+            stroke: '#000000', strokeThickness: 5,
+            shadow: { offsetX: 0, offsetY: 0, color: '#f59e0b', blur: 14, fill: true }
         }).setOrigin(0.5);
-        timerContainer.add(this.timerText);
 
         this.arenaIndicatorText = this.add.text(width - 24, 28, `🏟️ ${currentArena.name.toUpperCase()}`, {
             fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2,
             backgroundColor: '#1e293b', padding: { left: 8, right: 8, top: 5, bottom: 5 }
         }).setOrigin(1, 0.5);
 
-        this.questionIdText = this.add.text(35, 480, 'QUESTÃO: --', {
-            fontSize: '10px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
-        }).setOrigin(0, 0.5);
+        // (identificador da questão agora vai embutido no prompt; nenhum rótulo
+        // separado à direita do console)
+        this.questionIdText = null;
 
-        // Badge Modificador de Questão (Topo da Pergunta - Suave e Arredondado)
-        this.roundModifierBadge = createSmoothBanner(this, centerX, 480, '', {
-            radius: 12,
-            fontSize: '11px',
-            textColor: '#f59e0b',
-            fontStyle: 'bold',
-            paddingX: 14,
-            paddingY: 4
-        }).setVisible(false);
+        // Badge Modificador de Rodada: texto puro (emoji + texto) na mesma linha
+        // do prompt/cronômetro, sem pill/fundo — centro do espaço livre da faixa
+        const modBadgeX = (300 + (width - 180)) / 2;
+        this.roundModifierBadge = this.add.text(modBadgeX, 454, '', {
+            fontSize: '11px', fill: '#fbbf24', fontStyle: 'bold', resolution: 2,
+            fontFamily: '"Cascadia Code", "Consolas", monospace'
+        }).setOrigin(0.5).setVisible(false);
 
-        // Enunciado da questão (centralizado com leitura nítida e sem fundo poluído)
-        this.questionText = this.add.text(centerX, 506, '', { 
-            fontSize: '15px', fill: '#f8fafc', align: 'center', 
-            wordWrap: { width: Math.min(width - 80, 1180) }, fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0.5);
+        // Enunciado: dentro do console, logo abaixo da faixa do prompt
+        const termBgLeft = centerX - (Math.min(width - 60, 1210) / 2 + 14);
+        this.questionText = this.add.text(termBgLeft + 14, 484, '', { 
+            fontSize: '13.5px', fill: '#fbbf24', align: 'left', 
+            wordWrap: { width: Math.min(width - 60, 1210) - 28 }, fontStyle: 'bold', resolution: 2,
+            fontFamily: '"Cascadia Code", "Consolas", monospace'
+        }).setOrigin(0, 0);
 
-        // Botões de opções modernos e suaves com cantos arredondados
+        // Botões de opções: CONSOLE puro (proposta D) — linhas de shell com
+        // cursor ❯, numeração [1]–[4] âmbar e texto verde mono. Linha limpa por
+        // padrão; hover/seleção acende um fundo verde bem sutil (#062a1a).
         const btnWidth = Math.min(width - 60, 1210);
-        const btnHeight = 36;
+        const btnHeight = 38;
         this.optionButtons = [];
+
         for (let i = 0; i < 4; i++) {
-            const btn = this.add.container(centerX, 548 + (i * 40));
-            
-            // Fundo arredondado suave (radius: 12px)
+            const btn = this.add.container(centerX, 536 + (i * 40));
+
             const bgGfx = this.add.graphics();
-            const drawBtnBg = (fColor = 0x2d3544, sColor = 0x475569, sWidth = 1.5) => {
+            const drawBtnBg = (fColor = null, sColor = null) => {
                 bgGfx.clear();
-                drawRoundedRect(bgGfx, -btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 12, fColor, 0.96, sColor, sWidth);
+                if (fColor === null) return; // linha limpa (estilo console)
+                drawRoundedRect(bgGfx, -btnWidth / 2, -btnHeight / 2, btnWidth, btnHeight, 6, fColor, 1, sColor || null, sColor ? 1 : 0);
             };
-            drawBtnBg(0x2d3544, 0x475569, 1.5);
+            drawBtnBg(null);
 
-            // Badge com letra A, B, C, D com cantos arredondados
-            const badgeGfx = this.add.graphics();
-            drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x202734, 1, 0x475569, 1);
-            const badgeTxt = this.add.text(-btnWidth / 2 + 22, 0, String.fromCharCode(65 + i), {
-                fontSize: '11px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
-            }).setOrigin(0.5);
+            // Cursor de linha ❯ (só aparece no hover, como a linha ".cur" da proposta)
+            const cursorTxt = this.add.text(-btnWidth / 2 + 12, 0, '❯', {
+                fontSize: '13px', fill: '#22c55e', fontStyle: 'bold', resolution: 2,
+                fontFamily: '"Cascadia Code", "Consolas", monospace'
+            }).setOrigin(0, 0.5).setVisible(false);
+            btn.cursorTxt = cursorTxt;
 
-            // Texto da opção
-            const labelTxt = this.add.text(-btnWidth / 2 + 44, 0, '', {
-                fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2
+            // Prefixo [1]–[4] âmbar estilo shell
+            const numTxt = this.add.text(-btnWidth / 2 + 28, 0, `[${i + 1}]`, {
+                fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2,
+                fontFamily: '"Cascadia Code", "Consolas", monospace'
             }).setOrigin(0, 0.5);
 
-            btn.add([bgGfx, badgeGfx, badgeTxt, labelTxt]);
+            // Texto da opção (mono verde terminal)
+            const labelTxt = this.add.text(-btnWidth / 2 + 62, 0, '', {
+                fontSize: '13px', fill: '#4ade80', fontStyle: 'normal', resolution: 2,
+                fontFamily: '"Cascadia Code", "Consolas", monospace'
+            }).setOrigin(0, 0.5);
+
+            btn.add([bgGfx, cursorTxt, numTxt, labelTxt]);
 
             btn.setSize(btnWidth, btnHeight);
             btn.setInteractive({ useHandCursor: true });
@@ -470,22 +485,31 @@ export class MainScene extends Phaser.Scene {
                 if (styleObj.backgroundColor) {
                     const bg = styleObj.backgroundColor;
                     if (bg === '#16a34a' || bg === 0x16a34a) {
-                        drawBtnBg(0x14532d, 0x22c55e, 2);
-                        badgeGfx.clear();
-                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x16a34a, 1, 0x22c55e, 1);
-                        badgeTxt.setStyle({ fill: '#ffffff' });
+                        // Certo: linha piscando verde (blinkg da proposta D)
+                        drawBtnBg(0x14532d, 0x16a34a);
+                        cursorTxt.setVisible(true);
+                        numTxt.setStyle({ fill: '#4ade80' });
+                        labelTxt.setStyle({ fill: '#ffffff' });
+                        this.tweens.add({ targets: btn, alpha: { from: 1, to: 0.55 }, duration: 140, yoyo: true, repeat: 3 });
                     } else if (bg === '#dc2626' || bg === '#ef4444' || bg === 0xdc2626) {
-                        drawBtnBg(0x7f1d1d, 0xef4444, 2);
-                        badgeGfx.clear();
-                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0xdc2626, 1, 0xef4444, 1);
-                        badgeTxt.setStyle({ fill: '#ffffff' });
+                        // Errado: linha piscando vermelha (blinkr da proposta D)
+                        drawBtnBg(0x2a1216, 0xef4444);
+                        cursorTxt.setVisible(true);
+                        numTxt.setStyle({ fill: '#f87171' });
+                        labelTxt.setStyle({ fill: '#fecaca' });
+                        this.tweens.add({ targets: btn, alpha: { from: 1, to: 0.55 }, duration: 140, yoyo: true, repeat: 3 });
                     } else if (bg === '#374151' || bg === '#334155') {
-                        drawBtnBg(0x2d3544, 0xd97706, 2);
+                        // Timeout: linha apagada no console
+                        drawBtnBg(0x050a08, 0x1f2937);
+                        cursorTxt.setVisible(false);
+                        numTxt.setStyle({ fill: '#64748b' });
+                        labelTxt.setStyle({ fill: '#64748b' });
                     } else {
-                        drawBtnBg(0x2d3544, 0x475569, 1.5);
-                        badgeGfx.clear();
-                        drawRoundedRect(badgeGfx, -btnWidth / 2 + 10, -11, 24, 22, 6, 0x202734, 1, 0x475569, 1);
-                        badgeTxt.setStyle({ fill: '#f59e0b' });
+                        // Reset base: linha limpa do console
+                        drawBtnBg(null);
+                        cursorTxt.setVisible(false);
+                        numTxt.setStyle({ fill: '#f59e0b' });
+                        if (!styleObj.fill) labelTxt.setStyle({ fill: '#4ade80' });
                     }
                 }
                 return btn;
@@ -493,20 +517,34 @@ export class MainScene extends Phaser.Scene {
 
             btn.on('pointerover', () => {
                 if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
-                    drawBtnBg(0x374151, 0x60a5fa, 2);
-                    this.tweens.add({ targets: btn, scaleX: 1.01, scaleY: 1.01, duration: 80, ease: 'Power1' });
+                    drawBtnBg(0x062a1a); // hover sutil, como .row:hover da proposta
+                    cursorTxt.setVisible(true);
                 }
             });
             btn.on('pointerout', () => {
                 if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
-                    drawBtnBg(0x2d3544, 0x475569, 1.5);
-                    this.tweens.add({ targets: btn, scaleX: 1.0, scaleY: 1.0, duration: 80, ease: 'Power1' });
+                    drawBtnBg(null);
+                    cursorTxt.setVisible(false);
                 }
             });
             btn.on('pointerdown', () => this.handleAnswer(i));
 
             this.optionButtons.push(btn);
         }
+
+        // Rodapé do console: dica de uso (teclas 1–4 executam a resposta direto)
+        this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 688, '· tecle 1–4 ou clique na linha para executar a resposta', {
+            fontSize: '11px', fill: '#64748b', resolution: 2,
+            fontFamily: '"Cascadia Code", "Consolas", monospace'
+        }).setOrigin(0, 0.5);
+
+        // Teclado: 1–4 (linha numérica e numpad) executam a resposta imediatamente,
+        // como digitar o comando + Enter no console.
+        this.input.keyboard?.on('keydown', (ev) => {
+            const map = { '1': 0, '2': 1, '3': 2, '4': 3 };
+            const idx = map[ev.key];
+            if (idx != null && this.optionButtons[idx]?.input?.enabled) this.handleAnswer(idx);
+        });
 
         // Banner Central de Notificações de Combate (Suave e Arredondado)
         this.combatAlertBanner = createSmoothBanner(this, centerX, 220, '', {
@@ -926,9 +964,10 @@ export class MainScene extends Phaser.Scene {
         if (this.isWalkoverWin) {
             return this.enterWaitForChallenger();
         }
-        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
+        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname)
+            && this.latestData?.p2?.isBot !== true;   // bot Coringa: trata como modo solo
         if (!hasP2) {
-            // Modo solo: reinicia imediatamente sem pedir confirmação
+            // Sem oponente humano (solo ou treino): reinicia na hora, sem pedido
             return this.executeRematchDirectly();
         }
 
@@ -955,9 +994,10 @@ export class MainScene extends Phaser.Scene {
 
     async handleChangeProfessor() {
         if (!this.roomId) return;
-        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname);
+        const hasP2 = !!(this.latestData?.p2 && this.latestData.p2.nickname)
+            && this.latestData?.p2?.isBot !== true;   // bot Coringa: trata como modo solo
         if (!hasP2) {
-            // Modo solo: volta para a seleção direto, sem pedir confirmação
+            // Sem oponente humano (solo ou treino): volta direto à seleção
             return this.executeChangeProfessorDirectly();
         }
         // Se já há um pedido pendente do oponente, o painel de decisão cobre o clique
@@ -1375,10 +1415,30 @@ export class MainScene extends Phaser.Scene {
         }
         if (this.roomId && !this.isSpectator) {
             try {
+                const oppKey = this.playerId === 'p1' ? 'p2' : 'p1';
+                const oppNode = this.latestData?.[oppKey];
+                const matchInProgress = this.matchStartedEver && !this.isGameOver;
+                const oppIsHuman = !!oppNode && !oppNode.isBot;
+
                 if (this.playerId === 'p1') {
-                    await remove(ref(db, `rooms/${this.roomId}`));
+                    if (matchInProgress && oppIsHuman) {
+                        // Combate rolando: sair pelo botão = ABANDONO, igual a fechar
+                        // a aba — remove só o próprio nó e deixa o fluxo de W.O.
+                        // dar a vitória (e o LP) ao P2. Remover a sala inteira aqui
+                        // seria rage-quit sem custo (o P2 era jogado ao menu sem nada).
+                        logEvent('warn', `[Sala ${this.roomId}] Host abandonou a partida em andamento (botão sair).`, { playerId: 'p1' });
+                        await remove(ref(db, `rooms/${this.roomId}/p1`));
+                    } else {
+                        await remove(ref(db, `rooms/${this.roomId}`));
+                    }
                 } else if (this.playerId === 'p2') {
-                    await remove(ref(db, `rooms/${this.roomId}/p2`));
+                    if (!this.latestData?.p1) {
+                        // Sala zumbi (P1 já saiu): o P2 herda a limpeza para a sala
+                        // não ficar órfã no Firebase até o GM limpar.
+                        await remove(ref(db, `rooms/${this.roomId}`));
+                    } else {
+                        await remove(ref(db, `rooms/${this.roomId}/p2`));
+                    }
                 }
             } catch (err) {
                 console.error('Erro ao sair da sala:', err);
@@ -1674,6 +1734,9 @@ export class MainScene extends Phaser.Scene {
                 }
                 sessionStorage.removeItem('labcombat_room_id');
                 sessionStorage.removeItem('labcombat_player_id');
+                // Sala sumiu embaixo do jogador (GM limpou salas / dev-reset).
+                // Aviso é exibido uma vez no lobby pela MenuScene.
+                sessionStorage.setItem('labcombat_room_notice', '⚠️ A sala foi encerrada pelo organizador.');
                 this.scene.start('MenuScene');
             }
         });
@@ -1725,6 +1788,45 @@ export class MainScene extends Phaser.Scene {
         }
     }
 
+    // Pós-jogo: o oponente removeu o próprio nó da sala (saiu pelo menu ou
+    // caiu) DEPOIS do resultado. Sem este aviso o jogador que ficou não sabia
+    // do abandono — a tela mostrava só o painel "AGUARDANDO OPONENTE...".
+    notifyOpponentLeftPostMatch() {
+        // Não dispara após vitória por W.O.: aí o painel já diz que o oponente
+        // abandonou e a sala fica aberta de propósito ("Aguardar Novo Desafiante").
+        if (this.opponentLeftNotified || !this.isGameOver || this.isWalkoverWin) return;
+        this.opponentLeftNotified = true;
+
+        const oppKey = this.playerId === 'p1' ? 'p2' : 'p1';
+        const oppNick = (this.latestData?.[oppKey]?.nickname
+            || this.previousData?.[oppKey]?.nickname
+            || 'O oponente').toUpperCase();
+
+        logEvent('warn', `[Sala ${this.roomId}] O oponente saiu da sala após o fim da partida.`, {
+            playerId: this.playerId,
+            opponentNickname: oppNick
+        });
+
+        this.stopPostMatchCountdown?.();
+        // Esconde qualquer fluxo de revanche/troca pendente — não há mais ninguém
+        if (this.waitingBox) this.waitingBox.setVisible(false);
+        if (this.promptBox) this.promptBox.setVisible(false);
+        if (this.pausePanel) this.pausePanel.setVisible(false);
+
+        // Aviso permanente no painel de fim de jogo + botões de revanche viram "sair"
+        if (this.requestDeclinedBanner) {
+            this.requestDeclinedBanner
+                .setText(`⚠️ ${oppNick} SAIU DA SALA`)
+                .setVisible(true);
+        }
+        if (this.btnRematch) this.btnRematch.setVisible(false);
+        if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+        if (this.btnMainMenu) {
+            this.btnMainMenu.setPosition(0, 56);
+            this.btnMainMenu.setText('🏠 Voltar ao Menu');
+        }
+    }
+
     handleOpponentDisconnect() {
         if (this.isGameOver || this.isLeaving) return;
         this.cancelWalkoverCountdown();
@@ -1753,12 +1855,24 @@ export class MainScene extends Phaser.Scene {
         if (this.goSubText) this.goSubText.setText(`${oppNick} abandonou o duelo. A vitória é sua!\nA sala continua aberta para um novo desafiante.`).setStyle({ fill: '#e2e8f0' });
         this.timerText.setText('Vitória por W.O.');
 
-        // A sala NÃO é finalizada: oferece aguardar novo desafiante
-        if (this.btnRematch) this.btnRematch.setText('⏳ Aguardar Novo Desafiante');
-        if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
-        if (this.btnMainMenu) {
-            this.btnMainMenu.setPosition(125, 118);
-            this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
+        // A sala NÃO é finalizada: oferece aguardar novo desafiante — MAS só o
+        // host (P1) pode receber novo desafiante. Se o sobrevivente é o P2 (o
+        // host abandonou), só resta sair; a saída apaga a sala zumbi.
+        if (this.playerId === 'p1') {
+            if (this.btnRematch) this.btnRematch.setText('⏳ Aguardar Novo Desafiante');
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
+            }
+        } else {
+            if (this.goSubText) this.goSubText.setText(`${oppNick} abandonou o duelo. A vitória é sua!`).setStyle({ fill: '#e2e8f0' });
+            if (this.btnRematch) this.btnRematch.setVisible(false);
+            if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
+            if (this.btnMainMenu) {
+                this.btnMainMenu.setPosition(0, 56);
+                this.btnMainMenu.setText('🏠 Voltar ao Menu');
+            }
         }
     }
 
@@ -2077,6 +2191,8 @@ export class MainScene extends Phaser.Scene {
         this.lastProcessedQuestionId = null;
         this.lastProcessedRound = null;
         this.questionText.setText('');
+        this.questionText?.setVisible(false);   // limpa o enunciado do console
+        this.terminalCmdLine?.setVisible(true);  // prompt do console fica (mostra id quando tem questão)
         this.optionButtons.forEach(btn => {
             btn.setText('');
             btn.setStyle({ fill: '#fff', backgroundColor: '#1e293b' });
@@ -2085,8 +2201,8 @@ export class MainScene extends Phaser.Scene {
         if (this.roundModifierBadge) {
             this.roundModifierBadge.setVisible(false);
         }
+        this.timerText.setStyle({ fill: '#38bdf8', shadow: { offsetX: 0, offsetY: 0, color: '#38bdf8', blur: 14, fill: true } });
         this.timerText.setText('⏱️ Tempo: --');
-        this.timerText.setStyle({ fill: '#38bdf8', backgroundColor: '#1e293b' });
     }
 
     showCombatAlert(text, color = '#facc15') {
@@ -2139,6 +2255,16 @@ export class MainScene extends Phaser.Scene {
 
         const p1 = data.p1 || {};
         const p2 = data.p2 || {};
+
+        // Treino (oponente bot Coringa): se o jogador respondeu ERRADO e o bot
+        // não respondeu, o Coringa contra-ataca — entra como "acertou na
+        // sequência" (resolveRound vira "só o bot acertou": dano no jogador).
+        if (p2.isBot === true && p1.answered === true && p1.answerCorrect !== true && p2.answered !== true) {
+            p2.answered = true;
+            p2.answerCorrect = true;
+            p2.answeredChoice = -2;          // "resposta do bot" (não tem opção real)
+            p2.answeredAt = (p1.answeredAt || 0) + 1;  // atrasado: nunca ganha o speed-boost
+        }
 
         // Dano/limiar de K.O./HP máx: valem os da sala (gravados pelo P1 via
         // painel GM) ou os defaults locais — a resolução roda só no P1.
@@ -2615,19 +2741,19 @@ export class MainScene extends Phaser.Scene {
                 switch (data.roundModifier) {
                     case 'charge':
                         this.roundModifierBadge.setText('⚡ OVERCLOCK: +1 CARGA EXTRA AO ACERTAR PRIMEIRO')
-                            .setStyle({ fill: '#fef08a', backgroundColor: '#854d0e' });
+                            .setStyle({ fill: '#fef08a' });
                         break;
                     case 'shield':
                         this.roundModifierBadge.setText('🛡️ FIREWALL: GANHA ESCUDO QUE ANULA PRÓXIMO ATAQUE/ULTIMATE')
-                            .setStyle({ fill: '#bae6fd', backgroundColor: '#075985' });
+                            .setStyle({ fill: '#bae6fd' });
                         break;
                     case 'heal':
                         this.roundModifierBadge.setText(`💚 BACKUP: RESTAURA +${Number(data.modHeal) || this.MOD_HEAL} HP AO ACERTAR PRIMEIRO`)
-                            .setStyle({ fill: '#bbf7d0', backgroundColor: '#166534' });
+                            .setStyle({ fill: '#bbf7d0' });
                         break;
                     case 'try_catch':
                         this.roundModifierBadge.setText('🪲 TRY-CATCH: ANULA O PRÓXIMO ERRO SEM SOFRER DANO')
-                            .setStyle({ fill: '#f5d0fe', backgroundColor: '#86198f' });
+                            .setStyle({ fill: '#f5d0fe' });
                         break;
                     default:
                         this.roundModifierBadge.setVisible(false);
@@ -2652,17 +2778,33 @@ export class MainScene extends Phaser.Scene {
             const p1Blocked = prevP1Shield && !data.p1?.hasShield && p1Hp === prevP1Hp;
             const p2Blocked = prevP2Shield && !data.p2?.hasShield && p2Hp === prevP2Hp;
 
+            // Ordem visual dos golpes à distância: quando a rodada dispara um
+            // projétil (especial → ult1..3 aos ~300ms + projétil voa 340ms),
+            // o HIT no alvo espera o impacto (~700ms) — não a queda de HP.
+            const ultFiringNow = !!(data.ultimateWinner && !this.hasPlayedUltimateFinisher);
+            const specialFiringNow = !!(data.specialWinner && !data.ultimateWinner && (
+                data.specialWinner !== this.previousData.specialWinner || data.round !== this.previousData.round
+            ));
+            const hitDelay = (ultFiringNow || specialFiringNow) ? 700 : 0;
+            const playDelayed = (fighter, blocked) => {
+                if (hitDelay > 0) {
+                    this.time.delayedCall(hitDelay, () => this.playDamage(fighter, blocked));
+                } else {
+                    this.playDamage(fighter, blocked);
+                }
+            };
+
             if (p1Hp < prevP1Hp) {
-                this.playDamage(this.fighterP1, prevP1Shield);
-                this.cameras.main.shake(120, 0.008);
+                playDelayed(this.fighterP1, prevP1Shield);
+                if (!ultFiringNow) this.cameras.main.shake(120, 0.008);
             } else if (p1Blocked) {
-                this.playDamage(this.fighterP1, true);
+                playDelayed(this.fighterP1, true);
             }
             if (p2Hp < prevP2Hp) {
-                this.playDamage(this.fighterP2, prevP2Shield);
-                this.cameras.main.shake(120, 0.008);
+                playDelayed(this.fighterP2, prevP2Shield);
+                if (!ultFiringNow) this.cameras.main.shake(120, 0.008);
             } else if (p2Blocked) {
-                this.playDamage(this.fighterP2, true);
+                playDelayed(this.fighterP2, true);
             }
             const attackChanged = data.attackWinner && (
                 data.attackWinner !== this.previousData.attackWinner || data.round !== this.previousData.round
@@ -2723,9 +2865,19 @@ export class MainScene extends Phaser.Scene {
         if (!hasP1 || !hasP2) {
             this.isWaitingForOpponent = true;
             this.clearQuestion();
+
+            if (this.isGameOver || this.isSpectator) {
+                // Partida JÁ encerrada (ou espectador): sem W.O. — a partida teve
+                // resultado. Só avisa 1x no painel que o oponente saiu da sala;
+                // antes disso o jogador ficava em "AGUARDANDO OPONENTE..." sem
+                // saber do abandono (ex.: dono da sala guest após a luta).
+                this.notifyOpponentLeftPostMatch();
+                return;
+            }
+
             this.statusText.setText('Aguardando conexão do oponente...');
 
-            if (this.matchStartedEver && !this.isGameOver && !this.isSpectator) {
+            if (this.matchStartedEver) {
                 // O oponente caiu NO MEIO da partida: inicia a contagem de graça para W.O.
                 this.startWalkoverCountdown();
             } else {
@@ -2785,7 +2937,15 @@ export class MainScene extends Phaser.Scene {
         }
 
         // 5. Se ambos responderam: resolução da rodada e avanço sincronizado
-        if (data.p1 && data.p2 && data.p1.answered && data.p2.answered && !this.isGameOver) {
+        // No TREINO (oponente bot): o bot nunca responde — resolve NA HORA
+        // que o jogador humano respondeu, sem esperar o timeout da rodada.
+        // E se o jogador ERROU, o Coringa contra-ataca: entra como "acertou
+        // atrasado" (resolveRound vira "só o bot acertou" → ataque dele).
+        const isSoloBot = data.p2?.isBot === true;
+        const bothAnswered = isSoloBot
+            ? (data.p1 && data.p1.answered)   // treino: basta o humano responder
+            : (data.p1 && data.p2 && data.p1.answered && data.p2.answered);
+        if (bothAnswered && !this.isGameOver) {
             // Contagem local de erros do jogador (para o "perfect match" do
             // ranking). Dedup por rodada: vale também o timeout forçado pelo P1
             // (que grava answerCorrect=false para quem não respondeu).
@@ -2890,11 +3050,18 @@ export class MainScene extends Phaser.Scene {
         if (this.questionIdText) {
             this.questionIdText.setText(`QUESTÃO: ${questionData.id}`);
         }
-        this.questionText.setText(questionData.text);
+        // Linha de comando do console mostra a questão atual: root@labcombat:~$ ./QUESTÃO-web-12.SH
+        if (this.terminalCmdLine) {
+            const fileId = String(questionData.id).toUpperCase().replace(/[^A-Z0-9]+/g, '-');
+            this.terminalCmdLine.setText(`root@labcombat:~$ ./QUESTÃO-${fileId}.SH`);
+        }
+        this.questionText.setText(`$ questão: ${questionData.text}`);
+        this.questionText?.setVisible(true);     // mostra o enunciado dentro do console
+        this.terminalCmdLine?.setVisible(true);
 
         for (let i = 0; i < 4; i++) {
             this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${questionData.options[i]}`);
-            this.optionButtons[i].setStyle({ backgroundColor: '#2d3544', fill: '#ffffff' }); 
+            this.optionButtons[i].setStyle({ backgroundColor: '#2d3544', fill: null });  // (reset p/ estilo console)
             if (!this.isGameOver && !this.isSpectator) {
                 this.optionButtons[i].setInteractive(); 
             }
@@ -3003,6 +3170,16 @@ export class MainScene extends Phaser.Scene {
             this.showRankDeltaOnGameOver(null); // visitante: convite p/ criar conta
             return;
         }
+        // Regra anti-farm: só pontua LP em multiplayer quando AMBOS têm conta.
+        // Quem tem conta grava rankLabel no próprio nó da sala (CharacterSelectScene);
+        // visitante/anônimo não grava — então ausência de rankLabel no oponente
+        // = partida mista, não vale ranking para ninguém (o outro cliente
+        // enxerga a mesma coisa olhando o MEU nó).
+        const oppNode = roomData?.[oppKey] || {};
+        if (!oppNode.rankLabel) {
+            this.showRankDeltaOnGameOver('guest_opp');
+            return;
+        }
         const won = !!isWinner && !isTie;
         const me = roomData?.[this.playerId] || {};
         // LP da partida: valores da sala (definidos pelo P1 via painel GM) ou defaults locais
@@ -3036,6 +3213,14 @@ export class MainScene extends Phaser.Scene {
             // Modo solo (vs Professor Coringa): treino, não vale LP nem conta no ranking
             this.goRankText
                 .setText('🃏 Modo Treino (vs Coringa) — não conta LP no ranking')
+                .setStyle({ fill: '#94a3b8' })
+                .setVisible(true);
+            return;
+        }
+        if (summary === 'guest_opp') {
+            // Oponente sem conta: partida mista não vale LP para ninguém
+            this.goRankText
+                .setText('👤 Oponente sem conta — partida não conta LP no ranking')
                 .setStyle({ fill: '#94a3b8' })
                 .setVisible(true);
             return;
@@ -3134,7 +3319,7 @@ export class MainScene extends Phaser.Scene {
         }
 
         this.timerText.setText('Fim de Jogo');
-        this.timerText.setStyle({ fill: '#94a3b8', backgroundColor: '#1e293b' });
+        this.timerText.setStyle({ fill: '#94a3b8', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
 
         this.updatePostMatchRequestUI(data.postMatchRequest, data);
 
@@ -3269,13 +3454,13 @@ export class MainScene extends Phaser.Scene {
                 if (remaining > 0) {
                     this.timerText.setText(`⏱️ Tempo: ${remaining}s`);
                     if (remaining <= 5) {
-                        this.timerText.setStyle({ fill: '#ef4444', backgroundColor: '#450a0a' });
+                        this.timerText.setStyle({ fill: '#ef4444', shadow: { offsetX: 0, offsetY: 0, color: '#ef4444', blur: 14, fill: true } });
                         if (this.lastQuestionTick !== remaining) {
                             this.lastQuestionTick = remaining;
                             SoundManager.playTick();
                         }
                     } else {
-                        this.timerText.setStyle({ fill: '#38bdf8', backgroundColor: '#1e293b' });
+                        this.timerText.setStyle({ fill: '#38bdf8', shadow: { offsetX: 0, offsetY: 0, color: '#38bdf8', blur: 14, fill: true } });
                     }
                 } else {
                     this.timerText.setText('⏱️ Tempo: 0s');
@@ -3284,7 +3469,7 @@ export class MainScene extends Phaser.Scene {
             } else {
                 if (remaining > 0) {
                     this.timerText.setText(`⏳ Aguardando (${remaining}s)`);
-                    this.timerText.setStyle({ fill: '#94a3b8', backgroundColor: '#1e293b' });
+                    this.timerText.setStyle({ fill: '#94a3b8', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
                 } else {
                     this.timerText.setText('⏳ Processando...');
                 }
