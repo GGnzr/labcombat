@@ -375,7 +375,7 @@ Recomendamos a estratÃ©gia de **Licenciamento Misto (PadrÃ£o da IndÃºstria de Ga
 
 ## Backlog anotado (na~o-implementado ainda)
 
-### Pendente: Ranking completo com filtros e minha posição
+### Implementado (08/10/2026): Ranking completo com filtros e minha posição
 - Modal ??: busca por apelido, botão 'Ir para mim' (scroll até minha linha), resumo do topo com meu elo + 'faltam X LP pro próximo elo', paginação 50/página no Firebase, colunas V/D e winrate.
 - Lobby dock: manter Top 10 resumido; só compactar se sinalizar 50+/mais.
 - Impacto: lida bem com 100+ contas sem carregar tudo.
