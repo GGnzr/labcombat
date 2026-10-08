@@ -41,7 +41,7 @@ Para ativar o cadastro no projeto Firebase, abra **Authentication → Sign-in me
 - **Sistema de Cargas e Ultimate (⚡ 0 a 3 Cargas):**
   - Acertos acumulam cargas de energia para ataques especiais (máximo de 3 cargas).
   - Com **3 Cargas**, o próximo acerto dispara um **Super Golpe (-28 HP)** ou um devastador **Ultimate Finisher (K.O. instantâneo)** se o adversário estiver com 33 HP ou menos!
-- **Terminal de Respostas (estilo console):** A área de questões imita um terminal Linux: enunciado como `$ questão: ...`, opções em linhas `[1]`–`[4]` com cursor `❯` no hover e feedback piscante verde/vermelho. Responda clicando na linha **ou teclando 1–4**.
+- **Terminal de Respostas (estilo console):** A área de questões imita um terminal Linux: enunciado como `$ questão: ...`, opções em linhas `[1]`–`[4]` com cursor `❯` no hover e feedback piscante verde/vermelho. Responda clicando na linha, **teclando 1–4** (direto) ou navegando com **setas ↑↓ e confirmando com Enter**.
 - **HUD de combate:** Cronômetro estilo placar (com contorno e brilho que muda de cor: azul → vermelho nos 5s finais) entre os cards dos lutadores; o modificador da rodada aparece como texto no header do console.
 - **Disputa de Respostas por Rodada:**
   - **Apenas um acerta:** O acertador causa **-15 HP** de dano direto no rival e ganha +1 Carga.

@@ -465,6 +465,7 @@ export class MainScene extends Phaser.Scene {
             }).setOrigin(0, 0.5);
 
             btn.add([bgGfx, cursorTxt, numTxt, labelTxt]);
+            btn.drawRowBg = drawBtnBg; // expõe p/ navegação por teclado (setas)
 
             btn.setSize(btnWidth, btnHeight);
             btn.setInteractive({ useHandCursor: true });
@@ -523,8 +524,10 @@ export class MainScene extends Phaser.Scene {
             });
             btn.on('pointerout', () => {
                 if (!this.hasAnsweredLocal && !this.isGameOver && btn.input && btn.input.enabled) {
-                    drawBtnBg(null);
-                    cursorTxt.setVisible(false);
+                    // Respeita o cursor do teclado: não apaga a linha selecionada
+                    const kbActive = this.kbCursor === i;
+                    drawBtnBg(kbActive ? 0x062a1a : null);
+                    cursorTxt.setVisible(kbActive);
                 }
             });
             btn.on('pointerdown', () => this.handleAnswer(i));
@@ -532,18 +535,41 @@ export class MainScene extends Phaser.Scene {
             this.optionButtons.push(btn);
         }
 
-        // Rodapé do console: dica de uso (teclas 1–4 executam a resposta direto)
-        this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 688, '· tecle 1–4 ou clique na linha para executar a resposta', {
+        // Rodapé do console: dica de uso
+        this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 688, '· 1–4 responde direto · ↑↓ navega, Enter executa · ou clique na linha', {
             fontSize: '11px', fill: '#64748b', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0.5);
 
-        // Teclado: 1–4 (linha numérica e numpad) executam a resposta imediatamente,
-        // como digitar o comando + Enter no console.
+        // Teclado: 1–4 respondem na hora; ↑/↓ movem o cursor ❯; Enter/Enter
+        // "executa" a linha selecionada (estilo shell interativo).
+        this.kbCursor = -1;
         this.input.keyboard?.on('keydown', (ev) => {
             const map = { '1': 0, '2': 1, '3': 2, '4': 3 };
             const idx = map[ev.key];
-            if (idx != null && this.optionButtons[idx]?.input?.enabled) this.handleAnswer(idx);
+            if (idx != null && this.optionButtons[idx]?.input?.enabled) {
+                this.handleAnswer(idx);
+                return;
+            }
+            if (this.hasAnsweredLocal || this.isGameOver || this.isWaitingForOpponent || this.isSpectator) return;
+            if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
+                ev.preventDefault();
+                const next = this.kbCursor < 0
+                    ? (ev.key === 'ArrowDown' ? 0 : 3)
+                    : (ev.key === 'ArrowDown'
+                        ? Math.min(this.optionButtons.length - 1, this.kbCursor + 1)
+                        : Math.max(0, this.kbCursor - 1));
+                this.kbCursor = next;
+                this.optionButtons.forEach((b, i) => {
+                    if (!b.input?.enabled) return;
+                    const active = i === next;
+                    b.drawRowBg?.(active ? 0x062a1a : null);
+                    b.cursorTxt?.setVisible(active);
+                });
+            } else if ((ev.key === 'Enter' || ev.key === ' ') && this.kbCursor >= 0
+                && this.optionButtons[this.kbCursor]?.input?.enabled) {
+                this.handleAnswer(this.kbCursor);
+            }
         });
 
         // Banner Central de Notificações de Combate (Suave e Arredondado)
@@ -3066,6 +3092,7 @@ export class MainScene extends Phaser.Scene {
                 this.optionButtons[i].setInteractive(); 
             }
         }
+        this.kbCursor = -1; // nova questão: cursor do teclado volta a nada
 
         this.statusText.setText('Valendo!');
         this.statusText.setStyle({ fill: '#22c55e' });
