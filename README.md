@@ -20,12 +20,13 @@ Dois jogadores entram na arena, escolhem suas disciplinas/personagens favoritos 
 - **Entrada Descomplicada:** Entrada via código de 4 caracteres com botão rápido de colar da área de transferência.
 - **Proteção de Vagas (2/2):** Controle estrito de capacidade que impede que terceiros entrem ou derrubem jogadores já conectados.
 - **Limpeza Automática:** Gatilhos nativos de `onDisconnect` que limpam jogadores inativos e salas abandonadas.
+- **Anti rage-quit:** Desistir no meio da luta — pelo botão ou fechando a aba — tem o mesmo efeito: o oponente recebe a vitória por **W.O.** após 15s de graça. Salas órfãs são limpas pelo próprio jogador que sair por último.
 
 ### 🕹️ Seleção de Personagens (Estilo Arcade)
 - **Grid de Lutadores:** Escolha entre diferentes disciplinas da computação (Web & Mobile, Banco de Dados, Engenharia de Software, Redes, Programação Orientada a Objetos) e o imprevisível **Coringa**, que puxa questões de todas as matérias.
 - **Pré-visualização Dinâmica:** Sprites animados em repouso (Idle) e portraits retro.
 - **Confirmação Sincronizada:** Indicadores de "PRONTO" e início imediato do combate quando ambos os jogadores confirmam.
-- **Modo Solo para Testes:** Botão `⚡ Iniciar Solo` para testar as rodadas de perguntas diretamente sem precisar de um segundo jogador.
+- **Modo Treino:** Botão `🎯 TREINO` no lobby cria uma partida de treino contra o **Professor Coringa** (bot) — ideal para testar rodadas sem um segundo jogador. Partidas de treino **não valem LP no ranking**.
 
 ### 🔐 Contas e Modo Visitante
 - **Cadastro opcional:** Jogadores podem criar uma conta com e-mail, senha e apelido para manter seu perfil e estatísticas.
@@ -40,6 +41,8 @@ Para ativar o cadastro no projeto Firebase, abra **Authentication → Sign-in me
 - **Sistema de Cargas e Ultimate (⚡ 0 a 3 Cargas):**
   - Acertos acumulam cargas de energia para ataques especiais (máximo de 3 cargas).
   - Com **3 Cargas**, o próximo acerto dispara um **Super Golpe (-28 HP)** ou um devastador **Ultimate Finisher (K.O. instantâneo)** se o adversário estiver com 33 HP ou menos!
+- **Terminal de Respostas (estilo console):** A área de questões imita um terminal Linux: enunciado como `$ questão: ...`, opções em linhas `[1]`–`[4]` com cursor `❯` no hover e feedback piscante verde/vermelho. Responda clicando na linha **ou teclando 1–4**.
+- **HUD de combate:** Cronômetro estilo placar (com contorno e brilho que muda de cor: azul → vermelho nos 5s finais) entre os cards dos lutadores; o modificador da rodada aparece como texto no header do console.
 - **Disputa de Respostas por Rodada:**
   - **Apenas um acerta:** O acertador causa **-15 HP** de dano direto no rival e ganha +1 Carga.
   - **Duelo de Velocidade (Ambos acertam):** Quem responder em menor tempo vence a disputa de velocidade, recebendo +1 Carga e o bônus do modificador da rodada, enquanto o mais lento se defende sem sofrer dano.
@@ -50,6 +53,10 @@ Para ativar o cadastro no projeto Firebase, abra **Authentication → Sign-in me
   - 💚 **Backup:** Restaura **+10 HP** ao acertar primeiro.
   - ⚡ **Overclock:** Concede **+1 Carga extra** ao acertar primeiro.
 - **Temporizador Dinâmico:** Tempo por questão calibrado e sincronizado em tempo real com o painel do desenvolvedor.
+
+### 🏆 Ranking (LabPoints)
+- **LP e elos com divisões:** Vitória `+25 LP` (+5 de bônus por K.O. via ultimate ou "perfect match"), derrota `-10 LP`. Elos estilo LoL com 4 divisões: 🐣 Estagiário → ☕ Dev Júnior → 💻 Dev Pleno → 💎 Dev Sênior → 👑 Arquiteto.
+- **Regra anti-farm:** Só pontuam partidas multiplayer em que **os dois jogadores têm conta criada** — partidas contra visitantes e o modo treino não valem LP para ninguém.
 
 ## 🎮 Disciplinas / Personagens
 
@@ -109,9 +116,10 @@ Cada lutador representa uma disciplina fundamental da área de tecnologia:
 3. **Seleção de Personagens:**
    - Ambos os jogadores escolhem sua disciplina/personagem e clicam em **CONFIRMAR**.
 4. **O Combate:**
-   - Leia a pergunta técnica exibida na tela e clique na alternativa correta antes que o cronômetro expire.
+   - Leia a pergunta exibida no terminal e responda **clicando na linha ou teclando 1–4**, antes que o cronômetro expire.
    - Seja rápido: em caso de acerto mútuo, quem responder primeiro vence a disputa de velocidade da rodada.
    - Acumule 3 cargas para desferir o Ultimate Finisher. O primeiro a zerar os 100 HP do rival vence a batalha por K.O.!
+   - Se o adversário abandonar a luta, você vence por **W.O.** após 15 segundos de graça (vale para saída pelo botão ou por queda/fechamento da aba).
 
 ---
 
@@ -126,16 +134,17 @@ labcombat/
 ├── src/
 │   ├── scenes/
 │   │   ├── BootScene.js              # Pré-carregamento de assets
-│   │   ├── MenuScene.js              # Menu inicial e criação/busca de salas
+│   │   ├── MenuScene.js              # Lobby com dock (Criar/Entrar/Ranking/Regras + 🎯 Treino)
 │   │   ├── CharacterSelectScene.js   # Seleção arcade de lutadores
-│   │   └── MainScene.js              # Arena principal de combate e lógica do quiz
+│   │   └── MainScene.js              # Arena de combate, terminal de questões e lógica do quiz
 │   ├── auth.js               # Autenticação e controle de sessão do Game Master
 │   ├── firebase.js           # Inicialização e configuração do Firebase RTDB
 │   ├── game.js               # Configurações de escala e inicialização do Phaser
 │   ├── logger.js             # Sistema central de logs para o terminal GM
 │   ├── professors.js         # Dados e descrições dos lutadores
-│   ├── questions.js          # Banco de questões técnicas
-│   ├── style.css             # Estilos do jogo, sidebar GM e HUD
+│   ├── arenas.js             # Registro das arenas (cenários)
+│   ├── questionBank.js       # Banco de questões vindo do RTDB (por professor, com cache)
+│   ├── ranking.js            # LabPoints (LP), elos e gravação de resultados
 │   └── main.js               # Ponto de entrada da aplicação
 ├── index.html                # Estrutura HTML, painel GM e modais de entrada
 ├── package.json              # Dependências e scripts do projeto
