@@ -307,7 +307,7 @@ export class MenuScene extends Phaser.Scene {
         });
         btnRank.label.setY(-13);
         this.rankingDockSub = this.add.text(btnRank.x, 16, 'carregando...', {
-            fontSize: '10.5px', fill: '#cbd5e1', resolution: 2
+            fontSize: '11.5px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
         dock.add(this.rankingDockSub);
 
@@ -344,11 +344,11 @@ export class MenuScene extends Phaser.Scene {
 
         // Botão fechar (✕) no canto do painel
         card.add(this.add.text(W / 2 - 20, -H / 2 + 20, '✕', {
-            fontSize: '14px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '14px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerover', function () { this.setStyle({ fill: '#f1f5f9' }); })
-            .on('pointerout', function () { this.setStyle({ fill: '#94a3b8' }); })
+            .on('pointerout', function () { this.setStyle({ fill: '#cbd5e1' }); })
             .on('pointerdown', () => {
                 SoundManager.playClick();
                 this.toggleRankingPanel(false);
@@ -359,7 +359,7 @@ export class MenuScene extends Phaser.Scene {
             fontSize: '15px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 1, resolution: 2
         }).setOrigin(0.5));
         card.add(this.add.text(0, -H / 2 + 42, 'Top 10 por LabPoints (LP)', {
-            fontSize: '10px', fill: '#94a3b8', resolution: 2
+            fontSize: '11.5px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5));
 
         // Lista estilo pódio: 🥇 ouro grande, 🥈 prata médio, 🥉 bronze menor, resto normal
@@ -373,7 +373,7 @@ export class MenuScene extends Phaser.Scene {
             fontSize: s.fs, fill: s.color, fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0));
         const restText = this.add.text(-W / 2 + 14, podiumY + 84, 'Carregando...', {
-            fontSize: '11px', fill: '#cbd5e1', lineSpacing: 8, resolution: 2
+            fontSize: '12px', fill: '#cbd5e1', lineSpacing: 8, resolution: 2
         }).setOrigin(0, 0);
         card.add([...podiumTexts, restText]);
 
@@ -384,19 +384,19 @@ export class MenuScene extends Phaser.Scene {
         card.add(divider);
 
         card.add(this.add.text(0, 112, 'SEU ELO', {
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
+            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5));
         const youMain = this.add.text(0, 146, '', {
             fontSize: '17px', fill: '#f8fafc', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
         const youSub = this.add.text(0, 172, '', {
-            fontSize: '11px', fill: '#94a3b8', resolution: 2
+            fontSize: '12px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
         card.add([youMain, youSub]);
 
         // Link para o ranking geral (todas as posições, filtro por elo)
         card.add(this.add.text(0, 205, 'Ver ranking completo ›', {
-            fontSize: '11px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
+            fontSize: '12px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5)
             .setInteractive({ useHandCursor: true })
             .on('pointerover', function () { this.setStyle({ fill: '#7dd3fc' }); })

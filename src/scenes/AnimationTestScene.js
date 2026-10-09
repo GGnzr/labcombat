@@ -55,7 +55,7 @@ export class AnimationTestScene extends Phaser.Scene {
             fontSize: '23px', fill: '#f59e0b', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
         this.add.text(centerX, 58, 'Replica fiel do comportamento em jogo (frames, FPS e timings da batalha)', {
-            fontSize: '12px', fill: '#94a3b8', resolution: 2
+            fontSize: '12px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
 
         this.baseX = centerX - 150;   // posição de repouso do lutador
@@ -125,7 +125,7 @@ export class AnimationTestScene extends Phaser.Scene {
 
     createProfessorSelector(centerX) {
         this.add.text(centerX, 112, 'PERSONAGEM', {
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
         this.professorButtons = [];
@@ -170,13 +170,13 @@ export class AnimationTestScene extends Phaser.Scene {
             fontSize: '12px', fill: '#38bdf8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
         this.previewFrame = this.add.text(centerX, 236, '', {
-            fontSize: '10px', fill: '#64748b', resolution: 2
+            fontSize: '10px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
     }
 
     createControls(centerX) {
         this.add.text(centerX, 545, 'AÇÕES EM JOGO', {
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
         const controls = [
@@ -203,7 +203,7 @@ export class AnimationTestScene extends Phaser.Scene {
         });
 
         this.add.text(centerX, 652, 'Mesma lógica da MainScene: ataque avança e volta • hit/defesa piscam e tremem • especial = projetil 60% • ultimate = projetil cheio.', {
-            fontSize: '11px', fill: '#64748b', resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
     }
 

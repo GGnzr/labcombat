@@ -109,7 +109,7 @@
         }
         #orientation-prompt p {
           font-size: 13px;
-          color: #94a3b8;
+          color: #cbd5e1;
           max-width: 270px;
           line-height: 1.5;
           margin: 0 0 20px 0;
@@ -186,11 +186,11 @@
           <!-- Navegação por Abas (Tabs) -->
           <div style="display: flex; background: #0b1120; border-radius: 8px; padding: 3px; margin-bottom: 12px; border: 1px solid #1e293b;">
               <button id="tab-btn-controls" class="gm-tab-btn active" style="flex: 1; padding: 7px 4px; background: #1e293b; color: #38bdf8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🎮 Controles</button>
-              <button id="tab-btn-questions" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📝 Questões <span id="gm-questions-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
-              <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
-              <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
-              <button id="tab-btn-users" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">👥 Usuários <span id="gm-users-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
-              <button id="tab-btn-bugs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #94a3b8; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🐛 Bugs <span id="gm-bugs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-questions" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #cbd5e1; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📝 Questões <span id="gm-questions-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-rooms" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #cbd5e1; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📡 Salas <span id="gm-rooms-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-logs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #cbd5e1; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">📜 Logs <span id="gm-logs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-users" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #cbd5e1; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">👥 Usuários <span id="gm-users-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
+              <button id="tab-btn-bugs" class="gm-tab-btn" style="flex: 1; padding: 7px 4px; background: transparent; color: #cbd5e1; border: none; border-radius: 6px; font-size: 12px; font-weight: bold; cursor: pointer; transition: all 0.2s;">🐛 Bugs <span id="gm-bugs-count" style="font-size: 10px; background: #334155; padding: 1px 5px; border-radius: 8px; color: #cbd5e1;"></span></button>
           </div>
 
           <!-- ABA 1: CONTROLES DA PARTIDA -->
@@ -202,14 +202,14 @@
                       <label for="dev-start-delay" style="font-size: 12px;">Contagem Inicial:</label>
                       <div style="display: flex; align-items: center; gap: 5px;">
                           <input id="dev-start-delay" type="number" min="1" max="120" value="10" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
-                          <span style="font-size: 11px; color: #94a3b8;">seg</span>
+                          <span style="font-size: 11px; color: #cbd5e1;">seg</span>
                       </div>
                   </div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
                       <label for="dev-question-limit" style="font-size: 12px;">Tempo por Questão:</label>
                       <div style="display: flex; align-items: center; gap: 5px;">
                           <input id="dev-question-limit" type="number" min="3" max="120" value="15" style="width: 56px; background: #020617; color: #34d399; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
-                          <span style="font-size: 11px; color: #94a3b8;">seg</span>
+                          <span style="font-size: 11px; color: #cbd5e1;">seg</span>
                       </div>
                   </div>
                   <button id="dev-apply-timers-btn" style="width: 100%; padding: 7px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Tempos</button>
@@ -266,7 +266,7 @@
                   <div id="dev-lp-status" style="font-size: 11px; color: #c084fc; text-align: center; margin-top: 3px; min-height: 14px;"></div>
                   <hr style="border: none; border-top: 1px solid #334155; margin: 8px 0;">
                   <button id="gm-reset-season-btn" style="width: 100%; padding: 8px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;" title="Apaga o nó leaderboard do Firebase (LP, vitórias e elos) — irreversível!">⚠️ Zerar Temporada</button>
-                  <div id="gm-reset-season-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+                  <div id="gm-reset-season-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #cbd5e1; text-align: center;"></div>
               </div>
 
               <!-- 🗑️ Excluir Usuário (LGPD): GM apaga os dados do jogo pelo apelido -->
@@ -274,8 +274,8 @@
                   <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #f87171;">🗑️ Excluir Usuário (LGPD)</div>
                   <input id="gm-del-user-nick" type="text" maxlength="20" placeholder="Apelido exato do usuário" style="width: 100%; box-sizing: border-box; padding: 7px 9px; background: #020617; border: 1.5px solid #7f1d1d; border-radius: 6px; color: #fca5a5; outline: none; font-size: 12.5px; margin-bottom: 6px;">
                   <button id="gm-del-user-btn" style="width: 100%; padding: 8px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;" title="Remove perfil (users), ranking (leaderboard) e reserva de apelido">Apagar dados do usuário</button>
-                  <div id="gm-del-user-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
-                  <div style="font-size: 10px; color: #64748b; margin-top: 4px; line-height: 1.35;">⚠️ Apaga perfil+ranking+apelido no jogo. A conta de autenticação (Google/e-mail) só o próprio usuário exclui (Perfil) ou via painel do Firebase.</div>
+                  <div id="gm-del-user-status" style="min-height: 14px; margin-top: 4px; font-size: 11px; color: #cbd5e1; text-align: center;"></div>
+                  <div style="font-size: 10px; color: #cbd5e1; margin-top: 4px; line-height: 1.35;">⚠️ Apaga perfil+ranking+apelido no jogo. A conta de autenticação (Google/e-mail) só o próprio usuário exclui (Perfil) ou via painel do Firebase.</div>
               </div>
 
               <!-- 🎯 Sessão da Arena (cargas GM ficam na barra rápida #gm-quickbar em batalha) -->
@@ -286,7 +286,7 @@
 
               <!-- 🎞️ Velocidade das Animações -->
               <div style="background: #1e293b; padding: 10px; border-radius: 8px; border: 1px solid #334155;">
-                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #a855f7;">🎞️ Velocidade das Animações (FPS)</div>
+                  <div style="font-weight: bold; margin-bottom: 6px; font-size: 13px; color: #c084fc;">🎞️ Velocidade das Animações (FPS)</div>
                   <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
                       <label for="dev-anim-walk" style="font-size: 12px;">Walk (idle/run):</label>
                       <input id="dev-anim-walk" type="number" min="1" max="24" value="8" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
@@ -303,8 +303,8 @@
                       <label for="dev-anim-ult" style="font-size: 12px;">Ultimate (ult1→3):</label>
                       <input id="dev-anim-ult" type="number" min="1" max="24" value="7" style="width: 56px; background: #020617; color: #c084fc; border: 1px solid #475569; border-radius: 6px; padding: 4px 6px; text-align: center; font-size: 13px; font-weight: bold;">
                   </div>
-                  <button id="dev-apply-anim-btn" style="width: 100%; padding: 7px; background: #a855f7; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Velocidades</button>
-                  <div id="dev-anim-status" style="font-size: 11px; color: #a855f7; text-align: center; margin-top: 3px; min-height: 14px;"></div>
+                  <button id="dev-apply-anim-btn" style="width: 100%; padding: 7px; background: #7c3aed; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12.5px; font-weight: bold;">💾 Aplicar Velocidades</button>
+                  <div id="dev-anim-status" style="font-size: 11px; color: #c084fc; text-align: center; margin-top: 3px; min-height: 14px;"></div>
               </div>
           </div>
 
@@ -321,10 +321,10 @@
                           <option value="redes">Redes de Computadores</option>
                           <!-- Coringa não tem banco próprio: em jogo puxa questões de todos os outros -->
                       </select>
-                      <button id="gm-new-question-btn" style="padding: 7px 12px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">➕ Nova questão</button>
+                      <button id="gm-new-question-btn" style="padding: 7px 12px; background: #15803d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">➕ Nova questão</button>
                       <button id="gm-clear-bank-btn" style="padding: 7px 12px; background: #7f1d1d; color: #fca5a5; border: 1px solid #ef4444; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;" title="Apaga TODAS as questões do banco do professor selecionado">🗑️ Limpar banco</button>
                   </div>
-                  <div style="font-size: 10.5px; color: #64748b; margin-top: 6px;">🃏 O Coringa não aparece aqui de propósito: em jogo ele puxa questões de TODOS os professores.</div>
+                  <div style="font-size: 10.5px; color: #cbd5e1; margin-top: 6px;">🃏 O Coringa não aparece aqui de propósito: em jogo ele puxa questões de TODOS os professores.</div>
                   <input id="gm-q-search" class="qm-input" placeholder="🔍 Filtrar por texto..." style="margin-top: 8px;">
               </div>
 
@@ -332,7 +332,7 @@
               <div style="background: #1e293b; padding: 12px; border-radius: 8px; border: 1px solid #334155;">
                   <div style="font-weight: bold; margin-bottom: 8px; font-size: 13px; color: #f59e0b;">📦 Importar / Exportar Banco</div>
                   <div style="display: flex; gap: 14px; margin-bottom: 8px; font-size: 11.5px; color: #cbd5e1; flex-wrap: wrap;">
-                      <span style="color: #94a3b8; font-weight: bold;">Alvo:</span>
+                      <span style="color: #cbd5e1; font-weight: bold;">Alvo:</span>
                       <label style="display: flex; align-items: center; gap: 5px; cursor: pointer;">
                           <input type="radio" name="gm-import-target" value="single" checked style="accent-color: #38bdf8;">
                           Professor selecionado
@@ -342,26 +342,26 @@
                           Todos os professores (pacote)
                       </label>
                   </div>
-                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #94a3b8; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;">
+                  <input id="gm-question-file" type="file" accept="application/json,.json" style="width: 100%; color: #cbd5e1; font-size: 11px; margin-bottom: 8px; box-sizing: border-box;">
                   <div style="display: flex; gap: 6px;">
                       <button id="gm-upload-questions" style="flex: 1; padding: 8px; background: #b45309; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Publica o arquivo JSON no alvo escolhido acima (substitui)">⬆️ Publicar</button>
                       <button id="gm-download-questions" style="flex: 1; padding: 8px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;" title="Baixa o(s) banco(s) do alvo escolhido acima">⬇️ Baixar</button>
                   </div>
-                  <div id="gm-import-hint" style="font-size: 10.5px; color: #64748b; margin-top: 6px; line-height: 1.4;">
+                  <div id="gm-import-hint" style="font-size: 10.5px; color: #cbd5e1; margin-top: 6px; line-height: 1.4;">
                       💡 Exemplos de formato (clique em 📋 para copiar):<br>
                       <div style="display: flex; align-items: center; gap: 6px; margin-top: 3px;">
-                          <span style="color: #94a3b8; flex-shrink: 0;"><b>Professor selecionado</b> — array:</span>
-                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
+                          <span style="color: #cbd5e1; flex-shrink: 0;"><b>Professor selecionado</b> — array:</span>
+                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
                       </div>
-                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin: 3px 0 6px 0; white-space: pre; overflow-x: auto; color: #94a3b8;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]</code>
+                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin: 3px 0 6px 0; white-space: pre; overflow-x: auto; color: #cbd5e1;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }]</code>
                       <div style="display: flex; align-items: center; gap: 6px;">
-                          <span style="color: #94a3b8; flex-shrink: 0;"><b>Todos os professores</b> — lista única (o id carrega o professor):</span>
-                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }, { "id": "so-1", "text": "O que é uma classe?", "options": ["Molde de objeto", "Variável global"], "correctIndex": 0 }, { "id": "bd-1", "text": "O que é SQL?", "options": ["Linguagem de consulta", "Sistema operacional"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
+                          <span style="color: #cbd5e1; flex-shrink: 0;"><b>Todos os professores</b> — lista única (o id carrega o professor):</span>
+                          <button type="button" class="gm-copy-hint" data-copy='[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 }, { "id": "so-1", "text": "O que é uma classe?", "options": ["Molde de objeto", "Variável global"], "correctIndex": 0 }, { "id": "bd-1", "text": "O que é SQL?", "options": ["Linguagem de consulta", "Sistema operacional"], "correctIndex": 0 }]' style="flex-shrink: 0; background: #0f172a; border: 1px solid #475569; color: #cbd5e1; border-radius: 4px; cursor: pointer; font-size: 10px; padding: 2px 6px;">📋</button>
                       </div>
-                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin-top: 3px; white-space: pre; overflow-x: auto; color: #94a3b8;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 },
+                      <code style="display: block; background:#020617; padding: 4px 6px; border-radius: 4px; margin-top: 3px; white-space: pre; overflow-x: auto; color: #cbd5e1;">[{ "id": "web-1", "text": "O que é CSS?", "options": ["Folha de estilo", "Banco de dados"], "correctIndex": 0 },
  { "id": "so-1", "text": "O que é uma classe?", "options": ["Molde de objeto", "Variável global"], "correctIndex": 0 },
  { "id": "bd-1", "text": "O que é SQL?", "options": ["Linguagem de consulta", "Sistema operacional"], "correctIndex": 0 }]</code>
-                      <span style="color: #64748b;">Prefixos do id: <b>so</b> (POO), <b>eng_soft</b>, <b>web</b>, <b>bd</b>, <b>redes</b>. Baixar em "Todos" gera um único <b>questions-todos.json</b>.</span>
+                      <span style="color: #cbd5e1;">Prefixos do id: <b>so</b> (POO), <b>eng_soft</b>, <b>web</b>, <b>bd</b>, <b>redes</b>. Baixar em "Todos" gera um único <b>questions-todos.json</b>.</span>
                   </div>
                   <button id="gm-publish-base-questions" style="width: 100%; padding: 8px; background: #047857; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; margin-top: 6px;" title="Envia os arquivos assets/questions/*.json para o RTDB">📦 Publicar Bancos-base</button>
               </div>
@@ -370,21 +370,21 @@
               <div id="gm-q-editor" style="display: none; flex-direction: column; gap: 8px; background: #1e293b; padding: 12px; border-radius: 8px; border: 1.5px solid #a855f7;">
                   <div id="gm-q-editor-title" style="font-weight: bold; font-size: 13px; color: #d8b4fe;">➕ Nova questão</div>
                   <textarea id="gm-q-text" class="qm-input" rows="3" placeholder="Enunciado da questão..."></textarea>
-                  <div style="font-size: 11px; color: #94a3b8;">Opções (marque o ● da correta — gabarito):</div>
+                  <div style="font-size: 11px; color: #cbd5e1;">Opções (marque o ● da correta — gabarito):</div>
                   <div id="gm-q-options"></div>
-                  <button id="gm-q-add-option" style="align-self: flex-start; padding: 6px 10px; background: #0f172a; border: 1px solid #475569; color: #94a3b8; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">＋ Adicionar opção</button>
+                  <button id="gm-q-add-option" style="align-self: flex-start; padding: 6px 10px; background: #0f172a; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold;">＋ Adicionar opção</button>
                   <div id="gm-q-error" style="min-height: 14px; font-size: 11.5px; color: #f87171;"></div>
                   <div style="display: flex; gap: 8px;">
-                      <button id="gm-q-save" style="flex: 1; padding: 9px; background: #16a34a; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Salvar questão</button>
+                      <button id="gm-q-save" style="flex: 1; padding: 9px; background: #15803d; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">💾 Salvar questão</button>
                       <button id="gm-q-cancel" style="flex: 1; padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;">Cancelar</button>
                   </div>
               </div>
 
               <!-- Lista de questões do banco -->
               <div id="gm-questions-list" style="display: flex; flex-direction: column; gap: 6px;">
-                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Selecione um professor para carregar o banco.</div>
+                  <div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 12px;">Selecione um professor para carregar o banco.</div>
               </div>
-              <div id="gm-question-status" style="min-height: 18px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+              <div id="gm-question-status" style="min-height: 18px; font-size: 11px; color: #cbd5e1; text-align: center;"></div>
           </div>
 
           <!-- ABA 3: SALAS NO FIREBASE -->
@@ -401,7 +401,7 @@
               </div>
 
               <div id="dev-active-rooms-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; max-height: calc(100vh - 220px); background: #080d1a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px;">
-                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Carregando salas...</div>
+                  <div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 12px;">Carregando salas...</div>
               </div>
           </div>
 
@@ -411,7 +411,7 @@
                   <div style="font-size: 12px; color: #facc15; font-weight: bold;">📜 Console de Eventos</div>
                   <div style="display: flex; gap: 6px;">
                       <button id="dev-copy-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;">📋 Copiar</button>
-                      <button id="dev-clear-logs-btn" style="background: #334155; border: 1px solid #475569; color: #f87171; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;" title="Apaga só o histórico desta sessão (tela)">🗑️ Limpar local</button>
+                      <button id="dev-clear-logs-btn" style="background: #334155; border: 1px solid #475569; color: #fca5a5; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;" title="Apaga só o histórico desta sessão (tela)">🗑️ Limpar local</button>
                       <button id="dev-clear-logs-db-btn" style="background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 4px; cursor: pointer; padding: 4px 8px; font-size: 11px; font-weight: bold;" title="Apaga o nó logs/ do Firebase (irreversível — some para todos os GMs)">🗑️ Limpar BD</button>
                   </div>
               </div>
@@ -427,11 +427,11 @@
                   <input id="gm-users-search" type="text" placeholder="🔍 Filtrar por apelido ou e-mail..." style="flex: 1; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #e2e8f0; padding: 7px 10px; font-size: 12.5px; outline: none;">
                   <button id="gm-users-refresh" style="padding: 7px 12px; background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">🔄 Atualizar</button>
               </div>
-              <div id="gm-users-status" style="min-height: 14px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+              <div id="gm-users-status" style="min-height: 14px; font-size: 11px; color: #cbd5e1; text-align: center;"></div>
               <div id="gm-users-list" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 200px;">
-                  <div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>
+                  <div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>
               </div>
-              <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; font-size: 10.5px; color: #64748b; line-height: 1.4;">
+              <div style="background: #0f172a; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; font-size: 10.5px; color: #cbd5e1; line-height: 1.4;">
                   ⚠️ O botão 🗑️ apaga perfil, ranking e reserva de apelido <b>só no jogo</b>. A conta de login (Google/e-mail) só o próprio usuário exclui pelo Perfil ou pelo painel do Firebase (console).
               </div>
           </div>
@@ -443,9 +443,9 @@
                       <input id="gm-bugs-search" type="text" placeholder="🔍 Filtrar por apelido ou texto do bug..." style="flex: 1; background: #020617; border: 1.5px solid #475569; border-radius: 6px; color: #e2e8f0; padding: 7px 10px; font-size: 12.5px; outline: none;">
                       <button id="gm-bugs-refresh" style="padding: 7px 12px; background: #334155; border: 1px solid #475569; color: #f1f5f9; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: bold; white-space: nowrap;">🔄 Atualizar</button>
                   </div>
-                  <div id="gm-bugs-status" style="min-height: 14px; font-size: 11px; color: #94a3b8; text-align: center;"></div>
+                  <div id="gm-bugs-status" style="min-height: 14px; font-size: 11px; color: #cbd5e1; text-align: center;"></div>
                   <div id="gm-bugs-tickets" style="display: flex; flex-direction: column; gap: 6px; overflow-y: auto; flex: 1; min-height: 200px;">
-                      <div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>
+                      <div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>
                   </div>
               </div>
               <!-- Visão 2: Detalhe do ticket (abre ao clicar num ticket) -->
@@ -453,15 +453,15 @@
                   <div style="background: #1e293b; padding: 10px 12px; border-radius: 8px; border: 1.5px solid #f59e0b;">
                       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                           <div id="gm-bug-detail-title" style="font-size: 13px; font-weight: bold; color: #fbbf24;"></div>
-                          <div id="gm-bug-detail-when" style="font-size: 10.5px; color: #64748b;"></div>
+                          <div id="gm-bug-detail-when" style="font-size: 10.5px; color: #cbd5e1;"></div>
                       </div>
-                      <div id="gm-bug-detail-meta" style="font-size: 10.5px; color: #94a3b8; margin-bottom: 8px; line-height: 1.5;"></div>
+                      <div id="gm-bug-detail-meta" style="font-size: 10.5px; color: #cbd5e1; margin-bottom: 8px; line-height: 1.5;"></div>
                       <div id="gm-bug-detail-message" style="font-size: 12.5px; color: #e2e8f0; line-height: 1.5; white-space: pre-wrap; word-break: break-word; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 10px;"></div>
-                      <div style="font-size: 10px; color: #64748b; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Últimos logs do jogador</div>
-                      <div id="gm-bug-detail-logs" style="font-family: 'Cascadia Code', Consolas, monospace; font-size: 10px; color: #94a3b8; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 8px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;"></div>
+                      <div style="font-size: 10px; color: #cbd5e1; font-weight: bold; margin-top: 6px; text-transform: uppercase; letter-spacing: 0.5px;">Últimos logs do jogador</div>
+                      <div id="gm-bug-detail-logs" style="font-family: 'Cascadia Code', Consolas, monospace; font-size: 10px; color: #cbd5e1; background: #020617; border: 1px solid #1e293b; border-radius: 8px; padding: 8px; max-height: 120px; overflow-y: auto; white-space: pre-wrap; word-break: break-word;"></div>
                   </div>
                   <div style="display: flex; gap: 8px;">
-                      <button id="gm-bug-resolve-btn" style="flex: 1; padding: 9px; background: #16a34a; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: bold;">✓ Resolver (apagar ticket)</button>
+                      <button id="gm-bug-resolve-btn" style="flex: 1; padding: 9px; background: #15803d; color: white; border: none; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: bold;">✓ Resolver (apagar ticket)</button>
                       <button id="gm-bug-back-btn" style="flex: 1; padding: 9px; background: #334155; color: #cbd5e1; border: none; border-radius: 7px; cursor: pointer; font-size: 12.5px; font-weight: bold;">← Voltar à lista</button>
                   </div>
               </div>
@@ -472,12 +472,12 @@
     <!-- Barra rápida de GM em batalha (só visível com GM ativo, em MainScene e painel fechado) -->
     <div id="gm-quickbar">
         <div class="gm-qb-title">🛡️ GM</div>
-        <button id="dev-streak-plus" title="+1 Carga (habilita especial/ultimate)" style="background: #16a34a;"><span>➕</span>Carga</button>
-        <button id="dev-attack-enemy" title="Atacar inimigo (-20 HP)" style="background: #b91c1c;"><span>⚡</span>Atacar</button>
-        <button id="dev-special-btn" title="Disparar Especial (-28 HP, zera cargas)" style="background: #d97706;"><span>💥</span>Especial</button>
-        <button id="dev-ultimate-btn" title="Disparar ULTIMATE — K.O. imediato" style="background: #dc2626;"><span>🔥</span>Ultimate</button>
-        <button id="dev-skip-question" title="Pular para a próxima questão" style="background: #0284c7;"><span>⏭️</span>Pular</button>
-        <button id="dev-streak-minus" title="-1 Carga" style="background: #9333ea;"><span>➖</span>Carga</button>
+        <button id="dev-streak-plus" title="+1 Carga (habilita especial/ultimate)" style="background: #15803d; color: #fff;"><span>➕</span>Carga</button>
+        <button id="dev-attack-enemy" title="Atacar inimigo (-20 HP)" style="background: #b91c1c; color: #fff;"><span>⚡</span>Atacar</button>
+        <button id="dev-special-btn" title="Disparar Especial (-28 HP, zera cargas)" style="background: #b45309; color: #fff;"><span>💥</span>Especial</button>
+        <button id="dev-ultimate-btn" title="Disparar ULTIMATE — K.O. imediato" style="background: #dc2626; color: #fff;"><span>🔥</span>Ultimate</button>
+        <button id="dev-skip-question" title="Pular para a próxima questão" style="background: #0369a1; color: #fff;"><span>⏭️</span>Pular</button>
+        <button id="dev-streak-minus" title="-1 Carga" style="background: #9333ea; color: #fff;"><span>➖</span>Carga</button>
     </div>
 
     <!-- Botão Flutuante Discreto para Reabrir a Barra Lateral (Apenas quando GM logado e barra recolhida) -->
@@ -520,7 +520,7 @@
                         <div style="height: 6px; background: #0b1120; border: 1px solid #1e293b; border-radius: 4px; overflow: hidden;">
                             <div id="account-strength-bar" style="height: 100%; width: 0%; background: #f87171; transition: width 0.2s ease, background 0.2s ease;"></div>
                         </div>
-                        <div id="account-strength-label" style="font-size: 10.5px; color: #64748b; margin-top: 3px;">Força da senha: —</div>
+                        <div id="account-strength-label" style="font-size: 10.5px; color: #cbd5e1; margin-top: 3px;">Força da senha: —</div>
                     </div>
                     <!-- Confirmação de senha: só no modo Cadastrar -->
                     <div id="account-password2-row" style="display: none; margin-bottom: 6px;">
@@ -528,11 +528,11 @@
                     </div>
                     <!-- Aceite LGPD: só no Criar conta (obrigatório), abaixo da senha -->
                     <div id="account-terms-row" style="display: none; margin-bottom: 7px; text-align: left;">
-                        <label style="display: flex; align-items: flex-start; gap: 6px; cursor: pointer; font-size: 11.5px; color: #94a3b8; line-height: 1.4;">
+                        <label style="display: flex; align-items: flex-start; gap: 6px; cursor: pointer; font-size: 11.5px; color: #cbd5e1; line-height: 1.4;">
                             <input id="account-terms-check" type="checkbox" style="margin-top: 2px; accent-color: #34d399; width: 15px; height: 15px; cursor: pointer;">
                             <span>Li e aceito os <button id="account-terms-link" type="button" style="background: none; border: none; padding: 0; color: #34d399; font-size: 11.5px; font-weight: bold; text-decoration: underline; cursor: pointer;">Termos de Uso e Aviso de Privacidade</button></span>
                         </label>
-                        <div id="account-google-hint" style="font-size: 10px; color: #64748b; margin-top: 3px; padding-left: 21px;">(o cadastro pelo Google também exige aceitar os termos ☝️)</div>
+                        <div id="account-google-hint" style="font-size: 10px; color: #cbd5e1; margin-top: 3px; padding-left: 21px;">(o cadastro pelo Google também exige aceitar os termos ☝️)</div>
                     </div>
                     <div id="account-error-msg" style="min-height: 16px; font-size: 11.5px; color: #f87171; font-weight: bold; margin-bottom: 6px;"></div>
 
@@ -559,7 +559,7 @@
     <div id="terms-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 18px 20px; border-radius: 14px; border: 2px solid #34d399; box-shadow: 0 10px 40px rgba(52, 211, 153, 0.25); width: 430px; max-width: 92vw; max-height: 88vh; overflow-y: auto; text-align: left;">
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold; text-align: center;">🔒 Privacidade &amp; Termos de Uso</h2>
-            <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px; text-align: center;">LGPD (Lei 13.709/2018) — Privacy by Design</div>
+            <div style="color: #cbd5e1; font-size: 10.5px; margin-bottom: 10px; text-align: center;">LGPD (Lei 13.709/2018) — Privacy by Design</div>
             <div style="color: #cbd5e1; font-size: 12px; line-height: 1.65;">
                 <strong style="color: #f8fafc;">📚 Uso exclusivamente educacional.</strong> O LabCombat é uma ferramenta de sala de aula.<br><br>
                 <strong style="color: #f8fafc;">📦 O que coletamos (mínimo necessário):</strong>
@@ -585,22 +585,22 @@
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 17px; font-weight: bold;">👤 Perfil do Jogador</h2>
             <div id="profile-view">
                 <div id="profile-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin-bottom: 1px;"></div>
-                <div id="profile-mode" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
+                <div id="profile-mode" style="color: #cbd5e1; font-size: 10.5px; margin-bottom: 8px;"></div>
                 <div id="profile-nick-edit" style="display: none; margin-bottom: 8px;">
                     <div style="display: flex; gap: 6px;">
                         <input id="profile-nick-input" type="text" maxlength="20" placeholder="Apelido (2 a 20 caracteres)" class="qm-input" style="text-align: center; font-weight: bold; padding: 7px 9px;">
-                        <button id="profile-nick-save" type="button" title="Salvar apelido" style="padding: 7px 11px; background: #16a34a; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">💾</button>
+                        <button id="profile-nick-save" type="button" title="Salvar apelido" style="padding: 7px 11px; background: #15803d; color: #fff; border: none; border-radius: 6px; font-size: 13px; font-weight: bold; cursor: pointer;">💾</button>
                     </div>
-                    <div id="profile-nick-msg" style="min-height: 12px; font-size: 10.5px; color: #64748b; margin-top: 2px;"></div>
+                    <div id="profile-nick-msg" style="min-height: 12px; font-size: 10.5px; color: #cbd5e1; margin-top: 2px;"></div>
                 </div>
                 <div id="profile-body" style="min-height: 80px;"></div>
             </div>
-            <div style="border-top: 1px solid #1e293b; margin: 10px 0 8px 0; padding-top: 8px; color: #64748b; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;">🔐 Conta</div>
+            <div style="border-top: 1px solid #1e293b; margin: 10px 0 8px 0; padding-top: 8px; color: #cbd5e1; font-size: 10px; letter-spacing: 1px; text-transform: uppercase;">🔐 Conta</div>
             <div id="account-logged-view" style="display: none;">
                 <div style="background: #0b1120; border: 1px solid #334155; border-radius: 10px; padding: 10px 12px; margin-bottom: 8px;">
-                    <div style="color: #64748b; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Conectado como</div>
+                    <div style="color: #cbd5e1; font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Conectado como</div>
                     <div id="account-logged-nick" style="color: #38bdf8; font-size: 14px; font-weight: bold; margin: 2px 0;"></div>
-                    <div id="account-logged-email" style="color: #94a3b8; font-size: 11.5px;"></div>
+                    <div id="account-logged-email" style="color: #cbd5e1; font-size: 11.5px;"></div>
                 </div>
                 <div id="account-logged-msg" style="min-height: 14px; font-size: 11px; color: #34d399; margin-bottom: 6px;"></div>
                 <div style="display: flex; flex-direction: column; gap: 6px;">
@@ -612,7 +612,7 @@
                     <button id="account-delete-open-btn" type="button" style="width: 100%; padding: 7px; background: transparent; border: 1px dashed #7f1d1d; color: #f87171; border-radius: 8px; font-size: 11.5px; font-weight: bold; cursor: pointer;">🗑️ Excluir minha conta</button>
                     <div id="account-delete-box" style="display: none; margin-top: 8px; background: #1a0505; border: 1px solid #7f1d1d; border-radius: 8px; padding: 10px; text-align: left;">
                         <div style="color: #fca5a5; font-size: 11.5px; font-weight: bold; margin-bottom: 4px;">⚠️ Exclusão definitiva</div>
-                        <div style="color: #94a3b8; font-size: 10.5px; line-height: 1.4; margin-bottom: 8px;">Apaga sua conta, seus pontos do ranking e a reserva de apelido. <b>Não dá para desfazer.</b></div>
+                        <div style="color: #cbd5e1; font-size: 10.5px; line-height: 1.4; margin-bottom: 8px;">Apaga sua conta, seus pontos do ranking e a reserva de apelido. <b>Não dá para desfazer.</b></div>
                         <div id="account-delete-pass-row">
                             <input id="account-delete-password" type="password" autocomplete="current-password" placeholder="🔒 Digite sua senha para confirmar" style="width: 100%; box-sizing: border-box; padding: 8px 10px; background: #020617; border: 1.5px solid #7f1d1d; border-radius: 7px; color: #fca5a5; outline: none; font-size: 12.5px; margin-bottom: 6px;">
                         </div>
@@ -632,7 +632,7 @@
     <div id="ranking-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; text-align: center; border: 2px solid #f59e0b; box-shadow: 0 10px 40px rgba(245, 158, 11, 0.25); width: 680px; max-width: 96vw; box-sizing: border-box;">
             <h2 style="color: #f8fafc; margin: 0 0 2px 0; font-size: 19px; font-weight: bold;">🏆 Ranking da Arena</h2>
-            <div style="color: #64748b; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por LabPoints (LP)</div>
+            <div style="color: #cbd5e1; font-size: 10.5px; margin-bottom: 10px;">Todos os jogadores por LabPoints (LP)</div>
             <!-- Linha: busca + botão ir para mim -->
             <div style="display: flex; gap: 8px; margin-bottom: 8px;">
                 <input id="ranking-search" type="text" placeholder="🔍 Buscar por apelido..." style="flex: 1; min-width: 0; background: #020617; border: 1.5px solid #334155; border-radius: 8px; color: #e2e8f0; padding: 7px 10px; font-size: 12px; font-weight: bold; outline: none;">
@@ -653,7 +653,7 @@
         <div style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 30px 28px; border-radius: 14px; text-align: center; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.25); width: 340px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
             <div style="font-size: 38px; margin-bottom: 6px;">👤</div>
             <h2 style="color: #f8fafc; margin: 0 0 6px 0; font-size: 22px; font-weight: bold;">Seu Apelido</h2>
-            <p style="color: #94a3b8; font-size: 13px; margin: 0 0 16px 0;">Como deseja ser chamado no combate?</p>
+            <p style="color: #cbd5e1; font-size: 13px; margin: 0 0 16px 0;">Como deseja ser chamado no combate?</p>
             
             <div style="margin-bottom: 14px;">
                 <input id="nickname-modal-input" type="text" maxlength="20" placeholder="Ex: DevNinja" 
@@ -663,7 +663,7 @@
             <div id="nickname-error-msg" style="min-height: 18px; font-size: 12px; color: #f87171; font-weight: bold; margin-bottom: 12px;"></div>
 
             <div style="display: flex; flex-direction: column; gap: 8px;">
-                <button id="btn-save-nickname" style="padding: 12px; background: linear-gradient(90deg, #10b981, #059669); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: filter 0.2s; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);">
+                <button id="btn-save-nickname" style="padding: 12px; background: linear-gradient(90deg, #047857, #065f46); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: filter 0.2s; box-shadow: 0 4px 12px rgba(4, 120, 87, 0.4);">
                     ✓ Salvar Apelido
                 </button>
                 <button id="btn-cancel-nickname" style="padding: 10px; background: #334155; color: #cbd5e1; border: none; border-radius: 8px; font-size: 13px; font-weight: bold; cursor: pointer;">
@@ -683,7 +683,7 @@
                     <span style="font-size: 26px;">⚔️</span>
                     <div>
                         <h2 style="color: #f8fafc; margin: 0; font-size: 19px; font-weight: bold;">Entrar no Combate</h2>
-                        <div style="color: #94a3b8; font-size: 11px;">Conecte-se por código ou selecione uma sala aberta</div>
+                        <div style="color: #cbd5e1; font-size: 11px;">Conecte-se por código ou selecione uma sala aberta</div>
                     </div>
                 </div>
                 <button id="btn-close-join-x" type="button" title="Fechar" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold;">✕</button>
@@ -696,8 +696,8 @@
             <!-- Campo Apelido -->
             <div style="flex: 1; min-width: 180px; text-align: left;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-                    <label style="color: #94a3b8; font-size: 11px; font-weight: bold;">SEU APELIDO:</label>
-                    <span id="join-nick-lock-note" style="display: none; font-size: 10px; color: #94a3b8;" title="Apelido da conta — mude pelo Perfil (👤) no menu">🔒 conta</span>
+                    <label style="color: #cbd5e1; font-size: 11px; font-weight: bold;">SEU APELIDO:</label>
+                    <span id="join-nick-lock-note" style="display: none; font-size: 10px; color: #cbd5e1;" title="Apelido da conta — mude pelo Perfil (👤) no menu">🔒 conta</span>
                 </div>
                 <input id="join-nickname-input" type="text" maxlength="20" placeholder="Ex: Jogador 2" 
                        style="font-size: 15px; font-weight: bold; width: 100%; box-sizing: border-box; height: 44px; padding: 8px 12px; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #38bdf8; outline: none;">
@@ -705,7 +705,7 @@
 
             <!-- Opção A: Inserir Código -->
             <div style="flex: 1.5; min-width: 280px; text-align: left;">
-                <label style="color: #94a3b8; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">CÓDIGO DA SALA (4 CARACTERES):</label>
+                <label style="color: #cbd5e1; font-size: 11px; font-weight: bold; margin-bottom: 4px; display: block;">CÓDIGO DA SALA (4 CARACTERES):</label>
                 <div style="display: flex; gap: 8px; width: 100%; box-sizing: border-box; align-items: stretch;">
                     <input id="room-input" type="text" placeholder="ABCD" maxlength="4"
                            style="font-size: 18px; letter-spacing: 3px; font-family: monospace; font-weight: bold; flex: 1; min-width: 0; box-sizing: border-box; height: 44px; padding: 8px 10px; text-align: center; text-transform: uppercase; background: #020617; border: 1.5px solid #3b82f6; border-radius: 6px; color: #facc15; outline: none;">
@@ -728,9 +728,9 @@
                 <div style="display: flex; align-items: center; gap: 6px;">
                     <span style="font-size: 14px;">📡</span>
                     <span style="font-size: 11px; font-weight: bold; color: #38bdf8; letter-spacing: 0.5px; text-transform: uppercase;">Salas Abertas ao Vivo</span>
-                    <span id="open-rooms-count" style="font-size: 10px; background: #1e293b; color: #94a3b8; padding: 1px 6px; border-radius: 8px; font-weight: bold;">0</span>
+                    <span id="open-rooms-count" style="font-size: 10px; background: #1e293b; color: #cbd5e1; padding: 1px 6px; border-radius: 8px; font-weight: bold;">0</span>
                 </div>
-                <button id="btn-refresh-open-rooms" type="button" title="Recarregar salas" style="background: transparent; border: 1px solid #334155; color: #94a3b8; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 3px;">
+                <button id="btn-refresh-open-rooms" type="button" title="Recarregar salas" style="background: transparent; border: 1px solid #334155; color: #cbd5e1; border-radius: 4px; padding: 3px 8px; font-size: 11px; font-weight: bold; cursor: pointer; display: flex; align-items: center; gap: 3px;">
                     🔄 Atualizar
                 </button>
             </div>
@@ -757,7 +757,7 @@
                     <span style="font-size: 26px;">📜</span>
                     <div>
                         <h2 style="color: #f8fafc; margin: 0; font-size: 19px; font-weight: bold;">Como Jogar LabCombat</h2>
-                        <div style="color: #94a3b8; font-size: 11px;">Duelo 1v1 de conhecimento em tempo real</div>
+                        <div style="color: #cbd5e1; font-size: 11px;">Duelo 1v1 de conhecimento em tempo real</div>
                     </div>
                 </div>
                 <button id="rules-close-btn" type="button" title="Fechar" style="background: #1e293b; border: 1px solid #475569; color: #cbd5e1; border-radius: 6px; cursor: pointer; padding: 4px 8px; font-size: 13px; font-weight: bold;">✕</button>
@@ -790,7 +790,7 @@
                     <div style="color: #fbbf24; font-weight: bold; margin-bottom: 4px;">🏆 RANKING (LabPoints)</div>
                     <div>Com <b>conta</b>: vitória +<span id="rules-lpwin">25</span> LP • bônus +<span id="rules-lpbonus">5</span> LP • derrota +<span id="rules-lploss">10</span> LP. Elos: 🐣 → ☕ → 💻 → 💎 → 👑</div>
                 </div>
-                <div style="grid-column: 1 / -1; font-size: 10.5px; color: #94a3b8;">
+                <div style="grid-column: 1 / -1; font-size: 10.5px; color: #cbd5e1;">
                     💡 O <b>Coringa</b> mistura todas as disciplinas • oponente caido por 15s = W.O. • revanche/troca de professor pedem aceite e expiram em 15s.
                 </div>
             </div>
@@ -808,7 +808,7 @@
                 <div style="color: #f8fafc; font-weight: bold; font-size: 16px;">🐛 Relatar um bug</div>
                 <button id="bug-close-btn" type="button" title="Fechar" style="background: transparent; border: none; color: #ef4444; font-size: 16px; font-weight: bold; cursor: pointer;">✕</button>
             </div>
-            <div id="bug-nick-line" style="color: #64748b; font-size: 10.5px; margin-bottom: 8px;"></div>
+            <div id="bug-nick-line" style="color: #cbd5e1; font-size: 10.5px; margin-bottom: 8px;"></div>
             <textarea id="bug-message-input" rows="5" maxlength="1000" placeholder="Descreva o que aconteceu: onde você estava (menu, seleção, luta), o que esperava e o que houve. Mínimo 10 caracteres." style="width: 100%; box-sizing: border-box; resize: vertical; background: #020617; border: 1.5px solid #475569; border-radius: 8px; color: #e2e8f0; padding: 10px; font-size: 12.5px; outline: none; font-family: inherit;"></textarea>
             <div id="bug-error-msg" style="min-height: 16px; font-size: 11px; color: #f87171; font-weight: bold; margin: 4px 0;"></div>
             <div style="display: flex; gap: 8px;">
@@ -824,7 +824,7 @@
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
                 <div style="text-align: left;">
                     <h2 style="color: #f8fafc; margin: 0; font-size: 18px; font-weight: bold;">⚔️ Multiplayer Online</h2>
-                    <div style="color: #94a3b8; font-size: 11px;">Duelo 1v1 em tempo real — crie uma sala como host ou entre na de um amigo</div>
+                    <div style="color: #cbd5e1; font-size: 11px;">Duelo 1v1 em tempo real — crie uma sala como host ou entre na de um amigo</div>
                 </div>
                 <button id="mp-close-x" type="button" title="Fechar" style="background: transparent; border: none; color: #ef4444; font-size: 15px; font-weight: bold; cursor: pointer;">✕</button>
             </div>
@@ -832,12 +832,12 @@
                 <button id="mp-create-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #0d1f3c, #1e293b); border: 1.5px solid #2563eb; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
                     <div style="font-size: 30px; margin-bottom: 6px;">⚔️</div>
                     <div style="color: #60a5fa; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">CRIAR SALA (1P)</div>
-                    <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Você é o host. Compartilha o código de 4 letras e desafia um colega.</div>
+                    <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">Você é o host. Compartilha o código de 4 letras e desafia um colega.</div>
                 </button>
                 <button id="mp-join-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #261616, #1e293b); border: 1.5px solid #dc2626; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
                     <div style="font-size: 30px; margin-bottom: 6px;">📡</div>
                     <div style="color: #f87171; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">ENTRAR EM SALA (2P)</div>
-                    <div style="color: #94a3b8; font-size: 11px; line-height: 1.5;">Tens o código de um amigo? Entre para competir.</div>
+                    <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">Tens o código de um amigo? Entre para competir.</div>
                 </button>
             </div>
             <div style="margin-top: 12px; text-align: right;">
@@ -1412,11 +1412,11 @@
                 if (profileNickMsg) profileNickMsg.textContent = '';
             }
             if (!profileBody) return;
-            profileBody.innerHTML = '<div style="color:#64748b; padding:12px; font-size:11.5px;">Carregando ranking...</div>';
+            profileBody.innerHTML = '<div style="color:#cbd5e1; padding:12px; font-size:11.5px;">Carregando ranking...</div>';
 
             if (isGuest) {
                 profileBody.innerHTML = `
-                    <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
+                    <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#cbd5e1; font-size:11.5px; line-height:1.5;">
                         Você joga como <strong style="color:#f8fafc;">visitante</strong> — suas partidas <strong style="color:#f8fafc;">não pontuam</strong> no ranking.<br>
                         Crie uma conta abaixo para acumular LabPoints e subir de elo: 🐣→☕→💻→💎→👑
                     </div>`;
@@ -1427,7 +1427,7 @@
                 const { entry, position, total } = await loadMyLeaderboardEntry(uid);
                 if (!entry) {
                     profileBody.innerHTML = `
-                        <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#94a3b8; font-size:11.5px; line-height:1.5;">
+                        <div style="background:#0b1120; border:1px solid #334155; border-radius:8px; padding:10px 12px; color:#cbd5e1; font-size:11.5px; line-height:1.5;">
                             Nenhuma partida ranqueada ainda.<br>Vença a 1ª para ganhar <strong style="color:#34d399;">+25 LP</strong>! 🚀
                         </div>`;
                     return;
@@ -1449,14 +1449,14 @@
                         <div style="background:#020617; border:1px solid #334155; border-radius:6px; height:7px; margin-top:7px; overflow:hidden;">
                             <div style="height:100%; width:${progress}%; background:linear-gradient(90deg,#a855f7,#38bdf8);"></div>
                         </div>
-                        <div style="color:#64748b; font-size:10px; margin-top:3px;">${rank.nextMin != null ? `Próximo: ${rank.nextMin} LP` : '👑 Elo máximo alcançado!'}</div>
+                        <div style="color:#cbd5e1; font-size:10px; margin-top:3px;">${rank.nextMin != null ? `Próximo: ${rank.nextMin} LP` : '👑 Elo máximo alcançado!'}</div>
                     </div>
                     <div style="display:flex; gap:5px; text-align:center;">
-                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#34d399; font-weight:bold; font-size:14px;">${wins}</div><div style="color:#64748b; font-size:9.5px;">vitórias</div></div>
-                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#f87171; font-weight:bold; font-size:14px;">${losses}</div><div style="color:#64748b; font-size:9.5px;">derrotas</div></div>
-                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#38bdf8; font-weight:bold; font-size:14px;">${winRate}%</div><div style="color:#64748b; font-size:9.5px;">win rate</div></div>
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#34d399; font-weight:bold; font-size:14px;">${wins}</div><div style="color:#cbd5e1; font-size:9.5px;">vitórias</div></div>
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#f87171; font-weight:bold; font-size:14px;">${losses}</div><div style="color:#cbd5e1; font-size:9.5px;">derrotas</div></div>
+                        <div style="flex:1; background:#0b1120; border:1px solid #1e293b; border-radius:7px; padding:5px 3px;"><div style="color:#38bdf8; font-weight:bold; font-size:14px;">${winRate}%</div><div style="color:#cbd5e1; font-size:9.5px;">win rate</div></div>
                     </div>
-                    <div style="color:#94a3b8; font-size:10.5px; margin-top:7px;">Matéria mais jogada: <strong style="color:#f8fafc;">${favProf}</strong></div>`;
+                    <div style="color:#cbd5e1; font-size:10.5px; margin-top:7px;">Matéria mais jogada: <strong style="color:#f8fafc;">${favProf}</strong></div>`;
             } catch (error) {
                 profileBody.innerHTML = `<div style="color:#f87171; padding:12px; font-size:11.5px;">❌ Falha ao carregar ranking: ${error.message}</div>`;
             }
@@ -1648,7 +1648,7 @@
             }
 
             if (!filtrados.length) {
-                rankingBody.innerHTML = `<div style="color:#94a3b8; padding:18px; font-size:12px; text-align:center;">${rankingSearchTerm ? `Ninguém com apelido contendo "${rankingSearchTerm}".` : 'Ninguém nesse elo/divisão ainda. 🎯'}</div>`;
+                rankingBody.innerHTML = `<div style="color:#cbd5e1; padding:18px; font-size:12px; text-align:center;">${rankingSearchTerm ? `Ninguém com apelido contendo "${rankingSearchTerm}".` : 'Ninguém nesse elo/divisão ainda. 🎯'}</div>`;
                 if (rankingLoadMore) rankingLoadMore.style.display = 'none';
                 return;
             }
@@ -1673,7 +1673,7 @@
                     <span style="width:36px; flex-shrink:0; font-size:13px; color:#f59e0b; font-weight:bold;">${posGeral}º</span>
                     <span style="flex:1; min-width:0; color:#f8fafc; font-size:13px; font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${e.nickname || 'Jogador'}${e.uid === myUid ? ' <span style="color:#a855f7; font-size:10px;">(você)</span>' : ''}</span>
                     <span style="width:118px; flex-shrink:0; font-size:11.5px; color:#cbd5e1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${rank.label}</span>
-                    <span style="width:104px; flex-shrink:0; font-size:11px; color:#64748b; white-space:nowrap;">${wins}V/${losses}D · ${winRate}%</span>
+                    <span style="width:104px; flex-shrink:0; font-size:11px; color:#cbd5e1; white-space:nowrap;">${wins}V/${losses}D · ${winRate}%</span>
                     <span style="width:64px; flex-shrink:0; font-size:12.5px; color:#c084fc; font-weight:bold; white-space:nowrap; text-align:right;">${points} LP</span>
                 </div>`;
             }).join('');
@@ -1693,7 +1693,7 @@
             const faltam = rank.nextMin != null ? Math.max(0, rank.nextMin - (me.points || 0)) : null;
             rankingMySummary.style.display = 'block';
             rankingMySummary.innerHTML = `Você está em <b style="color:#a855f7;">#${pos} de ${rankingAll.length}</b> — ${rank.label} (${me.points || 0} LP)` +
-                (faltam != null ? `<br><span style="color:#94a3b8;">Faltam <b style="color:#fbbf24;">${faltam} LP</b> para o próximo elo (${faltam <= 0 ? 'já bateu!' : 'próxima divisão/elos acima'})</span>` : '<br><span style="color:#94a3b8;">Elo máximo alcançado 👑</span>');
+                (faltam != null ? `<br><span style="color:#cbd5e1;">Faltam <b style="color:#fbbf24;">${faltam} LP</b> para o próximo elo (${faltam <= 0 ? 'já bateu!' : 'próxima divisão/elos acima'})</span>` : '<br><span style="color:#cbd5e1;">Elo máximo alcançado 👑</span>');
         }
 
         // Botão 🎯 Eu: limpa filtros, expande até me ver e rola até minha linha
@@ -1732,7 +1732,7 @@
         }
 
         async function renderRankingModal() {
-            if (rankingBody) rankingBody.innerHTML = '<div style="color:#64748b; padding:18px; font-size:12px;">Carregando ranking...</div>';
+            if (rankingBody) rankingBody.innerHTML = '<div style="color:#cbd5e1; padding:18px; font-size:12px;">Carregando ranking...</div>';
             // Estado limpo a cada abertura
             rankingPageSize = 50;
             rankingSearchTerm = '';
@@ -1741,7 +1741,7 @@
             if (rankingTierTabs) {
                 const tiers = [['all', 'Todos'], ...RANK_TIERS.map(t => [t.id, `${t.icon} ${t.name.split(' /')[0]}`])];
                 rankingTierTabs.innerHTML = tiers.map(([id, label]) =>
-                    `<button data-tier="${id}" style="padding:6px 10px; font-size:11px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${rankingFilter === id ? '#f59e0b' : '#334155'}; background:${rankingFilter === id ? '#78350f' : '#0b1120'}; color:${rankingFilter === id ? '#fde68a' : '#94a3b8'};">${label}</button>`
+                    `<button data-tier="${id}" style="padding:6px 10px; font-size:11px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${rankingFilter === id ? '#f59e0b' : '#334155'}; background:${rankingFilter === id ? '#78350f' : '#0b1120'}; color:${rankingFilter === id ? '#fde68a' : '#cbd5e1'};">${label}</button>`
                 ).join('');
                 rankingTierTabs.querySelectorAll('button').forEach(btn => {
                     btn.addEventListener('click', () => { rankingFilter = btn.dataset.tier; rankingDivision = null; rankingPageSize = 50; renderRankingModalChips(); renderDivisionTabs(); renderRankingRows(); });
@@ -1750,7 +1750,7 @@
             try {
                 rankingAll = await loadTopLeaderboard(999);
                 if (!rankingAll.length) {
-                    rankingBody.innerHTML = '<div style="color:#94a3b8; padding:18px; font-size:12.5px; text-align:center;">Ninguém pontuou ainda.<br>Vença partidas com conta para aparecer aqui! 🏆</div>';
+                    rankingBody.innerHTML = '<div style="color:#cbd5e1; padding:18px; font-size:12.5px; text-align:center;">Ninguém pontuou ainda.<br>Vença partidas com conta para aparecer aqui! 🏆</div>';
                     if (rankingMySummary) rankingMySummary.style.display = 'none';
                     return;
                 }
@@ -1767,7 +1767,7 @@
                 const active = btn.dataset.tier === rankingFilter;
                 btn.style.border = `1px solid ${active ? '#f59e0b' : '#334155'}`;
                 btn.style.background = active ? '#78350f' : '#0b1120';
-                btn.style.color = active ? '#fde68a' : '#94a3b8';
+                btn.style.color = active ? '#fde68a' : '#cbd5e1';
             });
         }
 
@@ -1784,7 +1784,7 @@
             rankingDivTabs.innerHTML = divs.map(d => {
                 const id = d || '';
                 const active = rankingDivision === d;
-                return `<button data-div="${id}" style="padding:4px 9px; font-size:10.5px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${active ? '#38bdf8' : '#334155'}; background:${active ? '#0c4a6e' : '#0b1120'}; color:${active ? '#7dd3fc' : '#94a3b8'};">${d || 'Todas'}</button>`;
+                return `<button data-div="${id}" style="padding:4px 9px; font-size:10.5px; font-weight:bold; border-radius:6px; cursor:pointer; border:1px solid ${active ? '#38bdf8' : '#334155'}; background:${active ? '#0c4a6e' : '#0b1120'}; color:${active ? '#7dd3fc' : '#cbd5e1'};">${d || 'Todas'}</button>`;
             }).join('');
             rankingDivTabs.style.display = 'flex';
             rankingDivTabs.querySelectorAll('button').forEach(btn => {
@@ -1802,7 +1802,7 @@
             [tabBtnControls, tabBtnQuestions, tabBtnRooms, tabBtnLogs, tabBtnUsers, tabBtnBugs].forEach(b => {
                 if (!b) return;
                 b.style.background = 'transparent';
-                b.style.color = '#94a3b8';
+                b.style.color = '#cbd5e1';
             });
             [tabContentControls, tabContentQuestions, tabContentRooms, tabContentLogs, tabContentUsers, tabContentBugs].forEach(c => {
                 if (c) c.style.display = 'none';
@@ -1881,7 +1881,7 @@
             line.style.marginBottom = '3px';
 
             const timeSpan = document.createElement('span');
-            timeSpan.style.color = '#64748b';
+            timeSpan.style.color = '#cbd5e1';
             timeSpan.textContent = `[${logItem.timestamp}] `;
 
             const tagSpan = document.createElement('span');
@@ -2014,11 +2014,11 @@
         // Monitor de Salas Ativas em Tempo Real do Firebase
         async function fetchActiveRooms() {
             if (!roomsListEl) return;
-            roomsListEl.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px; font-size: 12px;">Atualizando salas...</div>';
+            roomsListEl.innerHTML = '<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 12px; font-size: 12px;">Atualizando salas...</div>';
             try {
                 const snapshot = await get(ref(db, 'rooms'));
                 if (!snapshot.exists()) {
-                    roomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala ativa no momento.</div>';
+                    roomsListEl.innerHTML = '<div style="color: #cbd5e1; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala ativa no momento.</div>';
                     if (gmRoomsCount) gmRoomsCount.textContent = '0';
                     return;
                 }
@@ -2028,7 +2028,7 @@
                 if (gmRoomsCount) gmRoomsCount.textContent = `${roomKeys.length}`;
 
                 if (roomKeys.length === 0) {
-                    roomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala encontrada.</div>';
+                    roomsListEl.innerHTML = '<div style="color: #cbd5e1; text-align: center; padding: 16px; font-size: 12px;">Nenhuma sala encontrada.</div>';
                     return;
                 }
 
@@ -2049,7 +2049,7 @@
                         <div style="display: flex; justify-content: space-between; align-items: center;">
                             <div style="display: flex; align-items: center; gap: 8px;">
                                 <span style="font-family: monospace; font-size: 14px; font-weight: bold; color: #facc15; background: #020617; padding: 2px 6px; border-radius: 4px; border: 1px solid #334155;">${k}</span>
-                                <span style="font-size: 10px; text-transform: uppercase; background: #1e293b; color: #94a3b8; padding: 2px 5px; border-radius: 4px; font-weight: bold;">${state}</span>
+                                <span style="font-size: 10px; text-transform: uppercase; background: #1e293b; color: #cbd5e1; padding: 2px 5px; border-radius: 4px; font-weight: bold;">${state}</span>
                             </div>
                             <div style="display: flex; gap: 4px;">
                                 <button class="btn-copy-code" title="Copiar Código" style="background: #1e293b; border: 1px solid #475569; color: #38bdf8; border-radius: 4px; padding: 3px 6px; font-size: 11px; cursor: pointer; font-weight: bold;">📋 Copiar</button>
@@ -2623,7 +2623,7 @@
 
         async function loadQuestionsCrud() {
             if (!gmActive || !gmQuestionProfessor || !gmQuestionsList) return;
-            gmQuestionsList.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">Carregando banco...</div>';
+            gmQuestionsList.innerHTML = '<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 12px;">Carregando banco...</div>';
             try {
                 const snapshot = await get(ref(db, `questionBanks/${gmQuestionProfessor.value}`));
                 const bank = snapshot.val();
@@ -2645,7 +2645,7 @@
             const filtro = (gmQSearch?.value || '').trim().toLowerCase();
             const visiveis = crudBank.filter(q => !filtro || String(q.text).toLowerCase().includes(filtro));
             if (!visiveis.length) {
-                gmQuestionsList.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 12px;">${crudBank.length ? 'Nenhuma questão bate com o filtro.' : 'Banco vazio — crie a primeira questão ou importe um JSON.'}</div>`;
+                gmQuestionsList.innerHTML = `<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 12px;">${crudBank.length ? 'Nenhuma questão bate com o filtro.' : 'Banco vazio — crie a primeira questão ou importe um JSON.'}</div>`;
                 return;
             }
             gmQuestionsList.innerHTML = '';
@@ -2911,7 +2911,7 @@
                 || String(u.email || '').toLowerCase().includes(filtro));
             if (gmUsersCount) gmUsersCount.textContent = gmUsersCache.length ? `${gmUsersCache.length}` : '';
             if (!visiveis.length) {
-                gmUsersList.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">${gmUsersCache.length ? 'Ninguém bate com o filtro.' : 'Nenhum usuário cadastrado.'}</div>`;
+                gmUsersList.innerHTML = `<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">${gmUsersCache.length ? 'Ninguém bate com o filtro.' : 'Nenhum usuário cadastrado.'}</div>`;
                 return;
             }
             gmUsersList.innerHTML = '';
@@ -2923,8 +2923,8 @@
                 row.innerHTML = `
                     <div style="flex: 1; min-width: 0;">
                         <div style="font-size: 12.5px; font-weight: bold; color: #f8fafc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${u.nickname || '(sem apelido)'}</div>
-                        <div style="font-size: 10.5px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${u.email || '—'}</div>
-                        <div style="font-size: 10px; color: #64748b;">${lp} · cadastro ${dataCadastro}${u.authProvider === 'google' ? ' · Google' : ''}</div>
+                        <div style="font-size: 10.5px; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${u.email || '—'}</div>
+                        <div style="font-size: 10px; color: #cbd5e1;">${lp} · cadastro ${dataCadastro}${u.authProvider === 'google' ? ' · Google' : ''}</div>
                     </div>
                     <button class="gm-user-del" style="flex-shrink: 0; padding: 6px 10px; background: #7f1d1d; border: 1px solid #ef4444; color: #fca5a5; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold;" title="Apagar dados do jogo (perfil, ranking, apelido)">🗑️</button>`;
                 row.querySelector('.gm-user-del').addEventListener('click', async () => {
@@ -2945,7 +2945,7 @@
         async function loadGmUsers() {
             if (!gmActive || !gmUsersList) return;
             setUsersStatus('Carregando...', true);
-            gmUsersList.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>';
+            gmUsersList.innerHTML = '<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">Carregando usuários...</div>';
             try {
                 const [usersSnap, lbSnap] = await Promise.all([get(ref(db, 'users')), get(ref(db, 'leaderboard'))]);
                 const users = usersSnap.val() || {};
@@ -3004,10 +3004,10 @@
                 linhas.forEach(([k, v]) => {
                     const linha = document.createElement('div');
                     const key = document.createElement('span');
-                    key.style.cssText = 'color: #64748b; font-weight: bold; margin-right: 6px;';
+                    key.style.cssText = 'color: #cbd5e1; font-weight: bold; margin-right: 6px;';
                     key.textContent = k + ':';
                     const val = document.createElement('span');
-                    val.style.cssText = 'color: #94a3b8; word-break: break-all;';
+                    val.style.cssText = 'color: #cbd5e1; word-break: break-all;';
                     val.textContent = String(v);
                     linha.append(key, val);
                     gmBugDetailMeta.appendChild(linha);
@@ -3030,7 +3030,7 @@
                 || String(t.message || '').toLowerCase().includes(filtro));
             if (gmBugsCount) gmBugsCount.textContent = gmBugsCache.length ? `${gmBugsCache.length}` : '';
             if (!visiveis.length) {
-                gmBugsTickets.innerHTML = `<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">${gmBugsCache.length ? 'Nenhum ticket bate com o filtro.' : 'Nenhum relato ainda. 🎉'}</div>`;
+                gmBugsTickets.innerHTML = `<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">${gmBugsCache.length ? 'Nenhum ticket bate com o filtro.' : 'Nenhum relato ainda. 🎉'}</div>`;
                 return;
             }
             gmBugsTickets.innerHTML = '';
@@ -3046,15 +3046,15 @@
                 who.style.cssText = 'font-size: 12px; font-weight: bold; color: #fbbf24;';
                 who.textContent = t.nickname || 'Visitante';
                 const when = document.createElement('span');
-                when.style.cssText = 'font-size: 9.5px; color: #64748b; white-space: nowrap;';
+                when.style.cssText = 'font-size: 9.5px; color: #cbd5e1; white-space: nowrap;';
                 when.textContent = `${quando}${t.scene ? ' · ' + t.scene : ''}`;
                 topo.append(who, when);
                 const previa = document.createElement('div');
-                previa.style.cssText = 'font-size: 11px; color: #94a3b8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
+                previa.style.cssText = 'font-size: 11px; color: #cbd5e1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;';
                 previa.textContent = String(t.message || '').slice(0, 90);
                 info.append(topo, previa);
                 const seta = document.createElement('span');
-                seta.style.cssText = 'color: #475569; font-size: 14px; flex-shrink: 0;';
+                seta.style.cssText = 'color: #cbd5e1; font-size: 14px; flex-shrink: 0;';
                 seta.textContent = '›';
                 row.append(info, seta);
                 row.addEventListener('pointerover', () => { row.style.borderColor = '#f59e0b'; row.style.background = '#0f172a'; });
@@ -3065,7 +3065,7 @@
         }
         async function loadBugReports() {
             if (!gmActive || !gmBugsTickets) return;
-            gmBugsTickets.innerHTML = '<div style="color: #64748b; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>';
+            gmBugsTickets.innerHTML = '<div style="color: #cbd5e1; font-style: italic; text-align: center; padding: 14px;">Carregando tickets...</div>';
             try {
                 const snap = await get(ref(db, 'bugReports'));
                 const data = snap.val() || {};
@@ -3074,7 +3074,7 @@
                     .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
                 if (gmBugsStatus) {
                     gmBugsStatus.textContent = gmBugsCache.length ? `${gmBugsCache.length} ticket(s) aberto(s)` : '';
-                    gmBugsStatus.style.color = '#94a3b8';
+                    gmBugsStatus.style.color = '#cbd5e1';
                 }
                 renderBugTickets();
             } catch (error) {
@@ -3155,7 +3155,7 @@
             }
             // Veio do botão "Continuar como visitante": conclui o acesso anônimo
             if (guestNicknameFlow) {
-                if (nicknameErrorMsg) { nicknameErrorMsg.textContent = 'Preparando acesso de visitante...'; nicknameErrorMsg.style.color = '#94a3b8'; }
+                if (nicknameErrorMsg) { nicknameErrorMsg.textContent = 'Preparando acesso de visitante...'; nicknameErrorMsg.style.color = '#cbd5e1'; }
                 const access = await ensureGuestAuth();
                 if (!access.success) {
                     if (nicknameErrorMsg) { nicknameErrorMsg.textContent = `Não foi possível ativar o visitante: ${access.message}`; nicknameErrorMsg.style.color = '#f87171'; }
@@ -3225,10 +3225,10 @@
 
         function renderNoRoomsHtml() {
             return `
-                <div style="color: #64748b; text-align: center; padding: 18px 10px; font-size: 12px; background: #070c16; border-radius: 8px; border: 1px dashed #1e293b;">
+                <div style="color: #cbd5e1; text-align: center; padding: 18px 10px; font-size: 12px; background: #070c16; border-radius: 8px; border: 1px dashed #1e293b;">
                     <div style="font-size: 20px; margin-bottom: 4px;">📡</div>
-                    <div style="color: #94a3b8; font-weight: bold; margin-bottom: 3px;">Nenhuma sala pública aberta no momento</div>
-                    <div style="font-size: 11px; color: #475569;">Peça o código ao Host ou insira um código privado no campo acima.</div>
+                    <div style="color: #cbd5e1; font-weight: bold; margin-bottom: 3px;">Nenhuma sala pública aberta no momento</div>
+                    <div style="font-size: 11px; color: #cbd5e1;">Peça o código ao Host ou insira um código privado no campo acima.</div>
                 </div>
             `;
         }
@@ -3240,7 +3240,7 @@
             }
             if (!openRoomsListEl) return;
 
-            openRoomsListEl.innerHTML = '<div style="color: #64748b; text-align: center; padding: 14px; font-size: 12px;">Buscando salas abertas no servidor...</div>';
+            openRoomsListEl.innerHTML = '<div style="color: #cbd5e1; text-align: center; padding: 14px; font-size: 12px;">Buscando salas abertas no servidor...</div>';
 
             try {
                 const roomsRef = ref(db, 'rooms');
@@ -3313,18 +3313,18 @@
                                 <span style="font-family: monospace; font-size: 14px; font-weight: bold; color: #facc15; background: #020617; padding: 2px 7px; border-radius: 4px; border: 1px solid #334155; letter-spacing: 1px;">${code}</span>
                                 <span style="font-size: 9.5px; font-weight: bold; color: ${badgeColor}; background: ${badgeBg}; padding: 2px 6px; border-radius: 4px;">${badgeTxt}</span>
                             </div>
-                            <div style="font-size: 11.5px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                👑 Host: <strong style="color: #f1f5f9;">${escapeHtml(hostNick)}</strong> <span style="color: #64748b;">(${profName})</span>
+                            <div style="font-size: 11.5px; color: #cbd5e1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                👑 Host: <strong style="color: #f1f5f9;">${escapeHtml(hostNick)}</strong> <span style="color: #cbd5e1;">(${profName})</span>
                             </div>
                         </div>
-                        <button type="button" class="btn-direct-join" style="flex-shrink: 0; padding: 7px 14px; background: #16a34a; border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: bold; cursor: pointer; transition: background 0.15s; white-space: nowrap; box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);">
+                        <button type="button" class="btn-direct-join" style="flex-shrink: 0; padding: 7px 14px; background: #15803d; border: none; border-radius: 6px; color: #fff; font-size: 12px; font-weight: bold; cursor: pointer; transition: background 0.15s; white-space: nowrap; box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);">
                             ⚔️ Entrar
                         </button>
                     `;
 
                     const btnDirect = card.querySelector('.btn-direct-join');
                     btnDirect.onmouseenter = () => btnDirect.style.background = '#15803d';
-                    btnDirect.onmouseleave = () => btnDirect.style.background = '#16a34a';
+                    btnDirect.onmouseleave = () => btnDirect.style.background = '#15803d';
 
                     const selectAndJoin = (e) => {
                         if (e) e.stopPropagation();

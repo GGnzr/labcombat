@@ -137,7 +137,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         });
 
         const lbl = this.add.text(-74, 0, '🔑 SALA:', {
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         const codeText = this.add.text(-22, 0, this.roomId, {
@@ -225,7 +225,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         this.p1StatusBadge = this.add.text(stageX + 165, 80, 'ESCOLHENDO', {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         // Divisória sutil
@@ -238,7 +238,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         // Linha 3: Disciplina / Especialidade
         this.p1SubjectText = this.add.text(stageX, 136, 'Threads, Processos & Kernel', { 
-            fontSize: '11px', fill: '#94a3b8', resolution: 2 
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
@@ -276,7 +276,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         // Linha 1: Status, Nickname e Tag 2P
         this.p2StatusBadge = this.add.text(stageX - 165, 80, 'AGUARDANDO...', {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
         this.p2NickText = this.add.text(stageX + 138, 80, 'AGUARDANDO P2', { 
@@ -299,7 +299,7 @@ export class CharacterSelectScene extends Phaser.Scene {
 
         // Linha 3: Disciplina / Especialidade
         this.p2SubjectText = this.add.text(stageX, 136, 'Frontend, Fullstack & APIs', { 
-            fontSize: '11px', fill: '#94a3b8', resolution: 2 
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2 
         }).setOrigin(0.5);
 
         // Linha 4: Golpe Especial / Ultimate
@@ -359,7 +359,7 @@ export class CharacterSelectScene extends Phaser.Scene {
         drawRoundedRect(rosterFrame, centerX - rosterWidth / 2, 545 - 54, rosterWidth, 108, 18, 0x242a35, 0.95, 0x475569, 1.5);
 
         this.add.text(centerX, 485, 'ROSTER DE LUTADORES • SELECIONE O SEU PROFESSOR', {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', letterSpacing: 2, resolution: 2
+            fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', letterSpacing: 2, resolution: 2
         }).setOrigin(0.5);
 
         this.cards = [];
@@ -511,15 +511,15 @@ export class CharacterSelectScene extends Phaser.Scene {
             }
             if (this.p1FighterName) {
                 this.p1FighterName.setText(isOnline ? prof.shortName.toUpperCase() : 'OPONENTE 1P');
-                this.p1FighterName.setStyle({ fill: isOnline ? prof.color : '#64748b' });
+                this.p1FighterName.setStyle({ fill: isOnline ? prof.color : '#cbd5e1' });
             }
             if (this.p1SubjectText) {
                 if (isOnline) {
                     this.p1SubjectText.setText(prof.subject);
-                    this.p1SubjectText.setStyle({ fill: '#94a3b8' });
+                    this.p1SubjectText.setStyle({ fill: '#cbd5e1' });
                 } else {
                     this.p1SubjectText.setText('Aguardando Host...');
-                    this.p1SubjectText.setStyle({ fill: '#64748b' });
+                    this.p1SubjectText.setStyle({ fill: '#cbd5e1' });
                 }
             }
             // Especial: nome não é mais exibido na seleção (design pedido)
@@ -535,10 +535,10 @@ export class CharacterSelectScene extends Phaser.Scene {
             if (this.p1StatusBadge) {
                 if (!isOnline) {
                     this.p1StatusBadge.setText('📡 OFFLINE');
-                    this.p1StatusBadge.setStyle({ fill: '#ef4444' });
+                    this.p1StatusBadge.setStyle({ fill: '#f87171' });
                 } else {
                     this.p1StatusBadge.setText(isReady ? '🟢 PRONTO' : '⏳ ESCOLHENDO');
-                    this.p1StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#94a3b8' });
+                    this.p1StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#cbd5e1' });
                 }
             }
             if (this.p1BannerBg) {
@@ -559,15 +559,15 @@ export class CharacterSelectScene extends Phaser.Scene {
             }
             if (this.p2FighterName) {
                 this.p2FighterName.setText(isOnline ? prof.shortName.toUpperCase() : 'OPONENTE 2P');
-                this.p2FighterName.setStyle({ fill: isOnline ? prof.color : '#64748b' });
+                this.p2FighterName.setStyle({ fill: isOnline ? prof.color : '#cbd5e1' });
             }
             if (this.p2SubjectText) {
                 if (isOnline) {
                     this.p2SubjectText.setText(prof.subject);
-                    this.p2SubjectText.setStyle({ fill: '#94a3b8' });
+                    this.p2SubjectText.setStyle({ fill: '#cbd5e1' });
                 } else {
                     this.p2SubjectText.setText(`Código da Sala: ${this.roomId}`);
-                    this.p2SubjectText.setStyle({ fill: '#64748b' });
+                    this.p2SubjectText.setStyle({ fill: '#cbd5e1' });
                 }
             }
             // Especial: nome não é mais exibido na seleção (design pedido)
@@ -583,10 +583,10 @@ export class CharacterSelectScene extends Phaser.Scene {
             if (this.p2StatusBadge) {
                 if (!isOnline) {
                     this.p2StatusBadge.setText('📡 OFFLINE');
-                    this.p2StatusBadge.setStyle({ fill: '#ef4444' });
+                    this.p2StatusBadge.setStyle({ fill: '#f87171' });
                 } else {
                     this.p2StatusBadge.setText(isReady ? '🟢 PRONTO' : '⏳ ESCOLHENDO');
-                    this.p2StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#94a3b8' });
+                    this.p2StatusBadge.setStyle({ fill: isReady ? '#4ade80' : '#cbd5e1' });
                 }
             }
             if (this.p2BannerBg && typeof this.p2BannerBg.setCardStyle === 'function') {
@@ -645,7 +645,7 @@ export class CharacterSelectScene extends Phaser.Scene {
             strokeWidth: 1.5
         }).setVisible(false);
         this.countdownTxt = this.add.text(0, 0, '', {
-            fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
+            fontSize: '13px', fill: '#fbbf24', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
         this.countdownBanner.add(this.countdownTxt);
     }

@@ -159,7 +159,7 @@ body.gm-active.in-battle:not(.dev-sidebar-open) #gm-quickbar {
 .qm-row .qm-meta {
   flex: 0 0 auto;
   font-size: 10.5px;
-  color: #64748b;
+  color: #cbd5e1;
   white-space: nowrap;
 }
 .qm-row button {

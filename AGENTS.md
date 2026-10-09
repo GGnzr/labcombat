@@ -24,6 +24,9 @@ npm install        # primeira vez
 npm run dev        # http://localhost:5173
 npm run build      # build de produção em dist/
 npm test           # testes de regressão (node:test, sem dependências extras)
+node tools/check-contrast.mjs   # auditoria de contraste WCAG 2.1 (exit 1 se algum
+                                # par texto×fundo ficar abaixo do AA; -h: par avulso
+                                # via `node tools/check-contrast.mjs "#fg" "#bg"`)
 ```
 
 ## 3. Mapa do repositório
@@ -195,6 +198,19 @@ de professor é um PEDIDO como a revanche (`handleChangeProfessor` — no modo
 solo sem oponente ela continua direta); aceitar a troca leva os dois de volta
 à seleção (`executeChangeProfessorDirectly` → `state:'character_select'`).
 Empate duplo (ambos HP ≤0) → `'🤝 EMPATE DUPLO!'`.
+
+**Painel de fim de jogo** (`MainScene.showGameOver`): placar + grade de
+**estatísticas da partida** (precisão, tempo médio — só respostas reais,
+`answeredChoice >= 0`; timeout `-1` e bot `-2` não contam tempo —, melhor
+sequência de acertos e dano causado), acumuladas **localmente** a cada rodada
+resolvida (`accumulateRoundStats`, dedup por `round` no flag `roundResolved`;
+zeradas no `resetLocalMatchState`; nada vai pro Firebase) + **caixa de LP**
+com delta animado (count-up) e barra de progresso até a próxima divisão/elo
+(`getRankForPoints` → `rankMin`/`nextMin`); os estados sem pontuação
+(visitante, partida mista conta×guest, treino vs Coringa) viram uma linha
+informativa na mesma caixa — espectador não vê a caixa. Entrada
+cinematográfica: carimbo do resultado (ícone/título com punch), flash na cor
+do resultado, confetes (partículas) na vitória e shake de câmera na derrota.
 
 ## 6. Questões
 
@@ -432,8 +448,8 @@ na mesma entrega**.
   estilo LoL: IV→III→II→I, tabela do PLANO §1.5; ícones 🐣•☕•💻•💎•👑),
   registro automático no fim da partida —
   `recordMatchResult` retorna `{ delta, points, rank }` e a MainScene exibe no
-  painel de fim de jogo quanto o jogador com conta ganhou/perdeu (+ elo atual;
-  visitante vê convite p/ criar conta) —, **modais separados: Perfil
+  painel de fim de jogo o delta com count-up + barra de progresso até a próxima
+  divisão/elo (visitante vê convite p/ criar conta) —, **modais separados: Perfil
   (`open-profile-modal`, ranking/apelido/sessão da conta) e Conta
   (`open-account-modal`, formulário Entrar/Cadastrar/visitante)**,
   **top 10 público no menu via botão 🏆 da dock inferior do lobby**
