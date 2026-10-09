@@ -196,7 +196,7 @@ export class MainScene extends Phaser.Scene {
 
         // Status da partida
         this.statusText = this.add.text(centerX, 43, 'Conectando...', { 
-            fontSize: '11px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '14px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         // 3. Painéis dos Jogadores - Fighter HUD Cards (P1 à esquerda, P2 à direita)
@@ -231,15 +231,15 @@ export class MainScene extends Phaser.Scene {
 
         // Linha 1: Nickname, Disciplina e HP Numérico (y = 82)
         this.p1NickText = this.add.text(p1ContentX, 82, 'JOGADOR 1', { 
-            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
+            fontSize: '16.5px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
-        this.p1ProfText = this.add.text(p1ContentX + 120, 82, '• SISTEMAS OP.', { 
-            fontSize: '11px', fill: '#93c5fd', fontStyle: 'bold', resolution: 2 
+        this.p1ProfText = this.add.text(p1ContentX + 140, 82, '• SISTEMAS OP.', { 
+            fontSize: '13px', fill: '#93c5fd', fontStyle: 'bold', resolution: 2 
         }).setOrigin(0, 0.5);
 
         this.p1HpText = this.add.text(p1Right - 15, 82, '100 HP', {
-            fontSize: '12px', fill: '#4ade80', fontStyle: 'bold', resolution: 2
+            fontSize: '16.5px', fill: '#4ade80', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         // Linha 2: Barra de HP P1 (y = 105)
@@ -252,16 +252,16 @@ export class MainScene extends Phaser.Scene {
         for (let s = 0; s < 3; s++) {
             const slotBg = this.add.rectangle(p1ContentX + 14 + (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
             const slotTxt = this.add.text(p1ContentX + 14 + (s * 36), 130, '⚡', {
-                fontSize: '10px', fill: '#64748b', fontStyle: 'bold', resolution: 2
+                fontSize: '11px', fill: '#64748b', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p1ChargeSlots.push(slotBg);
             this.p1SlotTexts.push(slotTxt);
         }
         this.p1ChargeLabel = this.add.text(p1ContentX + 120, 130, 'ESPECIAL: 0/3', {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '12.5px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
         this.p1BuffIcons = this.add.text(p1Right - 15, 130, '', {
-            fontSize: '11px', fontStyle: 'bold', resolution: 2
+            fontSize: '13.5px', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         // Aliases para compatibilidade
@@ -285,15 +285,15 @@ export class MainScene extends Phaser.Scene {
 
         // Linha 1: HP Numérico, Disciplina e Nickname (y = 82)
         this.p2HpText = this.add.text(p2Left + 15, 82, '100 HP', {
-            fontSize: '12px', fill: '#f87171', fontStyle: 'bold', resolution: 2
+            fontSize: '16.5px', fill: '#f87171', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
-        this.p2ProfText = this.add.text(p2ContentX - 120, 82, 'WEB & MOBILE •', { 
-            fontSize: '11px', fill: '#fca5a5', fontStyle: 'bold', resolution: 2 
+        this.p2ProfText = this.add.text(p2ContentX - 140, 82, 'WEB & MOBILE •', { 
+            fontSize: '13px', fill: '#fca5a5', fontStyle: 'bold', resolution: 2 
         }).setOrigin(1, 0.5);
 
         this.p2NickText = this.add.text(p2ContentX, 82, 'JOGADOR 2', { 
-            fontSize: '13px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
+            fontSize: '16.5px', fill: '#ffffff', fontStyle: 'bold', resolution: 2 
         }).setOrigin(1, 0.5);
 
         // Linha 2: Barra de HP P2 (y = 105)
@@ -302,11 +302,11 @@ export class MainScene extends Phaser.Scene {
 
         // Linha 3: Buffs, Label de Especial e Medidor de Cargas P2 (y = 130)
         this.p2BuffIcons = this.add.text(p2Left + 15, 130, '', {
-            fontSize: '11px', fontStyle: 'bold', resolution: 2
+            fontSize: '13.5px', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
 
         this.p2ChargeLabel = this.add.text(p2ContentX - 120, 130, 'ESPECIAL: 0/3', {
-            fontSize: '10px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '12.5px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         this.p2ChargeSlots = [];
@@ -314,7 +314,7 @@ export class MainScene extends Phaser.Scene {
         for (let s = 0; s < 3; s++) {
             const slotBg = this.add.rectangle(p2ContentX - 14 - (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
             const slotTxt = this.add.text(p2ContentX - 14 - (s * 36), 130, '⚡', {
-                fontSize: '10px', fill: '#64748b', fontStyle: 'bold', resolution: 2
+                fontSize: '11px', fill: '#64748b', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p2ChargeSlots.push(slotBg);
             this.p2SlotTexts.push(slotTxt);
@@ -390,7 +390,7 @@ export class MainScene extends Phaser.Scene {
         // Prompt dinâmico da linha de comando — troca conforme a questão carregada:
         // root@labcombat:~$ ./QUESTÃO-bd-45.SH
         this.terminalCmdLine = this.add.text(35, 454, 'root@labcombat:~$ ./responder.sh', {
-            fontSize: '12px', fill: '#4ade80', fontStyle: 'bold', resolution: 2,
+            fontSize: '14px', fill: '#4ade80', fontStyle: 'bold', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0.5);
 
@@ -415,14 +415,14 @@ export class MainScene extends Phaser.Scene {
         // do prompt/cronômetro, sem pill/fundo — centro do espaço livre da faixa
         const modBadgeX = (300 + (width - 180)) / 2;
         this.roundModifierBadge = this.add.text(modBadgeX, 454, '', {
-            fontSize: '11px', fill: '#fbbf24', fontStyle: 'bold', resolution: 2,
+            fontSize: '13.5px', fill: '#fbbf24', fontStyle: 'bold', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0.5).setVisible(false);
 
         // Enunciado: dentro do console, logo abaixo da faixa do prompt
         const termBgLeft = centerX - (Math.min(width - 60, 1210) / 2 + 14);
-        this.questionText = this.add.text(termBgLeft + 14, 484, '', { 
-            fontSize: '13.5px', fill: '#fbbf24', align: 'left', 
+        this.questionText = this.add.text(termBgLeft + 14, 478, '', { 
+            fontSize: '18px', fill: '#fbbf24', align: 'left', 
             wordWrap: { width: Math.min(width - 60, 1210) - 28 }, fontStyle: 'bold', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0);
@@ -431,11 +431,11 @@ export class MainScene extends Phaser.Scene {
         // cursor ❯, numeração [1]–[4] âmbar e texto verde mono. Linha limpa por
         // padrão; hover/seleção acende um fundo verde bem sutil (#062a1a).
         const btnWidth = Math.min(width - 60, 1210);
-        const btnHeight = 38;
+        const btnHeight = 48;
         this.optionButtons = [];
 
         for (let i = 0; i < 4; i++) {
-            const btn = this.add.container(centerX, 536 + (i * 40));
+            const btn = this.add.container(centerX, 530 + (i * 48));
 
             const bgGfx = this.add.graphics();
             const drawBtnBg = (fColor = null, sColor = null) => {
@@ -447,20 +447,20 @@ export class MainScene extends Phaser.Scene {
 
             // Cursor de linha ❯ (só aparece no hover, como a linha ".cur" da proposta)
             const cursorTxt = this.add.text(-btnWidth / 2 + 12, 0, '❯', {
-                fontSize: '13px', fill: '#22c55e', fontStyle: 'bold', resolution: 2,
+                fontSize: '17px', fill: '#22c55e', fontStyle: 'bold', resolution: 2,
                 fontFamily: '"Cascadia Code", "Consolas", monospace'
             }).setOrigin(0, 0.5).setVisible(false);
             btn.cursorTxt = cursorTxt;
 
             // Prefixo [1]–[4] âmbar estilo shell
-            const numTxt = this.add.text(-btnWidth / 2 + 28, 0, `[${i + 1}]`, {
-                fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2,
+            const numTxt = this.add.text(-btnWidth / 2 + 30, 0, `[${i + 1}]`, {
+                fontSize: '17px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2,
                 fontFamily: '"Cascadia Code", "Consolas", monospace'
             }).setOrigin(0, 0.5);
 
             // Texto da opção (mono verde terminal)
-            const labelTxt = this.add.text(-btnWidth / 2 + 62, 0, '', {
-                fontSize: '13px', fill: '#4ade80', fontStyle: 'normal', resolution: 2,
+            const labelTxt = this.add.text(-btnWidth / 2 + 72, 0, '', {
+                fontSize: '17px', fill: '#4ade80', fontStyle: 'normal', resolution: 2,
                 fontFamily: '"Cascadia Code", "Consolas", monospace'
             }).setOrigin(0, 0.5);
 
@@ -536,8 +536,8 @@ export class MainScene extends Phaser.Scene {
         }
 
         // Rodapé do console: dica de uso
-        this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 688, '· 1–4 responde direto · ↑↓ navega, Enter executa · ou clique na linha', {
-            fontSize: '11px', fill: '#64748b', resolution: 2,
+        this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 706, '· 1–4 responde direto · ↑↓ navega, Enter executa · ou clique na linha', {
+            fontSize: '12.5px', fill: '#64748b', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0.5);
 
