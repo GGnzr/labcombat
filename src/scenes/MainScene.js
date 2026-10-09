@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { ref, set, onValue, onDisconnect, get, update, remove, serverTimestamp } from 'firebase/database';
 import { db } from '../firebase.js';
 import { loadQuestionBanks } from '../questionBank.js';
-import { recordMatchResult } from '../ranking.js';
+import { recordMatchResult, getRankForPoints } from '../ranking.js';
 import { professors, getProfessorById } from '../professors.js';
 import { arenas, getArenaById, getRandomArena } from '../arenas.js';
 import { drawRoundedRect, createSmoothCard, createSmoothButton, createSmoothBanner } from '../ui/smoothUI.js';
@@ -101,6 +101,15 @@ export class MainScene extends Phaser.Scene {
         this.lastCountedErrorRound = null;
         this.rankingRecorded = false;
 
+        // Estatísticas da partida (acumuladas localmente a cada rodada
+        // resolvida — ambos os clientes leem os mesmos dados da sala).
+        // Alimentam a grade do painel de fim de jogo. Nada vai pro Firebase.
+        this.matchStats = this.createFreshMatchStats();
+        this.lastStatsRound = null;
+        this.lastStatsHp = null;
+        this.lpCountTween = null;
+        this.lpBarTween = null;
+
         // Flags de áudio: garantem que FIGHT e K.O. toquem exatamente uma vez por partida
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
@@ -196,7 +205,7 @@ export class MainScene extends Phaser.Scene {
 
         // Status da partida
         this.statusText = this.add.text(centerX, 43, 'Conectando...', { 
-            fontSize: '14px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '14px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         // 3. Painéis dos Jogadores - Fighter HUD Cards (P1 à esquerda, P2 à direita)
@@ -252,13 +261,13 @@ export class MainScene extends Phaser.Scene {
         for (let s = 0; s < 3; s++) {
             const slotBg = this.add.rectangle(p1ContentX + 14 + (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
             const slotTxt = this.add.text(p1ContentX + 14 + (s * 36), 130, '⚡', {
-                fontSize: '11px', fill: '#64748b', fontStyle: 'bold', resolution: 2
+                fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p1ChargeSlots.push(slotBg);
             this.p1SlotTexts.push(slotTxt);
         }
         this.p1ChargeLabel = this.add.text(p1ContentX + 120, 130, 'ESPECIAL: 0/3', {
-            fontSize: '12.5px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '12.5px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0, 0.5);
         this.p1BuffIcons = this.add.text(p1Right - 15, 130, '', {
             fontSize: '13.5px', fontStyle: 'bold', resolution: 2
@@ -306,7 +315,7 @@ export class MainScene extends Phaser.Scene {
         }).setOrigin(0, 0.5);
 
         this.p2ChargeLabel = this.add.text(p2ContentX - 120, 130, 'ESPECIAL: 0/3', {
-            fontSize: '12.5px', fill: '#94a3b8', fontStyle: 'bold', resolution: 2
+            fontSize: '12.5px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(1, 0.5);
 
         this.p2ChargeSlots = [];
@@ -314,7 +323,7 @@ export class MainScene extends Phaser.Scene {
         for (let s = 0; s < 3; s++) {
             const slotBg = this.add.rectangle(p2ContentX - 14 - (s * 36), 130, 28, 16, 0x1e2430).setStrokeStyle(1, 0x475569);
             const slotTxt = this.add.text(p2ContentX - 14 - (s * 36), 130, '⚡', {
-                fontSize: '11px', fill: '#64748b', fontStyle: 'bold', resolution: 2
+                fontSize: '11px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
             }).setOrigin(0.5);
             this.p2ChargeSlots.push(slotBg);
             this.p2SlotTexts.push(slotTxt);
@@ -461,11 +470,14 @@ export class MainScene extends Phaser.Scene {
             // Texto da opção (mono verde terminal)
             const labelTxt = this.add.text(-btnWidth / 2 + 72, 0, '', {
                 fontSize: '17px', fill: '#4ade80', fontStyle: 'normal', resolution: 2,
-                fontFamily: '"Cascadia Code", "Consolas", monospace'
+                fontFamily: '"Cascadia Code", "Consolas", monospace',
+                wordWrap: { width: btnWidth - 90 }
             }).setOrigin(0, 0.5);
 
             btn.add([bgGfx, cursorTxt, numTxt, labelTxt]);
             btn.drawRowBg = drawBtnBg; // expõe p/ navegação por teclado (setas)
+            btn.numTxt = numTxt;
+            btn.labelTxt = labelTxt;
 
             btn.setSize(btnWidth, btnHeight);
             btn.setInteractive({ useHandCursor: true });
@@ -503,8 +515,8 @@ export class MainScene extends Phaser.Scene {
                         // Timeout: linha apagada no console
                         drawBtnBg(0x050a08, 0x1f2937);
                         cursorTxt.setVisible(false);
-                        numTxt.setStyle({ fill: '#64748b' });
-                        labelTxt.setStyle({ fill: '#64748b' });
+                        numTxt.setStyle({ fill: '#cbd5e1' });
+                        labelTxt.setStyle({ fill: '#cbd5e1' });
                     } else {
                         // Reset base: linha limpa do console
                         drawBtnBg(null);
@@ -537,7 +549,7 @@ export class MainScene extends Phaser.Scene {
 
         // Rodapé do console: dica de uso
         this.consoleHintText = this.add.text(centerX - btnWidth / 2 + 14, 706, '· 1–4 responde direto · ↑↓ navega, Enter executa · ou clique na linha', {
-            fontSize: '12.5px', fill: '#64748b', resolution: 2,
+            fontSize: '12.5px', fill: '#cbd5e1', resolution: 2,
             fontFamily: '"Cascadia Code", "Consolas", monospace'
         }).setOrigin(0, 0.5);
 
@@ -601,7 +613,7 @@ export class MainScene extends Phaser.Scene {
         }).setOrigin(0.5);
         this.ultimateOverlay.add([this.ultBackdrop, this.ultFlash, this.ultPortrait, this.ultHeader, this.ultMoveName, this.ultQuote]);
 
-        // 6. Painel Game Over (Reformulado, Perfeitamente Centralizado e com Múltiplas Opções)
+        // 6. Painel Game Over (Redesenhado: placar + estatísticas + LP em destaque)
         this.gameOverPanel = this.add.container(centerX, 360).setDepth(200).setVisible(false);
 
         // Backdrop escuro que bloqueia interações com a tela de combate de fundo
@@ -614,9 +626,9 @@ export class MainScene extends Phaser.Scene {
 
         this.updateGameOverTheme = (themeColor = 0xd97706) => {
             this.goCardGlow.clear();
-            drawRoundedRect(this.goCardGlow, -305, -220, 610, 440, 24, themeColor, 0.22);
+            drawRoundedRect(this.goCardGlow, -305, -275, 610, 550, 24, themeColor, 0.22);
             this.goCardBg.clear();
-            drawRoundedRect(this.goCardBg, -300, -215, 600, 430, 20, 0x242a35, 0.98, themeColor, 2);
+            drawRoundedRect(this.goCardBg, -300, -270, 600, 540, 20, 0x242a35, 0.98, themeColor, 2);
         };
         this.updateGameOverTheme(0xd97706);
 
@@ -636,59 +648,112 @@ export class MainScene extends Phaser.Scene {
 
         // Faixa de Cabeçalho do Card (com cantos arredondados)
         const goCardHeader = this.add.graphics();
-        drawRoundedRect(goCardHeader, -290, -205, 580, 65, 14, 0x2d3544, 0.95, 0x475569, 1);
-        const goHeaderLine = this.add.line(0, -135, -280, 0, 280, 0, 0x475569).setLineWidth(1);
+        drawRoundedRect(goCardHeader, -290, -256, 580, 92, 14, 0x2d3544, 0.95, 0x475569, 1);
 
-        // Ícone e Títulos
-        this.goIconText = this.add.text(0, -182, '🏆', { 
-            fontSize: '34px'
+        // Ícone e Títulos (o ícone entra com efeito "carimbo" no showGameOver)
+        this.goIconText = this.add.text(0, -231, '🏆', {
+            fontSize: '36px'
         }).setOrigin(0.5);
 
-        this.goTitleText = this.add.text(0, -145, 'VITÓRIA ACADÊMICA!', { 
+        this.goTitleText = this.add.text(0, -189, 'VITÓRIA ACADÊMICA!', {
             fontSize: '26px', fontStyle: 'bold', fill: '#4ade80', resolution: 2
         }).setOrigin(0.5);
 
-        this.goSubText = this.add.text(0, -108, 'Parabéns! Você dominou o duelo.', { 
-            fontSize: '14px', fill: '#e2e8f0', fontStyle: 'bold',
-            align: 'center', resolution: 2
+        this.goSubText = this.add.text(0, -146, 'Parabéns! Você dominou o duelo.', {
+            fontSize: '13px', fill: '#e2e8f0', fontStyle: 'bold',
+            align: 'center', wordWrap: { width: 540 }, resolution: 2
         }).setOrigin(0.5);
 
         // Resumo / Placar da Partida (Stats Box Centralizado Suave)
         const statsBoxBg = this.add.graphics();
-        drawRoundedRect(statsBoxBg, -270, -74, 540, 92, 14, 0x1e2430, 0.95, 0x475569, 1.5);
+        drawRoundedRect(statsBoxBg, -270, -120, 540, 76, 14, 0x1e2430, 0.95, 0x475569, 1.5);
 
         // Coluna P1
-        this.goP1Nick = this.add.text(-170, -52, 'P1: JOGADOR 1', { 
-            fontSize: '13px', fill: '#60a5fa', fontStyle: 'bold', resolution: 2 
+        this.goP1Nick = this.add.text(-170, -105, 'P1: JOGADOR 1', {
+            fontSize: '13px', fill: '#60a5fa', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
-        this.goP1Prof = this.add.text(-170, -32, '[ SISTEMAS OP. ]', { 
-            fontSize: '11px', fill: '#94a3b8', resolution: 2 
+        this.goP1Prof = this.add.text(-170, -87, '[ SISTEMAS OP. ]', {
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5);
-        this.goP1Hearts = this.add.text(-170, -8, '100 HP', { 
-            fontSize: '13px', fill: '#4ade80', fontStyle: 'bold', resolution: 2 
+        this.goP1Hearts = this.add.text(-170, -65, '100 HP', {
+            fontSize: '13px', fill: '#4ade80', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
         // Separador Central (VS & Rodadas)
-        const vsBadge = this.add.text(0, -50, 'VS', { 
-            fontSize: '14px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2 
+        const vsBadge = this.add.text(0, -98, 'VS', {
+            fontSize: '14px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
-        this.goRoundsText = this.add.text(0, -30, '🎯 4 Rodadas', { 
-            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0.5);
-        const modeBadge = this.add.text(0, -10, 'Duelo 1v1', { 
-            fontSize: '10px', fill: '#64748b', resolution: 2 
+        this.goRoundsText = this.add.text(0, -77, '🎯 4 Rodadas', {
+            fontSize: '12px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5);
 
-        // Delta de LP + novo elo do jogador com conta (preenchido no fim da partida
-        // via showRankDeltaOnGameOver). Visitante vê convite p/ criar conta.
-        this.goRankText = this.add.text(0, 7, '', {
-            fontSize: '12px', fill: '#facc15', fontStyle: 'bold', resolution: 2
+        // Coluna P2
+        this.goP2Nick = this.add.text(170, -105, 'P2: JOGADOR 2', {
+            fontSize: '13px', fill: '#f87171', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5);
+        this.goP2Prof = this.add.text(170, -87, '[ WEB & MOBILE ]', {
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2
+        }).setOrigin(0.5);
+        this.goP2Hearts = this.add.text(170, -65, '💀 0 HP (K.O.)', {
+            fontSize: '13px', fill: '#f87171', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5);
+
+        // --- Grade de Estatísticas da Partida (preenchida no showGameOver) ---
+        const goStatsHeader = this.add.text(0, -30, '📊 ESTATÍSTICAS DA PARTIDA', {
+            fontSize: '12.5px', fill: '#cbd5e1', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0.5);
+        const goStatsBoxBg = this.add.graphics();
+        drawRoundedRect(goStatsBoxBg, -270, -18, 540, 90, 14, 0x1e2430, 0.95, 0x475569, 1.5);
+
+        // Linhas: valor P1 (esq, azul) | nome da estatística (centro) | valor P2 (dir, vermelho)
+        this.goStatRows = [];
+        ['🎯 Precisão', '⚡ Tempo médio', '🔥 Seq. de acertos', '💥 Dano causado'].forEach((label, i) => {
+            const rowY = -3 + i * 20;
+            const p1Val = this.add.text(-170, rowY, '—', {
+                fontSize: '14px', fill: '#60a5fa', fontStyle: 'bold', resolution: 2
+            }).setOrigin(0.5);
+            const lab = this.add.text(0, rowY, label, {
+                fontSize: '12.5px', fill: '#cbd5e1', resolution: 2
+            }).setOrigin(0.5);
+            const p2Val = this.add.text(170, rowY, '—', {
+                fontSize: '14px', fill: '#f87171', fontStyle: 'bold', resolution: 2
+            }).setOrigin(0.5);
+            this.goStatRows.push({ p1Val, lab, p2Val });
+        });
+
+        // --- Caixa de LP (delta animado + barra de progresso do elo) ---
+        // Visível só no fim da partida e apenas para quem pontua; nos estados
+        // sem LP (visitante / oponente sem conta / treino vs Coringa) vira uma
+        // linha informativa única (goRankText). Espectador nunca vê.
+        this.goLpBox = createSmoothCard(this, 0, 116, 540, 72, {
+            radius: 14,
+            fillColor: 0x1e2430,
+            fillAlpha: 0.96,
+            strokeColor: 0xd97706,
+            strokeWidth: 1.5
+        }).setVisible(false);
+
+        this.goLpRankLabel = this.add.text(-250, -16, '', {
+            fontSize: '13px', fill: '#facc15', fontStyle: 'bold', resolution: 2
+        }).setOrigin(0, 0.5);
+        this.goLpDelta = this.add.text(250, -16, '', {
+            fontSize: '18px', fontStyle: 'bold', fill: '#4ade80', resolution: 2
+        }).setOrigin(1, 0.5);
+        this.goLpBarGfx = this.add.graphics();
+        this.goLpBarText = this.add.text(0, 26, '', {
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2
+        }).setOrigin(0.5);
+
+        // Linha única dos estados sem pontuação (visitante / mista / treino)
+        this.goRankText = this.add.text(0, 0, '', {
+            fontSize: '12px', fill: '#facc15', fontStyle: 'bold', align: 'center',
+            wordWrap: { width: 500 }, resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
         // Text não recebeu clique de forma confiável (hitArea de origem 0.5 +
-        // container) — a zona invisível cobre a linha inteira e vira o alvo real
+        // container) — a zona invisível cobre a caixa inteira e vira o alvo real
         // do "toque aqui" do visitante (só age se um convite estiver visível).
-        this.goRankClickZone = this.add.zone(0, 7, 540, 22);
+        this.goRankClickZone = this.add.zone(0, 0, 540, 72);
         this.goRankClickZone.setInteractive({ useHandCursor: false });
         this.goRankClickZone.on('pointerdown', () => {
             if (this.isGuestRankInvite && this.goRankText?.visible) {
@@ -696,19 +761,13 @@ export class MainScene extends Phaser.Scene {
             }
         });
 
-        // Coluna P2
-        this.goP2Nick = this.add.text(170, -52, 'P2: JOGADOR 2', { 
-            fontSize: '13px', fill: '#f87171', fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0.5);
-        this.goP2Prof = this.add.text(170, -32, '[ WEB & MOBILE ]', { 
-            fontSize: '11px', fill: '#94a3b8', resolution: 2 
-        }).setOrigin(0.5);
-        this.goP2Hearts = this.add.text(170, -8, '💀 0 HP (K.O.)', { 
-            fontSize: '13px', fill: '#ef4444', fontStyle: 'bold', resolution: 2 
-        }).setOrigin(0.5);
+        this.goLpBox.add([
+            this.goLpRankLabel, this.goLpDelta, this.goLpBarGfx, this.goLpBarText,
+            this.goRankText, this.goRankClickZone
+        ]);
 
         // Banner temporário de recusa de solicitação (Suave e Arredondado)
-        this.requestDeclinedBanner = createSmoothBanner(this, 0, 22, '', { 
+        this.requestDeclinedBanner = createSmoothBanner(this, 0, 185, '', {
             radius: 14,
             fillColor: 0x450a0a,
             strokeColor: 0xef4444,
@@ -721,10 +780,10 @@ export class MainScene extends Phaser.Scene {
 
         // --- GRUPO 1: Botões de Ação Padrão (Suaves e Arredondados) ---
         // Botão 1 (Principal): Jogar Novamente (Revanche na Mesma Sala)
-        this.btnRematch = createSmoothButton(this, 0, 56, 460, 42, '⚔️ Jogar Novamente (Revanche)', {
-            radius: 21,
-            fillColor: 0x16a34a,
-            hoverFillColor: 0x22c55e,
+        this.btnRematch = createSmoothButton(this, 0, 186, 460, 40, '⚔️ Jogar Novamente (Revanche)', {
+            radius: 20,
+            fillColor: 0x15803d,
+            hoverFillColor: 0x14532d,
             strokeColor: 0x34d399,
             strokeWidth: 1.5,
             fontSize: '15px',
@@ -732,8 +791,8 @@ export class MainScene extends Phaser.Scene {
         });
 
         // Botão 2: Trocar Personagem (Volta para a Seleção mantendo a sala)
-        this.btnChangeProf = createSmoothButton(this, -125, 118, 210, 38, '🔄 Trocar Personagem', {
-            radius: 19,
+        this.btnChangeProf = createSmoothButton(this, -125, 232, 210, 36, '🔄 Trocar Personagem', {
+            radius: 18,
             fillColor: 0x323a48,
             hoverFillColor: 0x3e4758,
             strokeColor: 0x526075,
@@ -744,8 +803,8 @@ export class MainScene extends Phaser.Scene {
         });
 
         // Botão 3: Menu Principal (Limpa e Sai)
-        this.btnMainMenu = createSmoothButton(this, 125, 118, 210, 38, '🏠 Menu Principal', {
-            radius: 19,
+        this.btnMainMenu = createSmoothButton(this, 125, 232, 210, 36, '🏠 Menu Principal', {
+            radius: 18,
             fillColor: 0x7f1d1d,
             hoverFillColor: 0x991b1b,
             strokeColor: 0xb91c1c,
@@ -756,7 +815,7 @@ export class MainScene extends Phaser.Scene {
         });
 
         // --- GRUPO 2: Painel de Espera (Para quem ENVIOU a solicitação) ---
-        this.waitingBox = createSmoothCard(this, 0, 94, 520, 92, {
+        this.waitingBox = createSmoothCard(this, 0, 209, 520, 88, {
             radius: 14,
             fillColor: 0x1e2430,
             fillAlpha: 0.96,
@@ -764,12 +823,12 @@ export class MainScene extends Phaser.Scene {
             strokeWidth: 1.5
         }).setVisible(false);
 
-        this.waitingText = this.add.text(0, 74, '', { 
+        this.waitingText = this.add.text(0, 191, '', {
             fontSize: '13px', fill: '#f59e0b', fontStyle: 'bold', align: 'center',
             wordWrap: { width: 480 }, resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
-        this.btnCancelRequest = createSmoothButton(this, 0, 116, 200, 34, '✕ Cancelar Solicitação', {
+        this.btnCancelRequest = createSmoothButton(this, 0, 231, 200, 34, '✕ Cancelar Solicitação', {
             radius: 17,
             fillColor: 0x323a48,
             hoverFillColor: 0x3e4758,
@@ -781,7 +840,7 @@ export class MainScene extends Phaser.Scene {
         }).setVisible(false);
 
         // --- GRUPO 3: Painel de Decisão (Para quem RECEBEU a solicitação) ---
-        this.promptBox = createSmoothCard(this, 0, 94, 520, 102, {
+        this.promptBox = createSmoothCard(this, 0, 209, 520, 96, {
             radius: 14,
             fillColor: 0x1e2430,
             fillAlpha: 0.96,
@@ -789,25 +848,25 @@ export class MainScene extends Phaser.Scene {
             strokeWidth: 2
         }).setVisible(false);
 
-        this.promptTitle = this.add.text(0, 64, '', { 
+        this.promptTitle = this.add.text(0, 183, '', {
             fontSize: '14px', fill: '#f59e0b', fontStyle: 'bold', resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
-        this.promptSub = this.add.text(0, 86, '', { 
-            fontSize: '11px', fill: '#94a3b8', resolution: 2
+        this.promptSub = this.add.text(0, 204, '', {
+            fontSize: '11px', fill: '#cbd5e1', resolution: 2
         }).setOrigin(0.5).setVisible(false);
 
-        this.btnAcceptRequest = createSmoothButton(this, -165, 120, 145, 34, '✓ Aceitar', {
+        this.btnAcceptRequest = createSmoothButton(this, -165, 233, 145, 34, '✓ Aceitar', {
             radius: 17,
-            fillColor: 0x16a34a,
-            hoverFillColor: 0x22c55e,
+            fillColor: 0x15803d,
+            hoverFillColor: 0x14532d,
             strokeColor: 0x34d399,
             strokeWidth: 1.5,
             fontSize: '12px',
             onClick: () => this.acceptPostMatchRequest()
         }).setVisible(false);
 
-        this.btnPromptChangeProf = createSmoothButton(this, 0, 120, 155, 34, '🔄 Trocar Personagem', {
+        this.btnPromptChangeProf = createSmoothButton(this, 0, 233, 155, 34, '🔄 Trocar Personagem', {
             radius: 17,
             fillColor: 0x2563eb,
             hoverFillColor: 0x1d4ed8,
@@ -817,7 +876,7 @@ export class MainScene extends Phaser.Scene {
             onClick: () => this.executeChangeProfessorDirectly()
         }).setVisible(false);
 
-        this.btnDeclineRequest = createSmoothButton(this, 165, 120, 145, 34, '✕ Recusar (Encerrar)', {
+        this.btnDeclineRequest = createSmoothButton(this, 165, 233, 145, 34, '✕ Recusar (Encerrar)', {
             radius: 17,
             fillColor: 0x7f1d1d,
             hoverFillColor: 0x991b1b,
@@ -828,23 +887,20 @@ export class MainScene extends Phaser.Scene {
             onClick: () => this.declinePostMatchRequest()
         }).setVisible(false);
 
-        // Rodapé do Card
-        this.goFooterHint = this.add.text(0, 172, `Código da Sala: ${this.roomId} • Duelo Finalizado`, {
-            fontSize: '11px', fill: '#64748b', fontStyle: 'normal'
-        }).setOrigin(0.5);
-
         this.gameOverPanel.add([
-            goBackdrop, this.goCardGlow, this.goCardBg, goCardHeader, goHeaderLine,
+            goBackdrop, this.goCardGlow, this.goCardBg, goCardHeader,
             this.goIconText, this.goTitleText, this.goSubText,
             statsBoxBg,
             this.goP1Nick, this.goP1Prof, this.goP1Hearts,
-            vsBadge, this.goRoundsText, modeBadge, this.goRankText, this.goRankClickZone,
+            vsBadge, this.goRoundsText,
             this.goP2Nick, this.goP2Prof, this.goP2Hearts,
+            goStatsHeader, goStatsBoxBg,
+            ...this.goStatRows.flatMap(r => [r.p1Val, r.lab, r.p2Val]),
+            this.goLpBox,
             this.requestDeclinedBanner,
             this.btnRematch, this.btnChangeProf, this.btnMainMenu,
             this.waitingBox, this.waitingText, this.btnCancelRequest,
-            this.promptBox, this.promptTitle, this.promptSub, this.btnAcceptRequest, this.btnPromptChangeProf, this.btnDeclineRequest,
-            this.goFooterHint
+            this.promptBox, this.promptTitle, this.promptSub, this.btnAcceptRequest, this.btnPromptChangeProf, this.btnDeclineRequest
         ]);
 
         // 7. Painel de Contagem Inicial
@@ -962,6 +1018,14 @@ export class MainScene extends Phaser.Scene {
         this.lastCountedErrorRound = null;
         this.rankingRecorded = false;
         if (this.goRankText) this.goRankText.setVisible(false);
+        if (this.goLpBox) this.goLpBox.setVisible(false);
+        if (this.lpCountTween) { this.lpCountTween.stop(); this.lpCountTween = null; }
+        if (this.lpBarTween) { this.lpBarTween.stop(); this.lpBarTween = null; }
+
+        // Zera as estatísticas da partida (nova partida = novo boletim)
+        this.matchStats = this.createFreshMatchStats();
+        this.lastStatsRound = null;
+        this.lastStatsHp = null;
 
         this.hasPlayedFightFanfare = false;
         this.hasPlayedKOSound = false;
@@ -978,7 +1042,7 @@ export class MainScene extends Phaser.Scene {
         this.clearQuestion();
 
         if (this.statusText) {
-            this.statusText.setText('Preparando nova partida...').setStyle({ fill: '#94a3b8' });
+            this.statusText.setText('Preparando nova partida...').setStyle({ fill: '#cbd5e1' });
         }
         if (this.questionIdText) {
             this.questionIdText.setText('QUESTÃO: --');
@@ -1261,7 +1325,7 @@ export class MainScene extends Phaser.Scene {
                 this.btnRematch.setVisible(true);
             }
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setPosition(125, 232);
                 this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
                 this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
                 this.btnMainMenu.setVisible(true);
@@ -1286,7 +1350,7 @@ export class MainScene extends Phaser.Scene {
             if (this.btnRematch) this.btnRematch.setVisible(true);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(true);
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setPosition(125, 232);
                 this.btnMainMenu.setText('🏠 Menu Principal');
                 this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
                 this.btnMainMenu.setVisible(true);
@@ -1319,7 +1383,7 @@ export class MainScene extends Phaser.Scene {
             const actionLabel = req?.type === 'change_prof' ? 'a troca de professor' : 'a revanche';
 
             if (this.requestDeclinedBanner) {
-                this.requestDeclinedBanner.setPosition(0, 58);
+                this.requestDeclinedBanner.setPosition(0, 185);
                 this.requestDeclinedBanner.setText(isExpired
                     ? `⏱️ ${declinedNick} não respondeu ${actionLabel} em 15s.\n🚪 A sala foi finalizada. Retornando ao menu...`
                     : `❌ ${declinedNick} recusou ${actionLabel}.\n🚪 A sala foi finalizada. Retornando ao menu...`);
@@ -1335,7 +1399,7 @@ export class MainScene extends Phaser.Scene {
             }
 
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(0, 122);
+                this.btnMainMenu.setPosition(0, 237);
                 this.btnMainMenu.setText('🏠 Voltar ao Menu Principal Agora');
                 this.btnMainMenu.setStyle({ fixedWidth: 360, backgroundColor: '#991b1b', fill: '#ffffff' });
                 this.btnMainMenu.setVisible(true);
@@ -1359,7 +1423,7 @@ export class MainScene extends Phaser.Scene {
             if (this.btnRematch) this.btnRematch.setVisible(false);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setPosition(125, 232);
                 this.btnMainMenu.setText('🏠 Menu Principal');
                 this.btnMainMenu.setStyle({ fixedWidth: 210, backgroundColor: '#450a0a', fill: '#fca5a5' });
                 this.btnMainMenu.setVisible(true);
@@ -1848,7 +1912,7 @@ export class MainScene extends Phaser.Scene {
         if (this.btnRematch) this.btnRematch.setVisible(false);
         if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
         if (this.btnMainMenu) {
-            this.btnMainMenu.setPosition(0, 56);
+            this.btnMainMenu.setPosition(0, 237);
             this.btnMainMenu.setText('🏠 Voltar ao Menu');
         }
     }
@@ -1888,7 +1952,7 @@ export class MainScene extends Phaser.Scene {
             if (this.btnRematch) this.btnRematch.setText('⏳ Aguardar Novo Desafiante');
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(125, 118);
+                this.btnMainMenu.setPosition(125, 232);
                 this.btnMainMenu.setText('🏠 Sair e Fechar a Sala');
             }
         } else {
@@ -1896,7 +1960,7 @@ export class MainScene extends Phaser.Scene {
             if (this.btnRematch) this.btnRematch.setVisible(false);
             if (this.btnChangeProf) this.btnChangeProf.setVisible(false);
             if (this.btnMainMenu) {
-                this.btnMainMenu.setPosition(0, 56);
+                this.btnMainMenu.setPosition(0, 208);
                 this.btnMainMenu.setText('🏠 Voltar ao Menu');
             }
         }
@@ -2610,7 +2674,7 @@ export class MainScene extends Phaser.Scene {
             let p1Hex = '#34d399';
             if (p1Hp <= ultKoHud) {
                 p1Color = 0xef4444;
-                p1Hex = '#ef4444';
+                p1Hex = '#f87171';
             } else if (p1Hp <= maxHpHud * 0.66) {
                 p1Color = 0xeab308;
                 p1Hex = '#facc15';
@@ -2637,7 +2701,7 @@ export class MainScene extends Phaser.Scene {
                         this.p1ChargeSlots[s].setFillStyle(0x1e2430, 1);
                         this.p1ChargeSlots[s].setStrokeStyle(1, 0x475569);
                         if (this.p1SlotTexts && this.p1SlotTexts[s]) {
-                            this.p1SlotTexts[s].setStyle({ fill: '#64748b' });
+                            this.p1SlotTexts[s].setStyle({ fill: '#cbd5e1' });
                         }
                     }
                 }
@@ -2645,12 +2709,12 @@ export class MainScene extends Phaser.Scene {
             if (this.p1ChargeLabel) {
                 if (p1Charges >= 3) {
                     if (p2Hp <= ultKoHud) {
-                        this.p1ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
+                        this.p1ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#f87171' });
                     } else {
                         this.p1ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
                     }
                 } else {
-                    this.p1ChargeLabel.setText(`ESPECIAL: ${p1Charges}/3`).setStyle({ fill: '#64748b' });
+                    this.p1ChargeLabel.setText(`ESPECIAL: ${p1Charges}/3`).setStyle({ fill: '#cbd5e1' });
                 }
             }
 
@@ -2703,7 +2767,7 @@ export class MainScene extends Phaser.Scene {
             let p2Hex = '#34d399';
             if (p2Hp <= ultKoHud) {
                 p2Color = 0xef4444;
-                p2Hex = '#ef4444';
+                p2Hex = '#f87171';
             } else if (p2Hp <= maxHpHud * 0.66) {
                 p2Color = 0xeab308;
                 p2Hex = '#facc15';
@@ -2730,7 +2794,7 @@ export class MainScene extends Phaser.Scene {
                         this.p2ChargeSlots[s].setFillStyle(0x1e2430, 1);
                         this.p2ChargeSlots[s].setStrokeStyle(1, 0x475569);
                         if (this.p2SlotTexts && this.p2SlotTexts[s]) {
-                            this.p2SlotTexts[s].setStyle({ fill: '#64748b' });
+                            this.p2SlotTexts[s].setStyle({ fill: '#cbd5e1' });
                         }
                     }
                 }
@@ -2738,12 +2802,12 @@ export class MainScene extends Phaser.Scene {
             if (this.p2ChargeLabel) {
                 if (p2Charges >= 3) {
                     if (p1Hp <= ultKoHud) {
-                        this.p2ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#ef4444' });
+                        this.p2ChargeLabel.setText('⚡ ULTIMATE PRONTA!').setStyle({ fill: '#f87171' });
                     } else {
                         this.p2ChargeLabel.setText('⚡ SUPER GOLPE!').setStyle({ fill: '#facc15' });
                     }
                 } else {
-                    this.p2ChargeLabel.setText(`ESPECIAL: ${p2Charges}/3`).setStyle({ fill: '#64748b' });
+                    this.p2ChargeLabel.setText(`ESPECIAL: ${p2Charges}/3`).setStyle({ fill: '#cbd5e1' });
                 }
             }
 
@@ -2850,6 +2914,15 @@ export class MainScene extends Phaser.Scene {
             }
         }
         this.previousData = data;
+
+        // Acúmulo local de estatísticas da partida (precisão, tempo médio,
+        // sequência de acertos, dano causado) — alimenta a grade do painel de
+        // fim de jogo. Dedup por rodada: roundResolved=true chega 1x por rodada
+        // (P1 grava na sala, todos os clientes leem o mesmo snapshot).
+        if (data.roundResolved === true && data.round > 0 && data.round !== this.lastStatsRound) {
+            this.lastStatsRound = data.round;
+            this.accumulateRoundStats(data);
+        }
 
         // 2. Checagem de Fim de Jogo (HP <= 0)
         if (p1Hp === 100 && p2Hp === 100) {
@@ -3081,9 +3154,35 @@ export class MainScene extends Phaser.Scene {
             const fileId = String(questionData.id).toUpperCase().replace(/[^A-Z0-9]+/g, '-');
             this.terminalCmdLine.setText(`root@labcombat:~$ ./QUESTÃO-${fileId}.SH`);
         }
+        // Enunciado longo: reduz a fonte para caber mais linhas sem empurrar
+        // demais os botões (18px padrão → 16px → 14px conforme a altura)
+        this.questionText.setFontSize(18);
         this.questionText.setText(`$ questão: ${questionData.text}`);
+        if (this.questionText.height > 92) {       // 4+ linhas
+            this.questionText.setFontSize(14);
+        } else if (this.questionText.height > 46) { // 3+ linhas
+            this.questionText.setFontSize(16);
+        }
         this.questionText?.setVisible(true);     // mostra o enunciado dentro do console
         this.terminalCmdLine?.setVisible(true);
+
+        // Reposiciona os botões de resposta logo abaixo do enunciado (ele pode
+        // quebrar em várias linhas; posição fixa causava sobreposição). Quando
+        // falta espaço vertical, o espaçamento e a fonte das opções encolhem
+        // em vez de sobrepor o enunciado. Limite inferior: linha de hint (y≈706).
+        const btnHalf = 24;
+        const textBottom = this.questionText.y + this.questionText.height + 10;
+        const available = 700 - textBottom;
+        const spacing = Phaser.Math.Clamp((available - 48) / 3, 30, 48);
+        const optFontSize = spacing >= 44 ? 17 : (spacing >= 36 ? 15 : 13);
+        const firstBtnY = textBottom + btnHalf;
+        for (let i = 0; i < 4; i++) {
+            const btn = this.optionButtons[i];
+            btn.setY(firstBtnY + (i * spacing));
+            btn.labelTxt.setFontSize(optFontSize);
+            btn.numTxt.setFontSize(optFontSize);
+            btn.cursorTxt.setFontSize(optFontSize);
+        }
 
         for (let i = 0; i < 4; i++) {
             this.optionButtons[i].setText(`${String.fromCharCode(65 + i)}) ${questionData.options[i]}`);
@@ -3109,7 +3208,7 @@ export class MainScene extends Phaser.Scene {
         if (isTimeout) {
             SoundManager.playWrong();
             this.statusText.setText('TEMPO ESGOTADO!');
-            this.statusText.setStyle({ fill: '#ef4444' });
+            this.statusText.setStyle({ fill: '#f87171' });
             this.optionButtons.forEach(btn => btn.setStyle({ backgroundColor: '#374151' }));
         } else {
             isCorrect = (selectedIndex === this.currentQuestionData.correctIndex);
@@ -3229,50 +3328,186 @@ export class MainScene extends Phaser.Scene {
             .catch(err => logEvent('warn', `[Ranking] Falha ao registrar resultado: ${err.message}`));
     }
 
-    // Painel de fim de jogo: quanto o jogador com conta ganhou/perdeu de LP
-    // (+ elo atual). summary null = visitante → convite p/ criar conta.
+    // Painel de fim de jogo: seção de LP em destaque. Jogador com conta em
+    // partida ranqueada vê o delta animado (count-up) + barra de progresso até
+    // a próxima divisão/elo. Estados SEM pontuação (regras anti-farm):
+    //   null        → visitante: convite p/ criar conta (clicável)
+    //   'guest_opp' → partida mista (conta × visitante): não vale LP p/ ninguém
+    //   'bot'       → treino vs Coringa: não vale LP
     showRankDeltaOnGameOver(summary) {
-        if (!this.goRankText || this.isSpectator || !this.scene.isActive()) return;
+        if (!this.goLpBox || this.isSpectator || !this.scene.isActive()) return;
         // Visitante: só avisa — "se quiser pontuar, crie uma conta" (clicável:
         // a zona invisível goRankClickZone abre o modal de conta sem forçar nada).
         this.isGuestRankInvite = !summary;
+
+        // Cancela animações de uma partida anterior (revanche rápida)
+        if (this.lpCountTween) { this.lpCountTween.stop(); this.lpCountTween = null; }
+        if (this.lpBarTween) { this.lpBarTween.stop(); this.lpBarTween = null; }
+
+        // Estados sem LP: caixa vira uma linha informativa única e centralizada
+        const showInfoLine = (text, fill) => {
+            this.goRankText.setText(text).setStyle({ fill }).setVisible(true);
+            this.goLpRankLabel.setVisible(false);
+            this.goLpDelta.setVisible(false);
+            this.goLpBarGfx.setVisible(false);
+            this.goLpBarText.setVisible(false);
+            this.goLpBox.setAlpha(1).setVisible(true);
+        };
         if (summary === 'bot') {
             // Modo solo (vs Professor Coringa): treino, não vale LP nem conta no ranking
-            this.goRankText
-                .setText('🃏 Modo Treino (vs Coringa) — não conta LP no ranking')
-                .setStyle({ fill: '#94a3b8' })
-                .setVisible(true);
-            return;
+            return showInfoLine('🃏 Modo Treino (vs Coringa) — não conta LP no ranking', '#cbd5e1');
         }
         if (summary === 'guest_opp') {
             // Oponente sem conta: partida mista não vale LP para ninguém
-            this.goRankText
-                .setText('👤 Oponente sem conta — partida não conta LP no ranking')
-                .setStyle({ fill: '#94a3b8' })
-                .setVisible(true);
-            return;
+            return showInfoLine('👤 Oponente sem conta — partida não conta LP no ranking', '#cbd5e1');
         }
         if (!summary) {
-            this.goRankText
-                .setText('🎮 Se quiser pontuar no ranking, crie uma conta! (toque aqui)')
-                .setStyle({ fill: '#fbbf24' })
-                .setVisible(true);
-            return;
+            return showInfoLine('🎮 Se quiser pontuar no ranking, crie uma conta! (toque aqui)', '#fbbf24');
         }
+
+        // Partida ranqueada: delta em destaque + progresso do elo
         const { delta, points, rank } = summary;
-        const deltaTxt = delta > 0 ? `+${delta} LP` : delta < 0 ? `${delta} LP` : '0 LP';
+        this.goRankText.setVisible(false);
+        this.goLpRankLabel.setText(rank.label).setVisible(true);
         const fill = delta > 0 ? '#4ade80' : delta < 0 ? '#f87171' : '#facc15';
-        this.goRankText
-            .setText(`${rank.label} • ${deltaTxt} • Total: ${points} LP`)
-            .setStyle({ fill })
-            .setVisible(true);
+        this.goLpDelta.setStyle({ fill }).setText(delta >= 0 ? '+0 LP' : '0 LP').setVisible(true);
+        this.goLpBox.setAlpha(0).setVisible(true);
+        this.tweens.add({ targets: this.goLpBox, alpha: 1, duration: 350 });
+
+        // Count-up/down do delta de LP
+        const counter = { val: 0 };
+        this.lpCountTween = this.tweens.add({
+            targets: counter,
+            val: delta,
+            duration: 900,
+            delay: 300,
+            ease: 'Cubic.easeOut',
+            onUpdate: () => {
+                const v = Math.round(counter.val);
+                this.goLpDelta.setText(`${v > 0 ? '+' : ''}${v} LP`);
+            },
+            onComplete: () => {
+                this.goLpDelta.setText(`${delta > 0 ? '+' : ''}${delta} LP`);
+            }
+        });
+
+        // Barra de progresso dentro da divisão atual (rankMin → nextMin),
+        // animada do total anterior ao novo total de LP
+        this.goLpBarGfx.setVisible(true);
+        const BAR_W = 500;
+        const drawBar = (ratio) => {
+            this.goLpBarGfx.clear();
+            drawRoundedRect(this.goLpBarGfx, -250, 4, BAR_W, 10, 5, 0x11151d, 1, 0x475569, 1);
+            if (ratio > 0.005) {
+                drawRoundedRect(this.goLpBarGfx, -250, 4, Math.max(10, BAR_W * ratio), 10, 5, 0xfacc15, 1);
+            }
+        };
+        if (rank.nextMin == null) {
+            drawBar(1);
+            this.goLpBarText.setText(`👑 Elo máximo alcançado! Total: ${points} LP`).setVisible(true);
+        } else {
+            const prevPoints = Math.max(0, points - delta);
+            const span = rank.nextMin - rank.rankMin;
+            const fromRatio = Phaser.Math.Clamp((prevPoints - rank.rankMin) / span, 0, 1);
+            const toRatio = Phaser.Math.Clamp((points - rank.rankMin) / span, 0, 1);
+            const barAnim = { ratio: fromRatio };
+            drawBar(fromRatio);
+            this.lpBarTween = this.tweens.add({
+                targets: barAnim,
+                ratio: toRatio,
+                duration: 900,
+                delay: 300,
+                ease: 'Cubic.easeOut',
+                onUpdate: () => drawBar(barAnim.ratio)
+            });
+            const nextRank = getRankForPoints(rank.nextMin);
+            this.goLpBarText.setText(`${points} / ${rank.nextMin} LP para ${nextRank.label}`).setVisible(true);
+        }
+    }
+
+    // Boletim zerado da partida (ver accumulateRoundStats)
+    createFreshMatchStats() {
+        const blank = () => ({ answered: 0, correct: 0, totalTimeMs: 0, timedAnswers: 0, streak: 0, bestStreak: 0, damage: 0 });
+        return { p1: blank(), p2: blank() };
+    }
+
+    // Acumula os dados de UMA rodada resolvida nas estatísticas locais da
+    // partida. Roda em todos os clientes (cada um lê o mesmo snapshot da sala)
+    // — nada é gravado no Firebase. Chamada com dedup por rodada no updateState.
+    accumulateRoundStats(data) {
+        if (!this.matchStats) return;
+        const startedAt = typeof data.questionStartedAt === 'number' ? data.questionStartedAt : null;
+        ['p1', 'p2'].forEach((key) => {
+            const p = data[key];
+            const s = this.matchStats[key];
+            if (!p || !s || !p.answered) return;
+            s.answered += 1;
+            if (p.answerCorrect === true) {
+                s.correct += 1;
+                s.streak += 1;
+                if (s.streak > s.bestStreak) s.bestStreak = s.streak;
+            } else {
+                s.streak = 0;
+            }
+            // Tempo de resposta: só conta respostas REAIS (answeredChoice >= 0;
+            // -1 = timeout estourado, -2 = contra-ataque do bot). answeredAt e
+            // questionStartedAt são relógio do servidor (serverTimestamp);
+            // descarta valores fora do plausível — ex.: 1ª questão gravada com
+            // Date.now() pela CharacterSelectScene (exceção documentada no
+            // AGENTS.md §4.2), que misturaria relógios.
+            if (startedAt != null && typeof p.answeredAt === 'number' && typeof p.answeredChoice === 'number' && p.answeredChoice >= 0) {
+                const elapsed = p.answeredAt - startedAt;
+                if (elapsed >= 0 && elapsed <= 60000) {
+                    s.totalTimeMs += elapsed;
+                    s.timedAnswers += 1;
+                }
+            }
+        });
+        // Dano causado = queda de HP do OPONENTE desde a última rodada
+        // resolvida (cura do modificador BACKUP nunca zera dano: Math.max(0,·))
+        const maxHp = Number(data.maxHp) || this.MAX_HP;
+        const p1Hp = data.p1?.hp != null ? data.p1.hp : maxHp;
+        const p2Hp = data.p2?.hp != null ? data.p2.hp : maxHp;
+        if (this.lastStatsHp) {
+            this.matchStats.p1.damage += Math.max(0, this.lastStatsHp.p2 - p2Hp);
+            this.matchStats.p2.damage += Math.max(0, this.lastStatsHp.p1 - p1Hp);
+        }
+        this.lastStatsHp = { p1: p1Hp, p2: p2Hp };
+    }
+
+    // Chuva de confetes sobre o painel de fim de jogo (só na vitória).
+    // Textura minúscula gerada em runtime — o jogo não tem arquivos de imagem soltos.
+    spawnVictoryConfetti() {
+        if (!this.textures.exists('confetti_px')) {
+            const g = this.make.graphics({ add: false });
+            g.fillStyle(0xffffff, 1);
+            g.fillRect(0, 0, 7, 12);
+            g.generateTexture('confetti_px', 7, 12);
+            g.destroy();
+        }
+        const { width } = this.scale;
+        const emitter = this.add.particles(width / 2, 60, 'confetti_px', {
+            x: { min: -290, max: 290 },
+            lifespan: { min: 1800, max: 2800 },
+            speedY: { min: 90, max: 210 },
+            speedX: { min: -50, max: 50 },
+            gravityY: 130,
+            rotate: { min: -180, max: 180 },
+            quantity: 3,
+            frequency: 50,
+            tint: [0xfacc15, 0x34d399, 0x60a5fa, 0xf472b6, 0xffffff],
+            duration: 1300
+        });
+        emitter.setDepth(250); // acima do painel (200), abaixo do overlay de ultimate (260)
+        this.time.delayedCall(3600, () => { try { emitter.destroy(); } catch (e) { /* cena já encerrada */ } });
     }
 
     showGameOver(isWinner, winnerNick, isTie = false, roomData = null) {
-        // Esconde o texto de RP/LP ANTES de registrar o resultado: para
+        // Esconde a caixa de LP ANTES de registrar o resultado: para
         // visitantes o aviso é síncrono (showRankDeltaOnGameOver(null)) e não
         // pode ser escondido logo depois — bug que deixava o aviso invisível.
         if (this.goRankText) this.goRankText.setVisible(false);
+        if (this.goLpBox) this.goLpBox.setVisible(false);
         this.recordMyRanking(isWinner, isTie, roomData);
         if (!this.isGameOver && !this.hasPlayedKOSound) {
             this.hasPlayedKOSound = true;
@@ -3324,15 +3559,30 @@ export class MainScene extends Phaser.Scene {
         this.goP1Nick.setText(`P1: ${p1Name}`);
         this.goP1Prof.setText(`[ ${p1Prof.shortName.toUpperCase()} ]`);
         this.goP1Hearts.setText(p1Hp > 0 ? `${p1Hp} HP` : '💀 0 HP (K.O.)');
-        this.goP1Hearts.setStyle({ fill: p1Hp > 0 ? '#34d399' : '#ef4444' });
+        this.goP1Hearts.setStyle({ fill: p1Hp > 0 ? '#34d399' : '#f87171' });
 
         this.goP2Nick.setText(`P2: ${p2Name}`);
         this.goP2Prof.setText(`[ ${p2Prof.shortName.toUpperCase()} ]`);
         this.goP2Hearts.setText(p2Hp > 0 ? `${p2Hp} HP` : '💀 0 HP (K.O.)');
-        this.goP2Hearts.setStyle({ fill: p2Hp > 0 ? '#34d399' : '#ef4444' });
+        this.goP2Hearts.setStyle({ fill: p2Hp > 0 ? '#34d399' : '#f87171' });
 
         const roundsPlayed = data.round || this.currentRound || 1;
         this.goRoundsText.setText(`🎯 ${roundsPlayed} Rodada${roundsPlayed > 1 ? 's' : ''}`);
+
+        // Grade de Estatísticas da Partida (acumuladas localmente por rodada)
+        const blankStats = { answered: 0, correct: 0, totalTimeMs: 0, timedAnswers: 0, bestStreak: 0, damage: 0 };
+        const s1 = this.matchStats?.p1 || blankStats;
+        const s2 = this.matchStats?.p2 || blankStats;
+        const fmtAcc = (s) => (s.answered > 0 ? `${Math.round((s.correct / s.answered) * 100)}%` : '—');
+        const fmtTime = (s) => (s.timedAnswers > 0 ? `${(s.totalTimeMs / s.timedAnswers / 1000).toFixed(1)}s` : '—');
+        const fmtStreak = (s) => (s.bestStreak > 0 ? `${s.bestStreak}x` : '—');
+        const fmtDamage = (s) => `${s.damage} HP`;
+        [fmtAcc, fmtTime, fmtStreak, fmtDamage].forEach((fmt, i) => {
+            const row = this.goStatRows?.[i];
+            if (!row) return;
+            row.p1Val.setText(fmt(s1));
+            row.p2Val.setText(fmt(s2));
+        });
 
         this.btnRematch.setText('⚔️ Jogar Novamente (Revanche)');
         this.btnChangeProf.setText('🔄 Trocar Personagem');
@@ -3341,16 +3591,12 @@ export class MainScene extends Phaser.Scene {
             this.btnChangeProf.setVisible(false);
         }
 
-        if (this.goFooterHint) {
-            this.goFooterHint.setText(`Código da Sala: ${this.roomId} • Duelo Finalizado`);
-        }
-
         this.timerText.setText('Fim de Jogo');
-        this.timerText.setStyle({ fill: '#94a3b8', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
+        this.timerText.setStyle({ fill: '#cbd5e1', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
 
         this.updatePostMatchRequestUI(data.postMatchRequest, data);
 
-        // Animação de entrada suave
+        // Entrada cinematográfica: painel + carimbo do resultado + flash temático
         this.gameOverPanel.setScale(0.92);
         this.tweens.add({
             targets: this.gameOverPanel,
@@ -3358,6 +3604,30 @@ export class MainScene extends Phaser.Scene {
             duration: 180,
             ease: 'Back.easeOut'
         });
+
+        this.goIconText.setScale(3.2).setAlpha(0);
+        this.goTitleText.setScale(0.85).setAlpha(0);
+        this.tweens.add({ targets: this.goIconText, scale: 1, alpha: 1, duration: 380, delay: 120, ease: 'Back.easeOut' });
+        this.tweens.add({ targets: this.goTitleText, scale: 1, alpha: 1, duration: 300, delay: 240, ease: 'Back.easeOut' });
+
+        // Flash na cor do resultado sobre o card (some em ~650ms)
+        const themeColor = this.isSpectator ? 0x38bdf8 : isTie ? 0xfacc15 : isWinner ? 0x10b981 : 0xef4444;
+        const goFlash = this.add.rectangle(0, 0, 600, 540, themeColor, 0.28);
+        this.gameOverPanel.add(goFlash);
+        this.tweens.add({
+            targets: goFlash,
+            alpha: 0,
+            duration: 650,
+            onComplete: () => goFlash.destroy()
+        });
+
+        if (!this.isSpectator && !isTie) {
+            if (isWinner) {
+                this.spawnVictoryConfetti();
+            } else {
+                this.cameras.main.shake(160, 0.005);
+            }
+        }
     }
 
     pickNextQuestion() {
@@ -3496,7 +3766,7 @@ export class MainScene extends Phaser.Scene {
             } else {
                 if (remaining > 0) {
                     this.timerText.setText(`⏳ Aguardando (${remaining}s)`);
-                    this.timerText.setStyle({ fill: '#94a3b8', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
+                    this.timerText.setStyle({ fill: '#cbd5e1', shadow: { offsetX: 0, offsetY: 0, color: '#00000000', blur: 0, fill: false } });
                 } else {
                     this.timerText.setText('⏳ Processando...');
                 }
