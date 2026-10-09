@@ -147,7 +147,6 @@ export function createSmoothButton(scene, x, y, width, height, text, options = {
 
     container.on('pointerover', () => {
         if (!isBtnEnabled) return;
-        SoundManager.playHover();
         isHovered = true;
         renderBg(curHoverFillColor, fillAlpha, curHoverStrokeColor, strokeWidth + 0.5);
         scene.tweens.add({ targets: container, scaleX: 1.03, scaleY: 1.03, duration: 100, ease: 'Power1' });

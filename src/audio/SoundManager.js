@@ -10,7 +10,7 @@ class SoundManagerClass {
         const savedVolume = parseFloat(localStorage.getItem('labcombat_volume'));
         const defaultVolume = Number.isFinite(savedVolume) ? savedVolume : 0.5;
         this.effectsVolume = this._readStoredVolume('labcombat_effects_volume', defaultVolume);
-        this.musicVolume = this._readStoredVolume('labcombat_music_volume', defaultVolume);
+        this.musicVolume = this._readStoredVolume('labcombat_music_volume', 0.15);
         this.masterVolume = this.effectsVolume;
         this.muted = localStorage.getItem('labcombat_muted') === 'true';
         this.effectsMuted = localStorage.getItem('labcombat_effects_muted') === 'true';
@@ -161,119 +161,127 @@ class SoundManagerClass {
     // =========================================================================
     // SÍNTESE PROCEDURAL DE EFEITOS SONOROS (WEB AUDIO API)
     // =========================================================================
+    // Todos os SFX passam por um compressor compartilhado (sfxBus): evita
+    // clipping quando vários efeitos tocam juntos e dá "cola" ao mix.
+    // _tone() e _noise() são os blocos de construção de todos os efeitos.
+
+    _getSfxBus() {
+        if (!this._sfxBus && this.ctx) {
+            const comp = this.ctx.createDynamicsCompressor();
+            comp.threshold.setValueAtTime(-18, this.ctx.currentTime);
+            comp.knee.setValueAtTime(20, this.ctx.currentTime);
+            comp.ratio.setValueAtTime(6, this.ctx.currentTime);
+            comp.attack.setValueAtTime(0.002, this.ctx.currentTime);
+            comp.release.setValueAtTime(0.12, this.ctx.currentTime);
+            comp.connect(this.ctx.destination);
+            this._sfxBus = comp;
+        }
+        return this._sfxBus;
+    }
+
+    /** Gera um buffer de ruído branco com a duração pedida. */
+    _noiseBuffer(duration) {
+        const ctx = this.ctx;
+        const len = Math.max(1, Math.floor(ctx.sampleRate * duration));
+        const buffer = ctx.createBuffer(1, len, ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        return buffer;
+    }
+
+    /**
+     * Toca um tom sintetizado com ataque rápido e decaimento exponencial.
+     * Bloco base de todos os efeitos (pitch slide e filtro opcionais).
+     */
+    _tone({ type = 'sine', from, to = null, at = 0, duration = 0.2, volume = 0.2,
+            attack = 0.004, detune = 0, filterType = null, filterFreq = 2000,
+            filterEnd = null, filterQ = 1 }) {
+        const ctx = this.ctx;
+        const t = ctx.currentTime + at;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(from, t);
+        if (to) osc.frequency.exponentialRampToValueAtTime(Math.max(1, to), t + duration);
+        if (detune) osc.detune.setValueAtTime(detune, t);
+        const vol = volume * this.effectsVolume;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(vol, t + attack);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+        let head = osc;
+        if (filterType) {
+            const filter = ctx.createBiquadFilter();
+            filter.type = filterType;
+            filter.frequency.setValueAtTime(filterFreq, t);
+            if (filterEnd) filter.frequency.exponentialRampToValueAtTime(Math.max(20, filterEnd), t + duration);
+            filter.Q.setValueAtTime(filterQ, t);
+            osc.connect(filter);
+            head = filter;
+        }
+        head.connect(gain);
+        gain.connect(this._getSfxBus());
+        osc.start(t);
+        osc.stop(t + duration + 0.05);
+    }
+
+    /** Toca uma rajada de ruído filtrado (impactos, whooshes, explosões). */
+    _noise({ at = 0, duration = 0.15, volume = 0.2, filterType = 'bandpass',
+             filterFreq = 1000, filterEnd = null, filterQ = 1, attack = 0.002 }) {
+        const ctx = this.ctx;
+        const t = ctx.currentTime + at;
+        const src = ctx.createBufferSource();
+        src.buffer = this._noiseBuffer(duration + 0.05);
+        const filter = ctx.createBiquadFilter();
+        filter.type = filterType;
+        filter.frequency.setValueAtTime(filterFreq, t);
+        if (filterEnd) filter.frequency.exponentialRampToValueAtTime(Math.max(20, filterEnd), t + duration);
+        filter.Q.setValueAtTime(filterQ, t);
+        const gain = ctx.createGain();
+        const vol = volume * this.effectsVolume;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(vol, t + attack);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + duration);
+        src.connect(filter);
+        filter.connect(gain);
+        gain.connect(this._getSfxBus());
+        src.start(t);
+        src.stop(t + duration + 0.05);
+    }
 
     /**
      * Clique tátil de botão na interface (UI Click)
      */
     playClick() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(1100, now);
-        osc.frequency.exponentialRampToValueAtTime(500, now + 0.03);
-
-        const vol = 0.18 * this.effectsVolume;
-        gain.gain.setValueAtTime(vol, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.035);
+        // "Pop" arredondado: senoide morna com queda rápida de tom
+        this._tone({ type: 'sine', from: 620, to: 240, duration: 0.07, volume: 0.22, attack: 0.002 });
+        this._tone({ type: 'triangle', from: 1240, to: 500, duration: 0.05, volume: 0.08, attack: 0.002 });
     }
 
     /**
-     * Hover suave ao passar o cursor sobre botões ou cards
-     */
-    playHover() {
-        if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(480, now);
-        osc.frequency.exponentialRampToValueAtTime(620, now + 0.02);
-
-        const vol = 0.06 * this.effectsVolume;
-        gain.gain.setValueAtTime(vol, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.02);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.025);
-    }
-
-    /**
-     * Som de Resposta Correta (Arpeggio triunfante de Moeda / Power-up 16-bit)
+     * Som de Resposta Correta ("moeda" 16-bit: B5 → E6 com brilho de oitava)
      */
     playCorrect() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        // Notas da vitória: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
-        const notes = [523.25, 659.25, 783.99, 1046.50];
-        notes.forEach((freq, idx) => {
-            const start = now + (idx * 0.065);
-            const dur = 0.16;
-
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, start);
-
-            const vol = 0.22 * this.effectsVolume;
-            gain.gain.setValueAtTime(vol, start);
-            gain.gain.exponentialRampToValueAtTime(0.001, start + dur);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(start);
-            osc.stop(start + dur + 0.01);
-        });
+        this._tone({ type: 'square', from: 987.77, duration: 0.09, volume: 0.16,
+                     filterType: 'lowpass', filterFreq: 4000 });
+        this._tone({ type: 'square', from: 1318.51, at: 0.09, duration: 0.28, volume: 0.16,
+                     filterType: 'lowpass', filterFreq: 4500 });
+        this._tone({ type: 'triangle', from: 2637.02, at: 0.09, duration: 0.22, volume: 0.06 });
+        this._tone({ type: 'sine', from: 1975.53, at: 0.09, duration: 0.28, volume: 0.05 });
     }
 
     /**
-     * Som de Resposta Errada (Buzzer arcade de erro com leve distorção)
+     * Som de Resposta Errada (Buzzer arcade descendente com sub-grave)
      */
     playWrong() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        // Dois osciladores em dente de serra levemente desafinados
-        const freqs = [155, 162];
-        freqs.forEach(baseFreq => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(baseFreq, now);
-            osc.frequency.exponentialRampToValueAtTime(baseFreq * 0.65, now + 0.26);
-
-            const vol = 0.18 * this.effectsVolume;
-            gain.gain.setValueAtTime(vol, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.26);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 0.27);
-        });
+        this._tone({ type: 'sawtooth', from: 220, to: 110, duration: 0.28, volume: 0.16,
+                     filterType: 'lowpass', filterFreq: 1200, filterQ: 2 });
+        this._tone({ type: 'sawtooth', from: 226, to: 116, duration: 0.28, volume: 0.16,
+                     filterType: 'lowpass', filterFreq: 1200, filterQ: 2 });
+        this._tone({ type: 'square', from: 110, to: 55, duration: 0.28, volume: 0.10,
+                     filterType: 'lowpass', filterFreq: 600 });
     }
 
     /**
@@ -281,136 +289,49 @@ class SoundManagerClass {
      */
     playTick() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(880, now);
-        osc.frequency.exponentialRampToValueAtTime(440, now + 0.04);
-
-        const vol = 0.20 * this.effectsVolume;
-        gain.gain.setValueAtTime(vol, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.04);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.045);
+        this._tone({ type: 'square', from: 1250, duration: 0.035, volume: 0.12,
+                     filterType: 'lowpass', filterFreq: 4000 });
+        this._tone({ type: 'sine', from: 2500, duration: 0.025, volume: 0.06 });
     }
 
     /**
-     * Som de Impacto / Soco (Pancada com corpo grave e estalo de ruído)
+     * Som de Impacto / Soco (3 camadas: corpo grave + estalo + crack médio)
      */
     playPunch() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        // 1. Componente tonal: queda rápida de tom (240Hz -> 40Hz)
-        const osc = ctx.createOscillator();
-        const oscGain = ctx.createGain();
-
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(260, now);
-        osc.frequency.exponentialRampToValueAtTime(45, now + 0.12);
-
-        const oscVol = 0.35 * this.effectsVolume;
-        oscGain.gain.setValueAtTime(oscVol, now);
-        oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-
-        osc.connect(oscGain);
-        oscGain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.13);
-
-        // 2. Componente de ruído: impacto e textura de golpe físico
-        const bufferSize = Math.floor(ctx.sampleRate * 0.08);
-        const noiseBuffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
-        const output = noiseBuffer.getChannelData(0);
-        for (let i = 0; i < bufferSize; i++) {
-            output[i] = Math.random() * 2 - 1;
-        }
-
-        const whiteNoise = ctx.createBufferSource();
-        whiteNoise.buffer = noiseBuffer;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(650, now);
-        filter.Q.setValueAtTime(1.5, now);
-
-        const noiseGain = ctx.createGain();
-        const noiseVol = 0.25 * this.effectsVolume;
-        noiseGain.gain.setValueAtTime(noiseVol, now);
-        noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
-
-        whiteNoise.connect(filter);
-        filter.connect(noiseGain);
-        noiseGain.connect(ctx.destination);
-
-        whiteNoise.start(now);
-        whiteNoise.stop(now + 0.085);
+        this._tone({ type: 'sine', from: 200, to: 40, duration: 0.16, volume: 0.55 });
+        this._noise({ duration: 0.10, volume: 0.30, filterType: 'lowpass',
+                      filterFreq: 2600, filterEnd: 300 });
+        this._noise({ duration: 0.04, volume: 0.22, filterType: 'bandpass',
+                      filterFreq: 1100, filterQ: 1.2 });
     }
 
     /**
-     * Som de Escudo / Bloqueio / Try-Catch (Deflexão metálica de golpe)
+     * Som de Escudo / Bloqueio / Try-Catch (Deflexão metálica com ping agudo)
      */
     playShield() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        const freqs = [1200, 1680];
-        freqs.forEach(f => {
-            const osc = ctx.createOscillator();
-            const gain = ctx.createGain();
-
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(f, now);
-            osc.frequency.exponentialRampToValueAtTime(f * 0.7, now + 0.14);
-
-            const vol = 0.14 * this.effectsVolume;
-            gain.gain.setValueAtTime(vol, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
-
-            osc.connect(gain);
-            gain.connect(ctx.destination);
-
-            osc.start(now);
-            osc.stop(now + 0.15);
-        });
+        this._tone({ type: 'square', from: 1320, to: 880, duration: 0.12, volume: 0.10,
+                     filterType: 'highpass', filterFreq: 700 });
+        this._tone({ type: 'square', from: 1976, to: 1318, duration: 0.14, volume: 0.08, detune: 8 });
+        this._tone({ type: 'sine', from: 2637, to: 2400, duration: 0.20, volume: 0.10 });
+        this._noise({ duration: 0.06, volume: 0.12, filterType: 'bandpass',
+                      filterFreq: 4500, filterQ: 2 });
     }
 
     /**
-     * Som de Golpe Especial / Carga Máxima (Laser riser potente)
+     * Som de Golpe Especial / Carga Máxima (Riser de carregamento + descarga)
      */
     playSpecial() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
-
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.25);
-        osc.frequency.exponentialRampToValueAtTime(110, now + 0.42);
-
-        const vol = 0.28 * this.effectsVolume;
-        gain.gain.setValueAtTime(vol, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.42);
-
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-
-        osc.start(now);
-        osc.stop(now + 0.43);
+        // Riser: saw subindo com o filtro abrindo (sensação de carga de energia)
+        this._tone({ type: 'sawtooth', from: 160, to: 1250, duration: 0.34, volume: 0.20,
+                     filterType: 'lowpass', filterFreq: 700, filterEnd: 5200, filterQ: 2 });
+        this._tone({ type: 'square', from: 80, to: 640, duration: 0.34, volume: 0.10 });
+        // Descarga final: explosão de ruído + pancada grave
+        this._noise({ at: 0.34, duration: 0.22, volume: 0.32, filterType: 'lowpass',
+                      filterFreq: 5000, filterEnd: 400 });
+        this._tone({ type: 'sine', from: 320, to: 55, at: 0.34, duration: 0.24, volume: 0.40 });
     }
 
     /**
@@ -432,159 +353,60 @@ class SoundManagerClass {
     }
 
     /**
-     * Fanfarra de Início de Round (Arcade "FIGHT!" com metais, gong e narrador)
+     * Fanfarra de Início de Round (tambor de guerra → narrador "FIGHT!" em
+     * destaque → stab de metais). A voz NÃO compete com ruído: o stab só
+     * entra depois que ela termina.
      */
     playFight() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
 
-        // 1. Voz do Narrador Arcade
-        this.speak('FIGHT!', 0.75, 1.1);
+        // 1. Tambor de guerra: dois hits graves e secos (chamada de atenção)
+        this._tone({ type: 'sine', from: 160, to: 45, duration: 0.18, volume: 0.55 });
+        this._noise({ duration: 0.08, volume: 0.20, filterType: 'lowpass',
+                      filterFreq: 1800, filterEnd: 250 });
+        this._tone({ type: 'sine', from: 160, to: 45, at: 0.22, duration: 0.22, volume: 0.65 });
+        this._noise({ at: 0.22, duration: 0.10, volume: 0.25, filterType: 'lowpass',
+                      filterFreq: 2200, filterEnd: 250 });
 
-        // 2. Gong / Cymbal Crash Metálico (impacto enérgico)
-        const crashBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.9), ctx.sampleRate);
-        const crashData = crashBuffer.getChannelData(0);
-        for (let i = 0; i < crashData.length; i++) {
-            crashData[i] = Math.random() * 2 - 1;
-        }
-        const crashSource = ctx.createBufferSource();
-        crashSource.buffer = crashBuffer;
+        // 2. Voz do narrador sozinha, em destaque
+        this.speak('FIGHT!', 0.70, 1.0);
 
-        const crashFilter = ctx.createBiquadFilter();
-        crashFilter.type = 'bandpass';
-        crashFilter.frequency.setValueAtTime(2400, now);
-        crashFilter.Q.setValueAtTime(1.8, now);
-
-        const crashGain = ctx.createGain();
-        const crashVol = 0.35 * this.effectsVolume;
-        crashGain.gain.setValueAtTime(crashVol, now);
-        crashGain.gain.exponentialRampToValueAtTime(0.001, now + 0.85);
-
-        crashSource.connect(crashFilter);
-        crashFilter.connect(crashGain);
-        crashGain.connect(ctx.destination);
-        crashSource.start(now);
-        crashSource.stop(now + 0.9);
-
-        // 3. Brass Fanfare Triunfante (Estilo Street Fighter)
-        // Estágio 1: C4 + G4 (Ataque inicial)
-        // Estágio 2: E4 + B4 (Ascensão de tensão)
-        // Estágio 3: G4 + C5 + E5 + G5 (Acorde Final Sustentado com Brilho)
-        const fanfareSequence = [
-            { time: now, dur: 0.18, notes: [261.63, 392.00] },
-            { time: now + 0.18, dur: 0.20, notes: [329.63, 493.88] },
-            { time: now + 0.38, dur: 0.95, notes: [392.00, 523.25, 659.25, 783.99] }
-        ];
-
-        fanfareSequence.forEach(step => {
-            step.notes.forEach(f => {
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-                const filter = ctx.createBiquadFilter();
-
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(f, step.time);
-
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(2800, step.time);
-                filter.Q.setValueAtTime(2.0, step.time);
-
-                const vol = (step.notes.length > 2 ? 0.30 : 0.24) * this.effectsVolume;
-                gain.gain.setValueAtTime(vol, step.time);
-                gain.gain.exponentialRampToValueAtTime(0.001, step.time + step.dur);
-
-                osc.connect(filter);
-                filter.connect(gain);
-                gain.connect(ctx.destination);
-
-                osc.start(step.time);
-                osc.stop(step.time + step.dur + 0.05);
-            });
+        // 3. Stab de metais logo após a voz (acento arcade, curto e brilhante)
+        const stabAt = 0.62;
+        [261.63, 329.63, 392.00, 523.25].forEach((f, i) => {
+            this._tone({ type: 'sawtooth', from: f, at: stabAt, duration: 0.55, volume: 0.14,
+                         filterType: 'lowpass', filterFreq: 2600, filterQ: 1.5,
+                         detune: (i % 2 === 0 ? 6 : -6) });
         });
+        this._noise({ at: stabAt, duration: 0.30, volume: 0.16,
+                      filterType: 'highpass', filterFreq: 5000 });
     }
 
     /**
-     * Som de K.O. / Finalização de Duelo (Explosão pesada, cadência musical dramática e narrador)
+     * Som de K.O. / Finalização de Duelo (explosão com sub-grave → narrador →
+     * cadência dramática de stabs descendentes com golpe final)
      */
     playKO() {
         if (this.muted || this.effectsMuted || !this.ensureContext()) return;
-        const ctx = this.ctx;
-        const now = ctx.currentTime;
 
-        // 1. Voz do Narrador Arcade: K.O.!
-        this.speak('K.O.!', 0.70, 0.90);
+        // 1. Explosão de nocaute: sub-grave pesado + estrondo com varredura
+        this._tone({ type: 'sine', from: 320, to: 32, duration: 0.50, volume: 0.70 });
+        this._noise({ duration: 0.80, volume: 0.45, filterType: 'lowpass',
+                      filterFreq: 4200, filterEnd: 120, filterQ: 0.8, attack: 0.005 });
+        this._noise({ duration: 0.12, volume: 0.30, filterType: 'bandpass',
+                      filterFreq: 900, filterQ: 1 });
 
-        // 2. Impacto de Nocaute Pesado (Audível em qualquer alto-falante: 380Hz -> 110Hz)
-        const punchOsc = ctx.createOscillator();
-        const punchGain = ctx.createGain();
-        punchOsc.type = 'triangle';
-        punchOsc.frequency.setValueAtTime(380, now);
-        punchOsc.frequency.exponentialRampToValueAtTime(110, now + 0.28);
+        // 2. Voz do narrador logo após o impacto inicial
+        setTimeout(() => this.speak('K.O.!', 0.60, 0.85), 280);
 
-        const punchVol = 0.55 * this.effectsVolume;
-        punchGain.gain.setValueAtTime(punchVol, now);
-        punchGain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-
-        punchOsc.connect(punchGain);
-        punchGain.connect(ctx.destination);
-        punchOsc.start(now);
-        punchOsc.stop(now + 0.3);
-
-        // 3. Estrondo / Crash de Nocaute
-        const crashBuffer = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.7), ctx.sampleRate);
-        const crashData = crashBuffer.getChannelData(0);
-        for (let i = 0; i < crashData.length; i++) {
-            crashData[i] = Math.random() * 2 - 1;
-        }
-        const crashSource = ctx.createBufferSource();
-        crashSource.buffer = crashBuffer;
-
-        const filter = ctx.createBiquadFilter();
-        filter.type = 'bandpass';
-        filter.frequency.setValueAtTime(1400, now);
-        filter.Q.setValueAtTime(1.2, now);
-
-        const crashGain = ctx.createGain();
-        crashGain.gain.setValueAtTime(0.40 * this.effectsVolume, now);
-        crashGain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
-
-        crashSource.connect(filter);
-        filter.connect(crashGain);
-        crashGain.connect(ctx.destination);
-        crashSource.start(now);
-        crashSource.stop(now + 0.7);
-
-        // 4. Cadência Musical de Fim de Combate (Street Fighter K.O. chimes: G5 -> E5 -> C5 -> F#4)
-        const defeatNotes = [
-            { f: 783.99, t: now },
-            { f: 659.25, t: now + 0.16 },
-            { f: 523.25, t: now + 0.32 },
-            { f: 369.99, t: now + 0.48 } // Tritono dramático
-        ];
-
-        defeatNotes.forEach(item => {
-            const bell = ctx.createOscillator();
-            const bellGain = ctx.createGain();
-
-            bell.type = 'sawtooth';
-            bell.frequency.setValueAtTime(item.f, item.t);
-
-            const bFilter = ctx.createBiquadFilter();
-            bFilter.type = 'lowpass';
-            bFilter.frequency.setValueAtTime(2200, item.t);
-
-            const bVol = 0.28 * this.effectsVolume;
-            bellGain.gain.setValueAtTime(bVol, item.t);
-            bellGain.gain.exponentialRampToValueAtTime(0.001, item.t + 0.45);
-
-            bell.connect(bFilter);
-            bFilter.connect(bellGain);
-            bellGain.connect(ctx.destination);
-
-            bell.start(item.t);
-            bell.stop(item.t + 0.5);
-        });
+        // 3. Cadência dramática: dois stabs de tensão + resolução grave
+        const stab = (at, notes, dur, vol) => notes.forEach((f) =>
+            this._tone({ type: 'sawtooth', from: f, at, duration: dur, volume: vol,
+                         filterType: 'lowpass', filterFreq: 2200, filterQ: 1.5 }));
+        stab(0.85, [440.00, 554.37, 659.25], 0.16, 0.16);  // A maior
+        stab(1.05, [415.30, 523.25, 622.25], 0.16, 0.16);  // Ab maior (tensão)
+        stab(1.30, [220.00, 329.63, 440.00], 0.70, 0.18);  // Resolução grave
+        this._tone({ type: 'sine', from: 110, to: 30, at: 1.30, duration: 0.70, volume: 0.45 });
     }
 
     /**

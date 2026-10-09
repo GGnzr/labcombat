@@ -411,7 +411,6 @@ export class CharacterSelectScene extends Phaser.Scene {
             container.setInteractive({ useHandCursor: true });
 
             container.on('pointerover', () => {
-                SoundManager.playHover();
                 this.tweens.add({ targets: container, scale: 1.05, duration: 80, ease: 'Power1' });
             });
             container.on('pointerout', () => {

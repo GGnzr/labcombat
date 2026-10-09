@@ -818,36 +818,8 @@
         </div>
     </div>
 
-    <!-- Modal Multiplayer: Criar Sala ou Entrar em Sala (aberto pelo botão ⚔️ MULTIPLAYER da dock) -->
-    <div id="multiplayer-overlay" style="display: none; position: fixed; inset: 0; background: rgba(3, 7, 18, 0.88); backdrop-filter: blur(8px); justify-content: center; align-items: center; z-index: 2000; animation: fadeIn 0.2s ease;">
-        <div onclick="event.stopPropagation();" onpointerdown="event.stopPropagation();" style="background: linear-gradient(145deg, #0f172a, #1e293b); padding: 22px 24px; border-radius: 14px; border: 2px solid #38bdf8; box-shadow: 0 10px 40px rgba(56, 189, 248, 0.22); width: 640px; max-width: 96vw; box-sizing: border-box;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid #1e293b; padding-bottom: 10px;">
-                <div style="text-align: left;">
-                    <h2 style="color: #f8fafc; margin: 0; font-size: 18px; font-weight: bold;">⚔️ Multiplayer Online</h2>
-                    <div style="color: #cbd5e1; font-size: 11px;">Duelo 1v1 em tempo real — crie uma sala como host ou entre na de um amigo</div>
-                </div>
-                <button id="mp-close-x" type="button" title="Fechar" style="background: transparent; border: none; color: #ef4444; font-size: 15px; font-weight: bold; cursor: pointer;">✕</button>
-            </div>
-            <div style="display: flex; gap: 14px;">
-                <button id="mp-create-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #0d1f3c, #1e293b); border: 1.5px solid #2563eb; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
-                    <div style="font-size: 30px; margin-bottom: 6px;">⚔️</div>
-                    <div style="color: #60a5fa; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">CRIAR SALA (1P)</div>
-                    <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">Você é o host. Compartilha o código de 4 letras e desafia um colega.</div>
-                </button>
-                <button id="mp-join-btn" type="button" style="flex: 1; background: linear-gradient(145deg, #261616, #1e293b); border: 1.5px solid #dc2626; border-radius: 12px; padding: 18px 14px; cursor: pointer; text-align: center; transition: transform 0.12s ease, border-color 0.12s ease; min-height: 130px;">
-                    <div style="font-size: 30px; margin-bottom: 6px;">📡</div>
-                    <div style="color: #f87171; font-size: 14px; font-weight: bold; letter-spacing: 1px; margin-bottom: 6px;">ENTRAR EM SALA (2P)</div>
-                    <div style="color: #cbd5e1; font-size: 11px; line-height: 1.5;">Tens o código de um amigo? Entre para competir.</div>
-                </button>
-            </div>
-            <div style="margin-top: 12px; text-align: right;">
-                <button id="mp-cancel-btn" type="button" style="padding: 8px 14px; background: #334155; color: #cbd5e1; border: none; border-radius: 7px; font-size: 12px; font-weight: bold; cursor: pointer;">✕ Voltar ao Lobby</button>
-            </div>
-        </div>
-    </div>
-
     <script type="module">
-        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, deleteAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname } from '/src/auth.js';
+        import { ensureGuestAuth, getAuthenticatedUser, isAdminAccount, isNicknameTaken, deleteAccount, loginAccount, loginWithGoogle, logoutAccount, observeAuthState, registerAccount, requestPasswordReset, updateAccountNickname, claimGuestNickname, releaseGuestNickname } from '/src/auth.js';
         import { professors } from '/src/professors.js';
         import { RANK_TIERS, getRankForPoints, loadMyLeaderboardEntry, loadTopLeaderboard } from '/src/ranking.js';
         import { logEvent, getLogsHistory, clearLogsHistory } from '/src/logger.js';
@@ -1161,6 +1133,12 @@
             }
             accountSubmitBtn.disabled = true;
             accountErrorMsg.textContent = 'Conectando...';
+            // Upgrade visitante → conta: libera ANTES a reserva temporária do
+            // apelido de guest (senão o índice fica preso ao uid anônimo e a
+            // conta nova não consegue reivindicar o próprio apelido).
+            if (accountMode === 'register' && authenticatedUser?.isAnonymous) {
+                await releaseGuestNickname(authenticatedUser.uid, sessionStorage.getItem('labcombat_nickname'));
+            }
             const result = accountMode === 'register'
                 ? await registerAccount({ email, password, nickname: accountNicknameInput.value })
                 : await loginAccount({ email, password });
@@ -1204,6 +1182,10 @@
             }
             accountGoogleBtn.disabled = true;
             accountErrorMsg.textContent = 'Abrindo login do Google...';
+            // Mesmo motivo do cadastro por e-mail: libera a reserva de guest
+            if (authenticatedUser?.isAnonymous) {
+                await releaseGuestNickname(authenticatedUser.uid, sessionStorage.getItem('labcombat_nickname'));
+            }
             const result = await loginWithGoogle();
             accountGoogleBtn.disabled = false;
             if (!result.success) {
@@ -1319,7 +1301,7 @@
         // Cobre painel GM, conta/perfil, apelido, entrar em sala e ranking:
         // quando qualquer um estiver visível, body.modal-open desativa os
         // pointer-events do canvas (ver style.css) — nada "vaza" pro jogo.
-        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'bug-overlay', 'multiplayer-overlay', 'orientation-prompt'];
+        const overlayIds = ['dev-sidebar', 'account-overlay', 'nickname-overlay', 'join-overlay', 'ranking-overlay', 'rules-overlay', 'bug-overlay', 'orientation-prompt'];
         const __overlayObserver = new MutationObserver(() => {
             const anyVisible = overlayIds.some(id => {
                 const el = document.getElementById(id);
@@ -1517,32 +1499,6 @@
         if (rulesCloseBtn) rulesCloseBtn.addEventListener('click', closeRulesModal);
         if (rulesCloseBtn2) rulesCloseBtn2.addEventListener('click', closeRulesModal);
         if (rulesOverlay) rulesOverlay.addEventListener('click', (e) => { if (e.target === rulesOverlay) closeRulesModal(); });
-
-        // ===== Modal Multiplayer: Criar / Entrar em Sala (botão ⚔️ MULTIPLAYER da dock) =====
-        const mpOverlay = document.getElementById('multiplayer-overlay');
-        const mpCloseX = document.getElementById('mp-close-x');
-        const mpCancelBtn = document.getElementById('mp-cancel-btn');
-        const mpCreateBtn = document.getElementById('mp-create-btn');
-        const mpJoinBtn = document.getElementById('mp-join-btn');
-        function closeMpModal() { if (mpOverlay) mpOverlay.style.display = 'none'; }
-        window.addEventListener('open-multiplayer-modal', () => {
-            if (mpOverlay) mpOverlay.style.display = 'flex';
-        });
-        if (mpCloseX) mpCloseX.addEventListener('click', closeMpModal);
-        if (mpCancelBtn) mpCancelBtn.addEventListener('click', closeMpModal);
-        if (mpOverlay) mpOverlay.addEventListener('click', (e) => { if (e.target === mpOverlay) closeMpModal(); });
-        if (mpCreateBtn) {
-            mpCreateBtn.addEventListener('click', () => {
-                closeMpModal();
-                window.dispatchEvent(new CustomEvent('mp-create-room'));
-            });
-        }
-        if (mpJoinBtn) {
-            mpJoinBtn.addEventListener('click', () => {
-                closeMpModal();
-                window.dispatchEvent(new CustomEvent('mp-join-room'));
-            });
-        }
 
         // ===== Relatar Bug (jogador → GM): modal simples que grava em bugReports/ =====
         const bugOverlay = document.getElementById('bug-overlay');
@@ -3144,11 +3100,24 @@
                 if (nicknameErrorMsg) nicknameErrorMsg.textContent = 'Digite um apelido válido (2 a 20 caracteres).';
                 return;
             }
-            // Unicidade: apelido vinculado a uma conta não pode ser usado por visitante
+            // Unicidade: visitante RESERVA o apelido no índice global
+            // (nicknames/{nick}) — vale contra contas E contra outros
+            // visitantes. A reserva é temporária: onDisconnect libera ao
+            // fechar a aba/cair a conexão (ver claimGuestNickname em auth.js).
             if (!localStorage.getItem('labcombat_account_uid')) {
+                const access = await ensureGuestAuth();
+                if (!access.success) {
+                    if (nicknameErrorMsg) { nicknameErrorMsg.textContent = `⚠️ ${access.message}`; nicknameErrorMsg.style.color = '#f87171'; }
+                    return;
+                }
                 try {
-                    if (await isNicknameTaken(val)) {
-                        if (nicknameErrorMsg) { nicknameErrorMsg.textContent = 'Esse apelido já pertence a uma conta registrada.'; nicknameErrorMsg.style.color = '#f87171'; }
+                    const currentNick = sessionStorage.getItem('labcombat_nickname');
+                    if (currentNick && currentNick.trim().toLowerCase() !== val.toLowerCase()) {
+                        await releaseGuestNickname(access.user.uid, currentNick);
+                    }
+                    const claimed = await claimGuestNickname(access.user.uid, val);
+                    if (!claimed) {
+                        if (nicknameErrorMsg) { nicknameErrorMsg.textContent = '⚠️ Esse apelido já está em uso. Escolha outro.'; nicknameErrorMsg.style.color = '#f87171'; }
                         return;
                     }
                 } catch { /* falha de rede na checagem: segue o fluxo */ }
@@ -3501,6 +3470,18 @@
                     }
                     return;
                 }
+                // Unicidade global: visitante NÃO pode usar apelido reservado
+                // a outra conta (nicknames/{nick}) — mesma regra do modal de apelido.
+                try {
+                    if (await isNicknameTaken(nick, access.user.uid)) {
+                        joinErrorMsg.textContent = '⚠️ Esse apelido já pertence a uma conta registrada. Escolha outro.';
+                        if (btnSubmitJoin) {
+                            btnSubmitJoin.disabled = false;
+                            btnSubmitJoin.textContent = '🚀 Entrar';
+                        }
+                        return;
+                    }
+                } catch { /* falha de rede na checagem: segue o fluxo */ }
                 let targetRoomId = code;
                 let roomRef = ref(db, `rooms/${targetRoomId}`);
                 let snapshot = await get(roomRef);
@@ -3587,6 +3568,7 @@
                     closeJoinModal();
                     if (window.game && window.game.scene) {
                         window.game.scene.stop('MenuScene');
+                        window.game.scene.stop('LobbyScene');
                         window.game.scene.start('CharacterSelectScene', {
                             roomId: targetRoomId,
                             playerId: 'p1',
@@ -3605,6 +3587,7 @@
                     closeJoinModal();
                     if (window.game && window.game.scene) {
                         window.game.scene.stop('MenuScene');
+                        window.game.scene.stop('LobbyScene');
                         window.game.scene.start('CharacterSelectScene', {
                             roomId: targetRoomId,
                             playerId: 'p2',
@@ -3647,6 +3630,7 @@
                 // Transição garantida para CharacterSelectScene
                 if (window.game && window.game.scene) {
                     window.game.scene.stop('MenuScene');
+                        window.game.scene.stop('LobbyScene');
                     window.game.scene.start('CharacterSelectScene', {
                         roomId: targetRoomId,
                         playerId: 'p2',

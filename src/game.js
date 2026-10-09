@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { BootScene } from './scenes/BootScene.js';
 import { MenuScene } from './scenes/MenuScene.js';
+import { LobbyScene } from './scenes/LobbyScene.js';
 import { CharacterSelectScene } from './scenes/CharacterSelectScene.js';
 import { MainScene } from './scenes/MainScene.js';
 import { AnimationTestScene } from './scenes/AnimationTestScene.js';
@@ -69,7 +70,7 @@ const config = {
             debug: false
         }
     },
-    scene: [BootScene, MenuScene, CharacterSelectScene, MainScene, AnimationTestScene],
+    scene: [BootScene, MenuScene, LobbyScene, CharacterSelectScene, MainScene, AnimationTestScene],
     callbacks: {
         postBoot: (game) => {
             // Evita que o jogo pause ou congele o loop ao clicar no painel Dev ou mudar de aba

@@ -14,6 +14,7 @@ function read(rel) {
 const SRC = {
     'index.html': read('index.html'),
     'src/scenes/MenuScene.js': read('src/scenes/MenuScene.js'),
+    'src/scenes/LobbyScene.js': read('src/scenes/LobbyScene.js'),
     'src/scenes/MainScene.js': read('src/scenes/MainScene.js'),
     'src/scenes/CharacterSelectScene.js': read('src/scenes/CharacterSelectScene.js'),
     'src/audio/SoundManager.js': read('src/audio/SoundManager.js'),
@@ -34,15 +35,12 @@ const EVENT_CONTRACT = [
     { event: 'open-account-modal',      producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-gm-modal',           producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-nickname-modal',     producers: ['index.html'],              consumers: ['index.html'] },
-    { event: 'open-join-modal',         producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
+    { event: 'open-join-modal',         producers: ['src/scenes/LobbyScene.js'], consumers: ['index.html'] },
     { event: 'open-profile-modal',      producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-ranking-modal',      producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-rules-modal',        producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
     { event: 'open-bug-modal',          producers: ['index.html'], consumers: ['index.html'] },
-    { event: 'open-multiplayer-modal',  producers: ['src/scenes/MenuScene.js'], consumers: ['index.html'] },
-    { event: 'mp-create-room',          producers: ['index.html'], consumers: ['src/scenes/MenuScene.js'] },
-    { event: 'mp-join-room',            producers: ['index.html'], consumers: ['src/scenes/MenuScene.js'] },
-    { event: 'submit-room-code',        producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
+    { event: 'submit-room-code',        producers: ['index.html'],              consumers: ['src/scenes/LobbyScene.js'] },
     { event: 'nickname-changed',        producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'account-state-changed',   producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
     { event: 'admin-access-changed',    producers: ['index.html'],              consumers: ['src/scenes/MenuScene.js'] },
@@ -77,7 +75,7 @@ test('todo CustomEvent do contrato tem produtor e ouvinte', () => {
 
 test('ids de DOM usados pelas cenas existem no index.html', () => {
     const html = SRC['index.html'];
-    const sceneFiles = ['src/scenes/MenuScene.js', 'src/scenes/MainScene.js',
+    const sceneFiles = ['src/scenes/MenuScene.js', 'src/scenes/LobbyScene.js', 'src/scenes/MainScene.js',
         'src/scenes/CharacterSelectScene.js', 'src/game.js'];
     const ids = new Set();
     for (const f of sceneFiles) {

@@ -43,11 +43,17 @@ src/questionBank.js   Carrega/valida bancos de questões do RTDB (questionBanks/
 src/questions.js      ⚠️ LEGADO: banco embutido de 18 questões, NÃO é importado por
                       ninguém. Fonte real em runtime é o RTDB. Manter só como referência.
 src/professors.js     Registro dos 6 lutadores (dados, atlas, portrait, escala).
+src/rooms.js          Operações de sala multiplayer: identidade da aba (tabInstanceId +
+                      BroadcastChannel), generateRoomCode, registerPlayerSession,
+                      createRoom (pública/privada/treino) e joinRoom (código ou lista).
 src/arenas.js         Registro das 6 arenas (cenários).
 src/ui/smoothUI.js    Helpers de UI Phaser (cards, botões, banners arredondados).
 src/audio/SoundManager.js  Singleton de áudio procedural (SFX + 2 temas de BGM).
 src/scenes/BootScene.js          Tela de loading (500 ms) → MenuScene.
-src/scenes/MenuScene.js          Menu principal: criar sala (1P) / entrar (2P) / conta / GM.
+src/scenes/MenuScene.js          Menu principal: dock (multiplayer/treino/ranking/regras) + conta/GM.
+src/scenes/LobbyScene.js         Lobby multiplayer: lista AO VIVO de salas públicas abertas
+                                 (onValue em rooms/), criar sala pública/privada, entrar por
+                                 código (overlay DOM) ou com 1 clique numa sala da lista.
 src/scenes/CharacterSelectScene.js  Seleção de professor + ready + countdown → MainScene.
 src/scenes/MainScene.js          ★ A LUTA (~2700 linhas). Máquina de estados da partida.
 src/scenes/AnimationTestScene.js Cena dev p/ testar frames/animações dos atlases.
@@ -59,9 +65,10 @@ tests/              Testes de regressão (node:test). Rode com npm test.
                     `labcombat-combate`. Mantenha-as em sync com este arquivo.
 ```
 
-**Fluxo de cenas:** `BootScene` → `MenuScene` → (criar/entrar sala) →
-`CharacterSelectScene` → (2 prontos + countdown) → `MainScene` → fim de jogo →
-(revanche / trocar personagem → volta a `CharacterSelectScene` / menu).
+**Fluxo de cenas:** `BootScene` → `MenuScene` → (⚔️ MULTIPLAYER) → `LobbyScene`
+→ (criar/entrar sala) → `CharacterSelectScene` → (2 prontos + countdown) →
+`MainScene` → fim de jogo → (revanche / trocar personagem → volta a
+`CharacterSelectScene` / menu).
 
 ## 4. Multiplayer (Firebase Realtime Database)
 
@@ -72,6 +79,9 @@ Não há servidor: **o cliente do Player 1 (P1) é a autoridade** da partida.
 ```jsonc
 {
   "state": "character_select | in_match | closed",
+  "visibility": "public | private",   // public = aparece na lista da LobbyScene;
+                                      // private = só entra por código. Ausente (salas
+                                      // antigas) é tratado como 'public' pelo lobby.
   "arenaId": "quadra|classroom|lab07|lab08|lab09|biblioteca",
   "round": 0,
   "roundModifier": "normal|charge|shield|heal|try_catch",
@@ -139,7 +149,7 @@ Não existem `seasons` — "zerar temporada" = apagar o nó `leaderboard`.
    sem resposta, sem W.O., sem revanche.
 5. **Sessão por aba**: `sessionStorage labcombat_tab_instance_id` (UUID) +
    `BroadcastChannel('labcombat-tab-presence')` evitam roubo de identidade entre
-   abas; reconexão usa `clientId`/`labcombat_room_id`/`labcombat_player_id`.
+   abas (ambos em `src/rooms.js`); reconexão usa `clientId`/`labcombat_room_id`/`labcombat_player_id`.
 6. As **opções das questões são embaralhadas deterministicamente** por ambos os
    clientes com seed `${roomId}:${currentRound}:${question.id}` (LCG) — os dois
    veem a mesma ordem. Não torne o shuffle aleatório.
@@ -296,11 +306,11 @@ index.html; as cenas se comunicam por **CustomEvents** (contrato testado em
 
 | Evento | Quem dispara | Quem ouve |
 |---|---|---|
-| `open-account-modal`, `open-gm-modal`, `open-join-modal`, `open-profile-modal`, `open-ranking-modal`, `open-rules-modal` | MenuScene | index.html |
+| `open-account-modal`, `open-gm-modal`, `open-profile-modal`, `open-ranking-modal`, `open-rules-modal` | MenuScene | index.html |
+| `open-join-modal` | LobbyScene | index.html |
 | `open-nickname-modal` | index.html (fluxo visitante) | index.html |
 | `open-bug-modal` | index.html (botão rodapé "🐛 Bug Report") | index.html |
-| `open-multiplayer-modal`, `mp-create-room`, `mp-join-room` | MenuScene ↔ index.html | modal ⚔️ MULTIPLAYER (Criar/Entrar) |
-| `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | MenuScene |
+| `submit-room-code`, `nickname-changed`, `admin-access-changed`, `account-state-changed` | index.html | `submit-room-code` → LobbyScene; demais → MenuScene |
 | `dev-set-timers` | index.html | MainScene + MenuScene |
 | `dev-set-combat` (detail: `{dmgAttack, dmgSpecial, ultKoHp, maxHp, modChance, modHeal, lpWin, lpBonus, lpLoss}`) | index.html | MainScene |
 | `dev-anim-speeds` (detail: `{walk, attack, special, ult}` fps) | index.html | MainScene + AnimationTestScene |
@@ -328,12 +338,16 @@ sessionStorage: `labcombat_nickname`, `labcombat_access_mode` ('guest'|'account'
 ## 9. Áudio (`SoundManager`, singleton exportado)
 
 Sem arquivos de som — tudo sintetizado (Web Audio) + narrador
-(`speechSynthesis`, en-US). BGM de menu e batalha são **procedurais com
+(`speechSynthesis`, en-US). Os SFX são montados sobre dois helpers
+(`_tone()`/`_noise()`) e passam por um **compressor compartilhado**
+(`_getSfxBus()`, DynamicsCompressor → destination) anti-clipping — efeitos
+novos devem usar esses helpers em vez de ligar osciladores direto no
+`ctx.destination`. BGM de menu e batalha são **procedurais com
 variação por loop**: progressões de acordes alternam e a melodia é remontada a
 cada ciclo a partir de bancos de frases (`chordSets`/`phrases`/`structures` +
 `_bgmLoopCount` em SoundManager), com baixo caminhante/colcheias de chimbal nos
 loops ímpares e kick duplo na batalha — evita repetição monótona. API usada pelas cenas:
-`startMenuBGM()`, `startBattleBGM()`, `stopBGM()`, `playClick()`, `playHover()`,
+`startMenuBGM()`, `startBattleBGM()`, `stopBGM()`, `playClick()`,
 `playCorrect()`, `playWrong()`, `playTick()`, `playPunch()`, `playShield()`,
 `playSpecial()`, `playFight()`, `playKO()`, `createMuteButton(scene, x, y,
 {panelSide})`, toggles/volumes com persistência em localStorage.
@@ -455,8 +469,8 @@ na mesma entrega**.
   **top 10 público no menu via botão 🏆 da dock inferior do lobby**
   (`createDock`/`createRankingPanel` na MenuScene — o botão mostra seu LP/elo
   resumido; clicado abre o painel Top 10 + SEU ELO com botão ✕; o lobby usa
-  layout "dock": tela limpa com título central e ações Criar/Entrar/Ranking/
-  Regras numa doca no rodapé)
+  layout "dock": tela limpa com título central e ações Multiplayer/Treino/
+  Ranking/Regras numa doca no rodapé — ⚔️ MULTIPLAYER abre a LobbyScene)
   e **badge de elo na seleção de personagem** (`rankLabel` no nó do jogador).
   GM tem **"Zerar Temporada"** (aba Controles): apaga o nó `leaderboard` com
   confirmação dupla + log admin.
@@ -477,7 +491,16 @@ na mesma entrega**.
 - Logs importantes via `logEvent()` (tipos persistidos: `admin`, `error`, `warn`).
 - Textos de UI em pt-BR; identificadores em inglês; comentários em pt-BR.
 - **Apelido**: visitante define/troca pelo modal de apelido (fluxo "Continuar
-  como visitante") — sessionStorage `labcombat_nickname`. O modal de conta só é
+  como visitante") — sessionStorage `labcombat_nickname`. **Unicidade vale para
+  todos**: apelido reservado no índice `nicknames/{apelido}` não pode ser usado
+  por visitante nem em entrada de sala — checado no modal de apelido, no
+  overlay de entrar em sala (index.html) e no `joinRoom` (rooms.js), sempre com
+  `exceptUid` = uid atual (o dono entra normalmente). **Visitante também
+  RESERVA o apelido** no mesmo índice (`claimGuestNickname` em auth.js) — a
+  reserva é temporária via `onDisconnect().remove()` (libera ao fechar a aba)
+  e impede dois guests com o mesmo nick simultâneo; ao trocar de apelido ou
+  fazer upgrade p/ conta, a reserva de guest é liberada antes
+  (`releaseGuestNickname`). O modal de conta só é
   obrigatório na 1ª entrada (sem `labcombat_access_mode`); visitante NÃO é
   forçado ao voltar de uma partida — no fim da luta (vitória/W.O. inclusive) ele
   apenas vê o aviso clicável "crie uma conta p/ pontuar" (goRankText, abre o

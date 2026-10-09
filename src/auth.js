@@ -4,7 +4,7 @@
  */
 
 import { auth, db } from './firebase.js';
-import { ref, get, set, update, remove, runTransaction, child } from "firebase/database";
+import { ref, get, set, update, remove, runTransaction, child, onDisconnect } from "firebase/database";
 import {
     createUserWithEmailAndPassword,
     EmailAuthProvider,
@@ -96,6 +96,28 @@ async function releaseNickname(uid, nickname) {
     const nickRef = ref(db, `nicknames/${key}`);
     const snap = await get(nickRef);
     if (snap.exists() && snap.val() === uid) await remove(nickRef).catch(() => {});
+}
+
+// Reserva de apelido para VISITANTE (uid anônimo): mesma transação atômica do
+// claim de conta, mas com onDisconnect().remove() — a reserva é TEMPORÁRIA e
+// se libera sozinha quando a aba/conexão cai (guest não tem conta p/ liberar).
+// É o que impede dois visitantes de usarem o mesmo apelido ao mesmo tempo.
+export async function claimGuestNickname(uid, nickname) {
+    const claimed = await claimNickname(uid, nickname);
+    if (claimed) {
+        try { await onDisconnect(ref(db, `nicknames/${normalizeNick(nickname)}`)).remove(); } catch {}
+    }
+    return claimed;
+}
+
+// Libera a reserva temporária do visitante (troca de apelido ou upgrade p/ conta).
+export async function releaseGuestNickname(uid, nickname) {
+    if (!uid || !nickname) return;
+    try {
+        const nickRef = ref(db, `nicknames/${normalizeNick(nickname)}`);
+        await onDisconnect(nickRef).cancel().catch(() => {});
+        await releaseNickname(uid, nickname);
+    } catch {}
 }
 
 export async function registerAccount({ email, password, nickname }) {
